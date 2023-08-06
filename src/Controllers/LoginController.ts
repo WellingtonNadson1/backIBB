@@ -8,7 +8,8 @@ class LoginController {
   async login(request: FastifyRequest, reply: FastifyReply){
     // Dados de credenciais vindas do FrontEnd
     const { email, password } = request.body as UserData
-    const JWT_SECRET = process.env.JWT_TOKEN
+    const JWT_SECRET = process.env.JWT_SECRET
+    console.log('JWT: ',JWT_SECRET)
 
     interface TokenPayload {
       userId: string;

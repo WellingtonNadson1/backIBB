@@ -32,7 +32,7 @@ export interface UserData {
   escolas: Escolas[]
   encontros: Encontros[]
   estado_civil: string
-  nomeConjuge: string
+  nome_conjuge: string
   date_casamento: string | Date
   has_filho: string
   quantidade_de_filho: number
