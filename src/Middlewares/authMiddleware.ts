@@ -6,7 +6,7 @@ export async function requireAuth(
   reply: FastifyReply
 ) {
   const authHeader = request.headers.authorization;
-  const JWT_SECRET = process.env.JWT_TOKEN;
+  const JWT_SECRET = process.env.JWT_SECRET;
 
   if (
     (["POST"].includes(request.method) && request.url === "/login")||
