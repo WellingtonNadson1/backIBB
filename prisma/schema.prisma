@@ -1,0 +1,218 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+// MODELS
+model Account {
+  id            String  @id @default(uuid())
+  userId        String
+  type          String
+  refresh_token String? @db.Text
+  access_token  String? @db.Text
+  expires_at    Int?
+  token_type    String?
+  scope         String?
+  id_token      String? @db.Text
+  session_state String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("account")
+}
+
+model Session {
+  id           String   @id @default(uuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("session")
+}
+
+model User {
+  id                  String    @id @default(uuid())
+  image_url           String?
+  email               String    @unique
+  first_name          String?
+  last_name           String?
+  cpf                 String?
+  dateNasc            DateTime?
+  sexo                String?
+  telefone            String?
+  escolaridade        String?
+  profissao           String?
+  estado_civil        String?
+  nome_conjuge        String?
+  has_filho           String?
+  quantidade_de_filho Int?
+  endereco            Endereco? @relation(fields: [enderecoId], references: [id])
+
+  batizado              String?
+  is_discipulado        String?
+  discipulador          String?
+  supervisao_pertence   Supervisao?       @relation(fields: [supervisaoId], references: [id])
+  celula                Celula?           @relation(fields: [celulaId], references: [id])
+  escolas               Escolas[]
+  encontros             Encontros[]
+  situacao_no_reino     SituacaoNoReino?  @relation(fields: [situacaoNoReinoId], references: [id])
+  cargo_de_lideranca    CargoDeLideranca? @relation(fields: [cargoDeLiderancaId], references: [id])
+  lider                 Celula[]          @relation("LiderCelula")
+  supervisoes_lidera    Supervisao[]      @relation("Supervisor")
+  participacoes_eventos Participacao[]
+
+  date_casamento DateTime?
+  date_batizado  DateTime?
+  date_decisao   DateTime?
+  date_create    DateTime  @default(now())
+  date_update    DateTime  @updatedAt
+
+  celulaId           String?
+  enderecoId         String?
+  supervisaoId       String?
+  situacaoNoReinoId  String?
+  cargoDeLiderancaId String?
+
+  accounts Account[]
+  sessions Session[]
+  password String?
+
+  @@map("user") // Defina um nome de tabela personalizado, se necessário
+}
+
+model Evento {
+  id            String         @id @default(uuid())
+  startDatetime DateTime
+  endDatetime   DateTime
+  image_url     String?
+  name          String
+  descricao     String
+  recorrencia   String?
+  participacoes Participacao[]
+
+  @@map("evento")
+}
+
+model Participacao {
+  id       String  @id @default(uuid())
+  presente Boolean
+  evento   Evento  @relation(fields: [eventoId], references: [id])
+  membro   User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  eventoId String
+  userId   String
+
+  @@map("participacao")
+}
+
+model VerificationToken {
+  identifier String
+  token      String   @unique
+  expires    DateTime
+
+  @@unique([identifier, token])
+}
+
+model Endereco {
+  id          String   @id @default(uuid())
+  cep         String?
+  cidade      String?
+  estado      String?
+  endereco    String?
+  numero      String?
+  date_create DateTime @default(now())
+  date_update DateTime @updatedAt
+  user        User[]
+
+  @@map("endereco")
+}
+
+model Celula {
+  id              String     @id @default(uuid())
+  nome            String
+  lider           User?      @relation("LiderCelula", fields: [userId], references: [id], onDelete: Cascade)
+  supervisao      Supervisao @relation(fields: [supervisaoId], references: [id])
+  date_inicio     DateTime?
+  cep             String?
+  cidade          String?
+  estado          String?
+  endereco        String?
+  numero          String?
+  date_multipicar DateTime?
+  date_create     DateTime   @default(now())
+  date_update     DateTime   @updatedAt
+  supervisaoId    String
+  membros         User[]
+  userId          String?
+
+  @@map("celula")
+}
+
+model Supervisao {
+  id                String           @id @default(uuid())
+  nome              String
+  cor               String
+  supervisor        User?            @relation("Supervisor", fields: [userId], references: [id])
+  celulas           Celula[]
+  date_create       DateTime         @default(now())
+  date_update       DateTime         @updatedAt
+  membros           User[]
+  nivelSupervisao   NivelSupervisao? @relation(fields: [nivelSupervisaoId], references: [id])
+  userId            String?
+  nivelSupervisaoId String?
+
+  @@map("supervisao") // Defina um nome de tabela personalizado, se necessário
+}
+
+model NivelSupervisao {
+  id         String       @id @default(uuid())
+  nome       String
+  supervisao Supervisao[]
+
+  @@map("nivel_supervisao")
+}
+
+model Escolas {
+  id          String   @id @default(uuid())
+  nome        String
+  date_create DateTime @default(now())
+  date_update DateTime @updatedAt
+  user        User[]
+
+  @@map("escolas")
+}
+
+model Encontros {
+  id          String   @id @default(uuid())
+  nome        String
+  date_create DateTime @default(now())
+  date_update DateTime @updatedAt
+  user        User[]
+
+  @@map("encontros")
+}
+
+model SituacaoNoReino {
+  id          String   @id @default(uuid())
+  nome        String
+  date_create DateTime @default(now())
+  date_update DateTime @updatedAt
+  user        User[]
+
+  @@map("situcacao_no_reno")
+}
+
+model CargoDeLideranca {
+  id          String   @id @default(uuid())
+  nome        String
+  date_create DateTime @default(now())
+  date_update DateTime @updatedAt
+  user        User[]
+
+  @@map("cargo_de_lideranca")
+}
