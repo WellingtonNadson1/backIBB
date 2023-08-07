@@ -60,7 +60,6 @@ class CelulaRepositorie {
     return await prisma.celula.create({
       data: {
         ...CelulaData,
-        nome: CelulaData.nome,
         lider: {
           connect: {
             id: CelulaData.lider,
