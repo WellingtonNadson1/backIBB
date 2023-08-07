@@ -29,7 +29,9 @@ const start = async () => {
     app.register(routerSupervisao)
     app.register(routerCelula)
     app.register(routerUser) // tipo um middleware do express
-    await app.listen({ port: PORT })
+    await app.listen({
+      host: '0.0.0.0',
+      port: PORT })
   } catch (err) {
     app.log.error(err)
     process.exit(1)
