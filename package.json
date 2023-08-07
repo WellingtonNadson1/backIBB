@@ -29,5 +29,6 @@
   "keywords": [],
   "author": "Wellington Nadson",
   "license": "ISC",
-  "description": ""
+  "description": "",
+  "engines": {"node": "18"}
 }
