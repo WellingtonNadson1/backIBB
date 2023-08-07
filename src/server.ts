@@ -9,7 +9,7 @@ import routerParticipacao from "./Routers/Participacao";
 import routerSupervisao from "./Routers/SupervisaoRouters";
 import routerUser from "./Routers/UserRouters";
 
-const PORT = 3333;
+const PORT = process.env.PORT ? Number(process.env.PORT) : 3333;
 
 const app: FastifyInstance = Fastify({logger: true});
 
