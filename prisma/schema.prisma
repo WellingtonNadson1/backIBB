@@ -137,12 +137,13 @@ model Celula {
   nome            String
   lider           User?      @relation("LiderCelula", fields: [userId], references: [id], onDelete: Cascade)
   supervisao      Supervisao @relation(fields: [supervisaoId], references: [id])
-  date_inicio     DateTime?
   cep             String?
   cidade          String?
   estado          String?
   endereco        String?
   numero          String?
+  date_inicio     DateTime?
+  date_que_ocorre DateTime?
   date_multipicar DateTime?
   date_create     DateTime   @default(now())
   date_update     DateTime   @updatedAt

@@ -8,6 +8,7 @@ export interface CelulaData {
   membros: {
     id: string;
   }[];
+  date_que_ocorre: string;
   date_inicio: string;
   date_multipicar: string;
   cep: string;

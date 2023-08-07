@@ -79,12 +79,13 @@ class CelulaRepositorie {
   }
 
   async updateCelula(id: string, celulaDataForm: CelulaData) {
-    const { nome, lider, supervisao, membros } = celulaDataForm
+    const { nome, lider, supervisao, membros, ...CelulaData } = celulaDataForm
     return await prisma.celula.update({
       where: {
         id: id,
       },
       data: {
+        ...CelulaData,
         nome,
         lider: {
           connect: {
