@@ -1,7 +1,6 @@
 {
   "dependencies": {
     "@fastify/cors": "^8.3.0",
-    "@prisma/client": "^5.1.1",
     "bcrypt": "^5.1.0",
     "fastify": "^4.21.0",
     "jsonwebtoken": "^9.0.1"
@@ -10,6 +9,7 @@
   "version": "1.0.0",
   "main": "index.js",
   "devDependencies": {
+    "@prisma/client": "^5.1.1",
     "@types/bcrypt": "^5.0.0",
     "@types/jsonwebtoken": "^9.0.2",
     "@types/node": "^20.4.8",
@@ -23,8 +23,8 @@
     "test": "echo \"Error: no test specified\" && exit 1",
     "start": "tsx src/server.ts",
     "start:dev": "tsx watch src/server.ts",
-    "vercel-build": "npx prisma migrate deploy",
-    "build": "tsup src"
+    "build": "tsup src",
+    "vercel-build": "npx prisma migrate deploy"
   },
   "keywords": [],
   "author": "",
