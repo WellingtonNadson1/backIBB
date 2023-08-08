@@ -80,14 +80,14 @@ class SupervisiaoRepositorie {
         cor,
         supervisor: {
           connect: {
-            id: supervisor.id
+            id: supervisor
           }
         },
         celulas: {
-          connect: celulas.map((celulaId) => ({id: celulaId.id}))
+          connect: celulas.map((celulaId) => ({id: celulaId}))
         },
         membros: {
-          connect: membros.map((membroId) => ({id: membroId.id}))
+          connect: membros.map((membroId) => ({id: membroId}))
 
         },
       },
@@ -105,14 +105,14 @@ class SupervisiaoRepositorie {
         cor,
         supervisor: {
           connect: {
-            id: supervisor.id
+            id: supervisor
           }
         },
         celulas: {
-          connect: celulas.map((celulaId) => ({id: celulaId.id}))
+          connect: celulas.map((celulaId) => ({id: celulaId}))
         },
         membros: {
-          connect: membros.map((membroId) => ({id: membroId.id}))
+          connect: membros.map((membroId) => ({id: membroId}))
 
         },
       },

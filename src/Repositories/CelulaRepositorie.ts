@@ -71,7 +71,7 @@ class CelulaRepositorie {
           }
         },
         membros: {
-          connect: membros ? membros.map((membroId) => ({id: membroId.id})) : []
+          connect: membros ? membros.map((membroId) => ({id: membroId})) : []
 
         },
       },
@@ -98,7 +98,7 @@ class CelulaRepositorie {
           }
         },
         membros: {
-          connect: membros?.map((membroId) => ({id: membroId.id}))
+          connect: membros?.map((membroId) => ({id: membroId}))
 
         },
       },

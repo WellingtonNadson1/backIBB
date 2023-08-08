@@ -1,22 +1,23 @@
 import { FastifyReply, FastifyRequest } from "fastify";
+import { Input, array, date, object, string } from 'valibot';
 import CelulaRepositorie from "../Repositories/CelulaRepositorie";
 
-export interface CelulaData {
-  nome: string;
-  lider: string;
-  supervisao: string;
-  membros: {
-    id: string;
-  }[];
-  date_que_ocorre: string;
-  date_inicio: string;
-  date_multipicar: string;
-  cep: string;
-  cidade: string;
-  estado: string;
-  endereco: string;
-  numero: string;
-}
+const CelulaDataSchema = object ({
+  nome: string(),
+  lider: string(),
+  supervisao: string(),
+  membros: array(string()),
+  date_que_ocorre: date(),
+  date_inicio: date(),
+  date_multipicar: date(),
+  cep: string(),
+  cidade: string(),
+  estado: string(),
+  endereco: string(),
+  numero: string(),
+})
+
+export type CelulaData = Input<typeof CelulaDataSchema>
 
 interface CelulaParams {
   id: string;

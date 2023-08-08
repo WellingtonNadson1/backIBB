@@ -1,46 +1,42 @@
 import bcrypt from "bcrypt";
 import { FastifyReply, FastifyRequest } from 'fastify';
+import { Input, array, date, email, number, object, string } from "valibot";
 import UserRepositorie from "../Repositories/UserRepositorie";
 
-interface Escolas {
-  id: string
-  nome: string
-}
+const Escolas = array(string())
+const Encontros = array(string())
 
-interface Encontros {
-  id: string
-  nome: string
-}
+const UserDataSchema = object({
+  email: string([email()]),
+  password: string(),
+  first_name: string(),
+  last_name: string(),
+  cpf: string(),
+  dateNasc: date(),
+  sexo: string(),
+  telefone: string(),
+  escolaridade: string(),
+  profissao: string(),
+  batizado: string(),
+  date_batizado: date(),
+  is_discipulado: string(),
+  discipulador: string(),
+  supervisao:  string(),
+  celula: string(),
+  escolas: Escolas,
+  encontros: Encontros,
+  estado_civil: string(),
+  nome_conjuge: string(),
+  date_casamento: date(),
+  has_filho: string(),
+  quantidade_de_filho: number(),
+  endereco: string(),
+  date_decisao: date(),
+  situacao_no_reino: string(),
+  cargo_de_lideranca: string(),
+})
 
-export interface UserData {
-  email: string
-  password: string
-  first_name: string
-  last_name: string
-  cpf: string
-  dateNasc: string | Date
-  sexo: string
-  telefone: string
-  escolaridade: string
-  profissao: string
-  batizado: string
-  date_batizado: string | Date
-  is_discipulado: string
-  discipulador: string
-  supervisao:  string
-  celula: string  | undefined
-  escolas: Escolas[]
-  encontros: Encontros[]
-  estado_civil: string
-  nome_conjuge: string
-  date_casamento: string | Date
-  has_filho: string
-  quantidade_de_filho: number
-  endereco: string | undefined
-  date_decisao: string | Date
-  situacao_no_reino: string
-  cargo_de_lideranca: string
-}
+export type UserData = Input<typeof UserDataSchema>
 
 export interface UserParams {
   id: string

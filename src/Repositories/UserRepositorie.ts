@@ -168,10 +168,10 @@ class UserRepositorie {
           }
       },
       escolas: {
-          connect: escolas.map((escolaId) => ({id: escolaId.id}))
+          connect: escolas.map((escolaId) => ({id: escolaId}))
       },
       encontros: {
-          connect: encontros.map((encontId => ({id: encontId.id})))
+          connect: encontros.map((encontId => ({id: encontId})))
       },
       situacao_no_reino: {
           connect: {
@@ -214,10 +214,10 @@ class UserRepositorie {
             }
         },
         escolas: {
-          connect: escolas.map((escolaId) => ({id: escolaId.id}))
+          connect: escolas.map((escolaId) => ({id: escolaId}))
       },
       encontros: {
-          connect: encontros.map((encontId => ({id: encontId.id})))
+          connect: encontros.map((encontId => ({id: encontId})))
       },
         situacao_no_reino: {
           connect: {

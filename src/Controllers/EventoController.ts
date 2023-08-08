@@ -1,14 +1,17 @@
 import { FastifyReply, FastifyRequest } from 'fastify';
+import { Input, date, object, string } from 'valibot';
 import EventoRepositorie from '../Repositories/EventoRepositorie';
 
-export interface EventoData {
-  startDatetime: string
-  endDatetime:   string
-  image_url?:     string
-  name:          string
-  descricao:     string
-  recorrencia?:  string
-}
+const EventoDataSchema = object({
+  startDatetime: date(),
+  endDatetime:   date(),
+  image_url:     string(),
+  name:          string(),
+  descricao:     string(),
+  recorrencia:  string(),
+})
+
+export type EventoData = Input<typeof EventoDataSchema>
 
 interface EventoParams {
   id: string;

@@ -1,26 +1,16 @@
 import { FastifyReply, FastifyRequest } from 'fastify';
+import { Input, array, object, string } from 'valibot';
 import SupervisaoRepositorie from '../Repositories/SupervisaoRepositorie';
 
-interface Celula {
-  id: string
-  nome: string
-}
+const SupervisaoDataSchema = object({
+  nome: string(),
+  cor: string(),
+  supervisor: string(),
+  celulas: array(string()),
+  membros: array(string()),
+})
 
-interface User {
-  id: string
-  nome: string
-}
-
-export interface SupervisaoData {
-  nome: string;
-  cor: string
-  supervisor: {
-    id: string
-    nome: string
-  };
-  celulas: Celula[];
-  membros: User[];
-}
+export type SupervisaoData = Input<typeof SupervisaoDataSchema>
 
 interface SupervisaoParams {
   id: string;
