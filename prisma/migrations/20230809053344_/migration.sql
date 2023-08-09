@@ -29,7 +29,7 @@ CREATE TABLE "user" (
     "id" TEXT NOT NULL,
     "image_url" TEXT,
     "email" TEXT NOT NULL,
-    "first_name" TEXT,
+    "first_name" TEXT NOT NULL,
     "last_name" TEXT,
     "cpf" TEXT,
     "dateNasc" TIMESTAMP(3),
@@ -39,10 +39,10 @@ CREATE TABLE "user" (
     "profissao" TEXT,
     "estado_civil" TEXT,
     "nome_conjuge" TEXT,
-    "has_filho" TEXT,
+    "has_filho" BOOLEAN NOT NULL,
     "quantidade_de_filho" INTEGER,
-    "batizado" TEXT,
-    "is_discipulado" TEXT,
+    "batizado" BOOLEAN NOT NULL,
+    "is_discipulado" BOOLEAN NOT NULL,
     "discipulador" TEXT,
     "date_casamento" TIMESTAMP(3),
     "date_batizado" TIMESTAMP(3),
@@ -107,12 +107,13 @@ CREATE TABLE "endereco" (
 CREATE TABLE "celula" (
     "id" TEXT NOT NULL,
     "nome" TEXT NOT NULL,
-    "date_inicio" TIMESTAMP(3),
     "cep" TEXT,
     "cidade" TEXT,
     "estado" TEXT,
     "endereco" TEXT,
     "numero" TEXT,
+    "date_inicio" TIMESTAMP(3),
+    "date_que_ocorre" TIMESTAMP(3),
     "date_multipicar" TIMESTAMP(3),
     "date_create" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "date_update" TIMESTAMP(3) NOT NULL,
@@ -139,6 +140,7 @@ CREATE TABLE "supervisao" (
 CREATE TABLE "nivel_supervisao" (
     "id" TEXT NOT NULL,
     "nome" TEXT NOT NULL,
+    "descricao" TEXT,
 
     CONSTRAINT "nivel_supervisao_pkey" PRIMARY KEY ("id")
 );
@@ -147,6 +149,10 @@ CREATE TABLE "nivel_supervisao" (
 CREATE TABLE "escolas" (
     "id" TEXT NOT NULL,
     "nome" TEXT NOT NULL,
+    "descricao" TEXT,
+    "date_que_ocorre" TIMESTAMP(3),
+    "date_inicio" TIMESTAMP(3),
+    "date_conclusao" TIMESTAMP(3),
     "date_create" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "date_update" TIMESTAMP(3) NOT NULL,
 
@@ -157,6 +163,10 @@ CREATE TABLE "escolas" (
 CREATE TABLE "encontros" (
     "id" TEXT NOT NULL,
     "nome" TEXT NOT NULL,
+    "descricao" TEXT,
+    "date_que_ocorre" TIMESTAMP(3),
+    "date_inicio" TIMESTAMP(3),
+    "date_conclusao" TIMESTAMP(3),
     "date_create" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "date_update" TIMESTAMP(3) NOT NULL,
 
