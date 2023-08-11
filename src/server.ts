@@ -4,7 +4,7 @@ import { requireAuth } from "./Middlewares/authMiddleware";
 import routerAccount from "./Routers/AccountRouters";
 import routerCelula from "./Routers/CelulaRouters";
 import routerEncontro from "./Routers/EncontroRouters";
-import registerEscolaRoutes from "./Routers/Escolas";
+import registerEscolaRoutes from "./Routers/Escola";
 import routerEvento from "./Routers/Evento";
 import routerLogin from "./Routers/LoginRouter";
 import routerParticipacao from "./Routers/Participacao";

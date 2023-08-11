@@ -1,5 +1,5 @@
 import { FastifyInstance } from 'fastify';
-import EscolaController from "../../Controllers/EscolaController";
+import EscolaController from "../../Controllers/Escola/Escola";
 
 // const routerUser = Router();
 const routerEscola = async (fastify: FastifyInstance) => {

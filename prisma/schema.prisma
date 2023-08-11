@@ -221,19 +221,18 @@ model Escola {
 }
 
 model TurmaEscola {
-  id                  String       @id @default(uuid())
-  nome                String
-  descricao           String?
-  date_aulas_marcadas DateTime[]
-  aulas               AulaEscola[]
-  date_inicio         DateTime?
-  date_conclusao      DateTime?
-  userId              String?
-  alunos              User[]
-  escola              Escola?      @relation(fields: [escolaId], references: [id])
-  escolaId            String?
-  date_create         DateTime     @default(now())
-  date_update         DateTime     @updatedAt
+  id             String       @id @default(uuid())
+  nome           String
+  descricao      String?
+  escola         Escola?      @relation(fields: [escolaId], references: [id])
+  escolaId       String?
+  aulas_marcadas AulaEscola[]
+  alunos         User[]
+  userId         String?
+  date_inicio    DateTime?
+  date_conclusao DateTime?
+  date_create    DateTime     @default(now())
+  date_update    DateTime     @updatedAt
 
   @@map("turma_escola")
 }
@@ -248,12 +247,12 @@ model AulaEscola {
 }
 
 model PresencaEscola {
-  id            String      @id @default(uuid())
-  status        String //Pode ter um status (presente, ausente, justificado, etc.)
-  aluno         User?       @relation(fields: [userId], references: [id])
-  userId        String?
-  aula_presenca AulaEscola? @relation(fields: [aulaEscolaId], references: [id])
-  aulaEscolaId  String?
+  id                        String      @id @default(uuid())
+  status                    String //Pode ter um status (presente, ausente, justificado, etc.)
+  aluno                     User?       @relation(fields: [userId], references: [id])
+  userId                    String?
+  aula_presenca_qual_escola AulaEscola? @relation(fields: [aulaEscolaId], references: [id])
+  aulaEscolaId              String?
 }
 
 model Encontros {

@@ -2,7 +2,7 @@
 import { FastifyInstance } from 'fastify';
 import routerAulaEscola from './AulaEscola';
 import routerEscola from './Escola';
-import routerPresencaAulaEscola from './PresencaEscola';
+import routerPresencaAulaEscola from './PresencaAula';
 import routerTurmaEscola from './TurmaEscola';
 
 const registerEscolaRoutes = async (fastify: FastifyInstance) => {

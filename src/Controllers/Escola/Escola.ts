@@ -1,15 +1,13 @@
 import { FastifyReply, FastifyRequest } from "fastify";
-import { Input, array, date, object, string } from 'valibot';
-import EscolaRepositorie from "../Repositories/EscolaRepositorie";
+import { Input, array, object, string } from 'valibot';
+import { EscolaRepositorie } from "../../Repositories/Escola";
 
 const EscolaDataSchema = object ({
   nome: string(),
   descricao: string(),
   lider: string(),
-  alunos: array(string()),
   turmas: array(string()),
-  date_inicio: date(),
-  date_conclusao: date(),
+  alunos: array(string()),
 })
 
 export type EscolaData = Input<typeof EscolaDataSchema>
