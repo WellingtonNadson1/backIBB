@@ -1,9 +1,9 @@
 import { FastifyInstance } from 'fastify';
-import EscolaController from "../Controllers/EscolaController";
+import EscolaController from "../../Controllers/EscolaController";
 
 // const routerUser = Router();
 const routerEscola = async (fastify: FastifyInstance) => {
-  // CELULA
+  // ESCOLA
   fastify.get("/escolas", EscolaController.index);
   fastify.get('/escolas/:id', EscolaController.show);
   fastify.post("/escolas", EscolaController.store);

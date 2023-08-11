@@ -67,8 +67,8 @@ model User {
   celula_lidera           Celula[]          @relation("LiderCelula")
   escola_lidera           Escola[]          @relation("LiderEscola")
   supervisoes_lidera      Supervisao[]      @relation("Supervisor")
-  participacoes_eventos   Participacao[]
-  presencas_aulas_escolas Presenca[]
+  presencas_aulas_escolas PresencaEscola[]
+  presencas_cultos        PresencaCulto[]
 
   celulaId           String?
   enderecoId         String?
@@ -88,30 +88,6 @@ model User {
   date_update    DateTime  @updatedAt
 
   @@map("user") // Defina um nome de tabela personalizado, se necessário
-}
-
-model Evento {
-  id            String         @id @default(uuid())
-  startDatetime DateTime
-  endDatetime   DateTime
-  image_url     String?
-  name          String
-  descricao     String
-  recorrencia   String?
-  participacoes Participacao[]
-
-  @@map("evento")
-}
-
-model Participacao {
-  id       String  @id @default(uuid())
-  presente Boolean
-  evento   Evento  @relation(fields: [eventoId], references: [id])
-  membro   User    @relation(fields: [userId], references: [id], onDelete: Cascade)
-  eventoId String
-  userId   String
-
-  @@map("participacao")
 }
 
 model VerificationToken {
@@ -183,6 +159,53 @@ model NivelSupervisao {
   @@map("nivel_supervisao")
 }
 
+// Model das Presencas nos Cultos / Eventos (conferências)
+model CultoGeral {
+  id                    String         @id @default(uuid())
+  nome                  String
+  descricao             String?
+  lista_cultos_semanais CultoSemanal[]
+  date_create           DateTime       @default(now())
+  date_update           DateTime       @updatedAt
+
+  @@map("culto_geral")
+}
+
+model CultoSemanal {
+  id           String            @id @default(uuid())
+  nome         String
+  descricao    String?
+  cultos       CultoIndividual[]
+  cultoGeral   CultoGeral?       @relation(fields: [cultoGeralId], references: [id])
+  cultoGeralId String?
+  date_create  DateTime          @default(now())
+  date_update  DateTime          @updatedAt
+
+  @@map("culto_semanal")
+}
+
+model CultoIndividual {
+  id                 String          @id @default(uuid())
+  data_inicio_culto  DateTime
+  data_termino_culto DateTime
+  status             String // status (realizada, cancelada, etc.)
+  presencas_culto    PresencaCulto[]
+  culto_semana       CultoSemanal?   @relation(fields: [cultoSemanalId], references: [id])
+  cultoSemanalId     String?
+
+  @@map("culto_individual")
+}
+
+model PresencaCulto {
+  id                String           @id @default(uuid())
+  status            Boolean //Pode ter um status (presente, ausente, justificado, etc.)
+  membro            User?            @relation(fields: [userId], references: [id])
+  userId            String?
+  presenca_culto    CultoIndividual? @relation(fields: [cultoIndividualId], references: [id])
+  cultoIndividualId String?
+}
+
+// Model das Presencas nas aulas das Escolas
 model Escola {
   id          String        @id @default(uuid())
   nome        String
@@ -216,21 +239,21 @@ model TurmaEscola {
 }
 
 model AulaEscola {
-  id            String       @id @default(uuid())
+  id            String           @id @default(uuid())
   data_aula     DateTime
   status        String // status (realizada, cancelada, etc.)
-  presencas     Presenca[]
-  turma         TurmaEscola? @relation(fields: [turmaEscolaId], references: [id])
+  presencas     PresencaEscola[]
+  turma         TurmaEscola?     @relation(fields: [turmaEscolaId], references: [id])
   turmaEscolaId String?
 }
 
-model Presenca {
-  id           String      @id @default(uuid())
-  status       String //Pode ter um status (presente, ausente, justificado, etc.)
-  aluno        User?       @relation(fields: [userId], references: [id])
-  userId       String?
-  sessao       AulaEscola? @relation(fields: [aulaEscolaId], references: [id])
-  aulaEscolaId String?
+model PresencaEscola {
+  id            String      @id @default(uuid())
+  status        String //Pode ter um status (presente, ausente, justificado, etc.)
+  aluno         User?       @relation(fields: [userId], references: [id])
+  userId        String?
+  aula_presenca AulaEscola? @relation(fields: [aulaEscolaId], references: [id])
+  aulaEscolaId  String?
 }
 
 model Encontros {
