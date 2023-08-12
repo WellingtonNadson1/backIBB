@@ -7,6 +7,7 @@ import registerCultoRoutes from "./Routers/Culto";
 import routerEncontro from "./Routers/EncontroRouters";
 import registerEscolaRoutes from "./Routers/Escola";
 import routerLogin from "./Routers/LoginRouter";
+import routerSituacaoNoReino from "./Routers/SituacaoNoReino";
 import routerSupervisao from "./Routers/SupervisaoRouters";
 import routerUser from "./Routers/UserRouters";
 
@@ -30,6 +31,7 @@ const start = async () => {
     app.register(routerEncontro)
     app.register(routerAccount)
     app.register(routerSupervisao)
+    app.register(routerSituacaoNoReino)
     app.register(routerCelula)
     app.register(routerUser) // tipo um middleware do express
     await app.listen({
