@@ -47,7 +47,7 @@ class PresencaAulaRepositorie {
     });
   }
 
-  async updateAulaEscola(id: string, presencaAulaDataForm: PresencaAulaData) {
+  async updatePresencaAula(id: string, presencaAulaDataForm: PresencaAulaData) {
     const { aluno, aula_presenca_qual_escola, ...PresencaAulaData } = presencaAulaDataForm;
     return await prisma.presencaEscola.update({
       where: {
@@ -69,7 +69,7 @@ class PresencaAulaRepositorie {
     });
   }
 
-  async deleteAulaEscola(id: string) {
+  async deletePresencaAula(id: string) {
     await prisma.presencaEscola.delete({
       where: {
         id: id,

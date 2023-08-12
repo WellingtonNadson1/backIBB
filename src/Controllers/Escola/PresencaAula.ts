@@ -1,6 +1,6 @@
 import { FastifyReply, FastifyRequest } from "fastify";
 import { Input, object, string } from 'valibot';
-import PresencaAulaRepositorie from "../../Repositories/PresencaAulaRepositorie";
+import { PresencaAulaRepositorie } from "../../Repositories/Escola";
 
 const PresencaAulaDataSchema = object ({
   status: string(), //Pode ter um status (presente, ausente, justificado, etc.)

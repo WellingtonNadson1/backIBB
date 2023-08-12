@@ -3,9 +3,6 @@ import { FastifyReply, FastifyRequest } from 'fastify';
 import { Input, array, date, email, number, object, string } from "valibot";
 import UserRepositorie from "../Repositories/UserRepositorie";
 
-const Escolas = array(string())
-const Encontros = array(string())
-
 const UserDataSchema = object({
   email: string([email()]),
   password: string(),
@@ -23,8 +20,8 @@ const UserDataSchema = object({
   discipulador: string(),
   supervisao:  string(),
   celula: string(),
-  escolas: Escolas,
-  encontros: Encontros,
+  escolas: array(string()),
+  encontros: array(string()),
   estado_civil: string(),
   nome_conjuge: string(),
   date_casamento: date(),
