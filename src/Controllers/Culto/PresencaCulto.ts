@@ -1,50 +1,50 @@
 import { FastifyReply, FastifyRequest } from "fastify";
-import { Input, object, string } from 'valibot';
-import PresencaAulaRepositorie from "../../Repositories/PresencaAulaRepositorie";
+import { Input, boolean, object, string } from 'valibot';
+import { PresencaCultoRepositorie } from "../../Repositories/Culto";
 
-const PresencaAulaDataSchema = object ({
-  status: string(), //Pode ter um status (presente, ausente, justificado, etc.)
-  aluno: string(),
-  aula_presenca_qual_escola: string(),
+const PresencaCultoDataSchema = object ({
+  status: boolean(), //Pode ter um status (presente, ausente, justificado, etc.)
+  membro: string(),
+  presenca_culto: string(),
 })
 
-export type PresencaAulaData = Input<typeof PresencaAulaDataSchema>
+export type PresencaCultoData = Input<typeof PresencaCultoDataSchema>
 
-interface PresencaAulaParams {
+interface PresencaCultoParams {
   id: string;
 }
 
 class PresencaCultoController {
   // Fazendo uso do Fastify
   async index(request: FastifyRequest, reply: FastifyReply) {
-    const presencaAula = await PresencaAulaRepositorie.findAll();
-    if (!presencaAula) {
+    const presencasCultos = await PresencaCultoRepositorie.findAll();
+    if (!presencasCultos) {
       return reply.code(500).send({ error: "Internal Server Error" });
     }
-    return reply.send(presencaAula);
+    return reply.send(presencasCultos);
   }
 
   async show(
     request: FastifyRequest<{
-      Params: PresencaAulaParams;
+      Params: PresencaCultoParams;
     }>,
     reply: FastifyReply
   ) {
     const id = request.params.id;
-    const PresencaAula = await PresencaAulaRepositorie.findById(id);
-    if (!PresencaAula) {
+    const presencaCulto = await PresencaCultoRepositorie.findById(id);
+    if (!presencaCulto) {
       return reply.code(404).send({ message: "Presença not found!" });
     }
-    return reply.code(200).send(PresencaAula);
+    return reply.code(200).send(presencaCulto);
   }
 
   async store(request: FastifyRequest, reply: FastifyReply) {
     try {
-      const presencaAulaDataForm = request.body as PresencaAulaData;
-      const presencaAula = await PresencaAulaRepositorie.createPresencaAula({
-        ...presencaAulaDataForm,
+      const presencaCultoDataForm = request.body as PresencaCultoData;
+      const presencaCulto = await PresencaCultoRepositorie.createPresencaCulto({
+        ...presencaCultoDataForm,
       });
-      return reply.code(201).send(presencaAula);
+      return reply.code(201).send(presencaCulto);
     } catch (error) {
       return reply.code(400).send(error);
     }
@@ -52,26 +52,26 @@ class PresencaCultoController {
 
   async update(
     request: FastifyRequest<{
-      Params: PresencaAulaParams;
+      Params: PresencaCultoParams;
     }>,
     reply: FastifyReply
   ) {
     const id = request.params.id;
-    const presencaAulaDataForm = request.body as PresencaAulaData;
-    const presencaAula = await PresencaAulaRepositorie.updatePresencaAula(id, {
-      ...presencaAulaDataForm,
+    const presencaCultoDataForm = request.body as PresencaCultoData;
+    const presencaCulto = await PresencaCultoRepositorie.updatePresencaCulto(id, {
+      ...presencaCultoDataForm,
     });
-    return reply.code(202).send(presencaAula);
+    return reply.code(202).send(presencaCulto);
   }
 
   async delete(
     request: FastifyRequest<{
-      Params: PresencaAulaParams;
+      Params: PresencaCultoParams;
     }>,
     reply: FastifyReply
   ) {
     const id = request.params.id;
-    await PresencaAulaRepositorie.deletePresencaAula(id);
+    await PresencaCultoRepositorie.deletePresencaCulto(id);
     return reply.code(204);
   }
 }

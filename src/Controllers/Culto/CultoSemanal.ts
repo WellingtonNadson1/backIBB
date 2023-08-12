@@ -1,54 +1,51 @@
 import { FastifyReply, FastifyRequest } from "fastify";
-import { Input, array, date, object, string } from 'valibot';
-import { TurmaEscolaRepositorie } from "../../Repositories/Escola";
+import { Input, array, object, string } from 'valibot';
+import { CultoSemanalRepositorie } from "../../Repositories/Culto";
 
-const TurmaEscolaDataSchema = object ({
+const CultoSemanalDataSchema = object ({
   nome: string(),
   descricao: string(),
-  escola: string(),
-  aulas_marcadas: array(string()),
-  alunos: array(string()),
-  date_inicio: date(),
-  date_conclusao: date(),
+  cultoGeral: string(),
+  cultos: array(string()),
 })
 
-export type TrumaEscolaData = Input<typeof TurmaEscolaDataSchema>
+export type CultoSemanalData = Input<typeof CultoSemanalDataSchema>
 
-interface TurmaEscolaParams {
+interface CultoSemanalParams {
   id: string;
 }
 
 class CultoSemanalController {
   // Fazendo uso do Fastify
   async index(request: FastifyRequest, reply: FastifyReply) {
-    const turmasEscolas = await TurmaEscolaRepositorie.findAll();
-    if (!turmasEscolas) {
+    const cultosSemanais = await CultoSemanalRepositorie.findAll();
+    if (!cultosSemanais) {
       return reply.code(500).send({ error: "Internal Server Error" });
     }
-    return reply.send(turmasEscolas);
+    return reply.send(cultosSemanais);
   }
 
   async show(
     request: FastifyRequest<{
-      Params: TurmaEscolaParams;
+      Params: CultoSemanalParams;
     }>,
     reply: FastifyReply
   ) {
     const id = request.params.id;
-    const TurmaEscola = await TurmaEscolaRepositorie.findById(id);
-    if (!TurmaEscola) {
-      return reply.code(404).send({ message: "Turma of Aula not found!" });
+    const CultoSemanal = await CultoSemanalRepositorie.findById(id);
+    if (!CultoSemanal) {
+      return reply.code(404).send({ message: "Culto Semanal not found!" });
     }
-    return reply.code(200).send(TurmaEscola);
+    return reply.code(200).send(CultoSemanal);
   }
 
   async store(request: FastifyRequest, reply: FastifyReply) {
     try {
-      const turmaEscolaDataForm = request.body as TrumaEscolaData;
-      const turmaEscola = await TurmaEscolaRepositorie.createTurmaEscola({
-        ...turmaEscolaDataForm,
+      const cultoSemanalDataForm = request.body as CultoSemanalData;
+      const cultoSemanal = await CultoSemanalRepositorie.createCultoSemanal({
+        ...cultoSemanalDataForm,
       });
-      return reply.code(201).send(turmaEscola);
+      return reply.code(201).send(cultoSemanal);
     } catch (error) {
       return reply.code(400).send(error);
     }
@@ -56,26 +53,26 @@ class CultoSemanalController {
 
   async update(
     request: FastifyRequest<{
-      Params: TurmaEscolaParams;
+      Params: CultoSemanalParams;
     }>,
     reply: FastifyReply
   ) {
     const id = request.params.id;
-    const turmaEscolaDataForm = request.body as TrumaEscolaData;
-    const turmaEscola = await TurmaEscolaRepositorie.updateTurmaEscola(id, {
-      ...turmaEscolaDataForm,
+    const cultoSemanalDataForm = request.body as CultoSemanalData;
+    const cultoSemanal = await CultoSemanalRepositorie.updateCultoSemanal(id, {
+      ...cultoSemanalDataForm,
     });
-    return reply.code(202).send(turmaEscola);
+    return reply.code(202).send(cultoSemanal);
   }
 
   async delete(
     request: FastifyRequest<{
-      Params: TurmaEscolaParams;
+      Params: CultoSemanalParams;
     }>,
     reply: FastifyReply
   ) {
     const id = request.params.id;
-    await TurmaEscolaRepositorie.deleteTurmaEscola(id);
+    await CultoSemanalRepositorie.deleteCultoSemanal(id);
     return reply.code(204);
   }
 }
