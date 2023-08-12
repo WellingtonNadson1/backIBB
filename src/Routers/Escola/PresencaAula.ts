@@ -4,11 +4,11 @@ import { PresencaAulaController } from '../../Controllers/Escola';
 // const routerUser = Router();
 const routerPresencaAula = async (fastify: FastifyInstance) => {
   // ESCOLA
-  fastify.get("/presencaaula", PresencaAulaController.index);
-  fastify.get('/presencaaula/:id', PresencaAulaController.show);
-  fastify.post("/presencaaula", PresencaAulaController.store);
-  fastify.delete("/presencaaula/:id", PresencaAulaController.delete);
-  fastify.put("/presencaaula/:id", PresencaAulaController.update);
+  fastify.get("/presencaaulas", PresencaAulaController.index);
+  fastify.get('/presencaaulas/:id', PresencaAulaController.show);
+  fastify.post("/presencaaulas", PresencaAulaController.store);
+  fastify.delete("/presencaaulas/:id", PresencaAulaController.delete);
+  fastify.put("/presencaaulas/:id", PresencaAulaController.update);
 
 };
 
