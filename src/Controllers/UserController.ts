@@ -1,6 +1,6 @@
 import bcrypt from "bcrypt";
 import { FastifyReply, FastifyRequest } from 'fastify';
-import { Input, array, date, email, number, object, string } from "valibot";
+import { Input, array, boolean, date, email, number, object, string } from "valibot";
 import UserRepositorie from "../Repositories/UserRepositorie";
 
 const UserDataSchema = object({
@@ -14,9 +14,9 @@ const UserDataSchema = object({
   telefone: string(),
   escolaridade: string(),
   profissao: string(),
-  batizado: string(),
+  batizado: boolean(),
   date_batizado: date(),
-  is_discipulado: string(),
+  is_discipulado: boolean(),
   discipulador: string(),
   supervisao:  string(),
   celula: string(),
@@ -25,9 +25,14 @@ const UserDataSchema = object({
   estado_civil: string(),
   nome_conjuge: string(),
   date_casamento: date(),
-  has_filho: string(),
+  has_filho: boolean(),
   quantidade_de_filho: number(),
+  cep: string(),
+  cidade: string(),
+  estado: string(),
+  Bairro: string(),
   endereco: string(),
+  numero_casa: string(),
   date_decisao: date(),
   situacao_no_reino: string(),
   cargo_de_lideranca: string(),

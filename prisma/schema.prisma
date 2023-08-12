@@ -52,7 +52,12 @@ model User {
   nome_conjuge        String?
   has_filho           Boolean
   quantidade_de_filho Int?
-  endereco            Endereco? @relation(fields: [enderecoId], references: [id])
+  cep                 String?
+  cidade              String?
+  estado              String?
+  Bairro              String?
+  endereco            String?
+  numero_casa         String?
 
   batizado                Boolean
   is_discipulado          Boolean
@@ -71,7 +76,6 @@ model User {
   presencas_cultos        PresencaCulto[]
 
   celulaId           String?
-  enderecoId         String?
   supervisaoId       String?
   turmaEscolaId      String?
   situacaoNoReinoId  String?
@@ -98,20 +102,6 @@ model VerificationToken {
   @@unique([identifier, token])
 }
 
-model Endereco {
-  id          String   @id @default(uuid())
-  cep         String?
-  cidade      String?
-  estado      String?
-  endereco    String?
-  numero      String?
-  date_create DateTime @default(now())
-  date_update DateTime @updatedAt
-  membro      User[]
-
-  @@map("endereco")
-}
-
 model Celula {
   id              String     @id @default(uuid())
   nome            String
@@ -120,8 +110,9 @@ model Celula {
   cep             String?
   cidade          String?
   estado          String?
+  Bairro          String?
   endereco        String?
-  numero          String?
+  numero_casa     String?
   date_inicio     DateTime?
   date_que_ocorre DateTime?
   date_multipicar DateTime?

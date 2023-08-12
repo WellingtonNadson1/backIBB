@@ -29,48 +29,53 @@ class UserRepositorie {
         quantidade_de_filho: true,
         date_decisao: true,
         celulaId: false,
-        enderecoId: false,
+        cep: false,
+        cidade: false,
+        estado: false,
+        Bairro: false,
+        endereco: false,
+        numero_casa: false,
         supervisaoId: false,
         situacaoNoReinoId: false,
         cargoDeLiderancaId: false,
-          supervisao_pertence:{
-              select:{
-                  nome:true
-              }
+        supervisao_pertence: {
+          select: {
+            nome: true,
           },
-          celula:{
-              select:{
-                  nome:true
-              }
+        },
+        celula: {
+          select: {
+            nome: true,
           },
-          situacao_no_reino:{
-              select:{
-                  nome:true
-              }
+        },
+        situacao_no_reino: {
+          select: {
+            nome: true,
           },
-          cargo_de_lideranca:{
-              select:{
-                  nome:true
-              }
+        },
+        cargo_de_lideranca: {
+          select: {
+            nome: true,
           },
-          escolas:{
-              select:{
-                  nome:true
-              }
+        },
+        escolas: {
+          select: {
+            nome: true,
           },
-          encontros:{
-              select:{
-                  nome:true
-              }
+        },
+        encontros: {
+          select: {
+            nome: true,
           },
-          participacoes_eventos: true,
-          password: false,
-      }
+        },
+        presencas_aulas_escolas: true,
+        presencas_cultos: true,
+        password: false,
+      },
     });
   }
 
-
-  async findById(id: string){
+  async findById(id: string) {
     return await prisma.user.findUnique({
       where: {
         id: id,
@@ -98,99 +103,118 @@ class UserRepositorie {
         quantidade_de_filho: true,
         date_decisao: true,
         celulaId: false,
-        enderecoId: false,
+        cep: true,
+        cidade: true,
+        estado: true,
+        Bairro: true,
+        endereco: true,
+        numero_casa: true,
         supervisaoId: false,
         situacaoNoReinoId: false,
         cargoDeLiderancaId: false,
-          supervisao_pertence:{
-              select:{
-                  nome:true
-              }
+        supervisao_pertence: {
+          select: {
+            nome: true,
           },
-          celula:{
-              select:{
-                  nome:true
-              }
+        },
+        celula: {
+          select: {
+            nome: true,
           },
-          situacao_no_reino:{
-              select:{
-                  nome:true
-              }
+        },
+        situacao_no_reino: {
+          select: {
+            nome: true,
           },
-          cargo_de_lideranca:{
-              select:{
-                  nome:true
-              }
+        },
+        cargo_de_lideranca: {
+          select: {
+            nome: true,
           },
-          escolas:{
-              select:{
-                  nome:true
-              }
+        },
+        escolas: {
+          select: {
+            nome: true,
           },
-          encontros:{
-              select:{
-                  nome:true
-              }
+        },
+        encontros: {
+          select: {
+            nome: true,
           },
-          participacoes_eventos: true,
-          password: false,
-      }
-    })
+        },
+        presencas_aulas_escolas: true,
+        presencas_cultos: true,
+        password: false,
+      },
+    });
   }
 
-  async findByEmail(email: string){
+  async findByEmail(email: string) {
     return await prisma.user.findFirst({
       where: {
         email: email,
-      }
-    })
+      },
+    });
   }
 
   async createUser(userDataForm: UserData) {
-    const {password, supervisao, endereco, celula, escolas, encontros, situacao_no_reino, cargo_de_lideranca, ...userData} = userDataForm
-  const user = await prisma.user.create({
-    data: {
-      ...userData,
+    const {
       password,
-      supervisao_pertence: {
+      supervisao,
+      celula,
+      escolas,
+      encontros,
+      situacao_no_reino,
+      cargo_de_lideranca,
+      ...userData
+    } = userDataForm;
+    const user = await prisma.user.create({
+      data: {
+        ...userData,
+        password,
+        supervisao_pertence: {
           connect: {
-            id: supervisao
-          }
-      },
-      endereco: {
+            id: supervisao,
+          },
+        },
+        celula: {
           connect: {
-            id: endereco
-          }
-      },
-      celula: {
+            id: celula,
+          },
+        },
+        escolas: {
+          connect: escolas.map((escolaId) => ({ id: escolaId })),
+        },
+        encontros: {
+          connect: encontros.map((encontId) => ({ id: encontId })),
+        },
+        situacao_no_reino: {
           connect: {
-            id: celula
-          }
-      },
-      escolas: {
-          connect: escolas.map((escolaId) => ({id: escolaId}))
-      },
-      encontros: {
-          connect: encontros.map((encontId => ({id: encontId})))
-      },
-      situacao_no_reino: {
+            id: situacao_no_reino,
+          },
+        },
+        cargo_de_lideranca: {
           connect: {
-            id: situacao_no_reino
-          }
+            id: cargo_de_lideranca,
+          },
+        },
       },
-      cargo_de_lideranca: {
-          connect: {
-            id: cargo_de_lideranca
-          }
-      },
-    },
-  });
+    });
 
-  return user;
+    return user;
   }
 
   async updateUser(id: string, userDataForm: UserData) {
-    const {password, supervisao, endereco, celula, escolas, encontros, situacao_no_reino, cargo_de_lideranca, ...userData} = userDataForm
+    const {
+      password,
+      supervisao,
+      celula,
+      escolas,
+      encontros,
+      situacao_no_reino,
+      cargo_de_lideranca,
+      ...userData
+    } = userDataForm;
     return await prisma.user.update({
       where: {
         id: id,
@@ -199,38 +223,33 @@ class UserRepositorie {
         ...userData,
         password,
         supervisao_pertence: {
-            connect: {
-              id: supervisao
-            }
-        },
-        endereco: {
-            connect: {
-              id: endereco
-            }
+          connect: {
+            id: supervisao,
+          },
         },
         celula: {
-            connect: {
-              id: celula
-            }
+          connect: {
+            id: celula,
+          },
         },
         escolas: {
-          connect: escolas.map((escolaId) => ({id: escolaId}))
-      },
-      encontros: {
-          connect: encontros.map((encontId => ({id: encontId})))
-      },
+          connect: escolas.map((escolaId) => ({ id: escolaId })),
+        },
+        encontros: {
+          connect: encontros.map((encontId) => ({ id: encontId })),
+        },
         situacao_no_reino: {
           connect: {
-            id: situacao_no_reino
-          }
-      },
-      cargo_de_lideranca: {
+            id: situacao_no_reino,
+          },
+        },
+        cargo_de_lideranca: {
           connect: {
-            id: cargo_de_lideranca
-          }
+            id: cargo_de_lideranca,
+          },
+        },
       },
-      },
-  });
+    });
   }
 
   async deleteUser(id: string) {
