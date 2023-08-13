@@ -110,7 +110,7 @@ model Celula {
   cep             String?
   cidade          String?
   estado          String?
-  Bairro          String?
+  bairro          String?
   endereco        String?
   numero_casa     String?
   date_inicio     DateTime?
