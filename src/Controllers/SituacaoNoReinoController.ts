@@ -40,7 +40,9 @@ class SituacaoNoReinoController {
   async store(request: FastifyRequest, reply: FastifyReply) {
     const situacaoNoReinoDataForm = request.body as SituacaoNoReinoData;
     const situacaoNoReino =
-      await SituacaoNoReinoRepositorie.createSituacaoNoReino
+      await SituacaoNoReinoRepositorie.createSituacaoNoReino({
+        ...situacaoNoReinoDataForm
+      })
     return reply.code(201).send(situacaoNoReino);
   }
 

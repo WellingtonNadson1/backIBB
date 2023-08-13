@@ -2,6 +2,7 @@ import cors from "@fastify/cors";
 import Fastify, { FastifyInstance } from "fastify";
 import { requireAuth } from "./Middlewares/authMiddleware";
 import routerAccount from "./Routers/AccountRouters";
+import routerCargoslideranca from "./Routers/Cargoslideranca";
 import routerCelula from "./Routers/CelulaRouters";
 import registerCultoRoutes from "./Routers/Culto";
 import routerEncontro from "./Routers/EncontroRouters";
@@ -32,6 +33,7 @@ const start = async () => {
     app.register(routerAccount)
     app.register(routerSupervisao)
     app.register(routerSituacaoNoReino)
+    app.register(routerCargoslideranca)
     app.register(routerCelula)
     app.register(routerUser) // tipo um middleware do express
     await app.listen({
