@@ -9,7 +9,7 @@ const UserDataSchema = object({
   first_name: string(),
   last_name: string(),
   cpf: string(),
-  dateNasc: date(),
+  date_nascimento: date(),
   sexo: string(),
   telefone: string(),
   escolaridade: string(),

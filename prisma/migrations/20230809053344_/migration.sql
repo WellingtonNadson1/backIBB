@@ -32,7 +32,7 @@ CREATE TABLE "user" (
     "first_name" TEXT NOT NULL,
     "last_name" TEXT,
     "cpf" TEXT,
-    "dateNasc" TIMESTAMP(3),
+    "date_nascimento" TIMESTAMP(3),
     "sexo" TEXT,
     "telefone" TEXT,
     "escolaridade" TEXT,

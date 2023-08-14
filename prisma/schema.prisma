@@ -43,7 +43,7 @@ model User {
   first_name          String
   last_name           String?
   cpf                 String?
-  dateNasc            DateTime?
+  date_nascimento     DateTime?
   sexo                String?
   telefone            String?
   escolaridade        String?
@@ -55,7 +55,7 @@ model User {
   cep                 String?
   cidade              String?
   estado              String?
-  Bairro              String?
+  bairro              String?
   endereco            String?
   numero_casa         String?
 
