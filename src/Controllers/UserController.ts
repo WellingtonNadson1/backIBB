@@ -30,7 +30,7 @@ const UserDataSchema = object({
   cep: string(),
   cidade: string(),
   estado: string(),
-  Bairro: string(),
+  bairro: string(),
   endereco: string(),
   numero_casa: string(),
   date_decisao: date(),
