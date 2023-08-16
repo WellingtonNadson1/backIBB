@@ -26,7 +26,7 @@ const UserDataSchema = z.object({
   nome_conjuge: z.string().optional(),
   date_casamento: z.string().datetime().optional(),
   has_filho: z.boolean(),
-  quantidade_de_filho: z.number().optional(),
+  quantidade_de_filho: z.string().optional(),
   cep: z.string(),
   cidade: z.string(),
   estado: z.string(),

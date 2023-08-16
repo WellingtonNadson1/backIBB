@@ -51,7 +51,7 @@ model User {
   estado_civil        String?
   nome_conjuge        String?
   has_filho           Boolean
-  quantidade_de_filho Int?
+  quantidade_de_filho String?
   cep                 String?
   cidade              String?
   estado              String?
