@@ -62,20 +62,24 @@ model User {
   batizado                Boolean
   is_discipulado          Boolean
   discipulador            String?
-  supervisao_pertence     String?
-  celula                  String?
-  encontros               String[]
-  escolas                 String[]
-  TurmaEscola             TurmaEscola?     @relation(fields: [turmaEscolaId], references: [id])
-  situacao_no_reino       String?
-  cargo_de_lideranca      String?
-  celula_lidera           String[]
-  escola_lidera           String[]
-  supervisoes_lidera      String[]
+  supervisao_pertence     Supervisao?       @relation(fields: [supervisaoId], references: [id])
+  celula                  Celula?           @relation(fields: [celulaId], references: [id])
+  encontros               Encontros[]
+  escolas                 Escola[]
+  TurmaEscola             TurmaEscola?      @relation(fields: [turmaEscolaId], references: [id])
+  situacao_no_reino       SituacaoNoReino?  @relation(fields: [situacaoNoReinoId], references: [id])
+  cargo_de_lideranca      CargoDeLideranca? @relation(fields: [cargoDeLiderancaId], references: [id])
+  celula_lidera           Celula[]          @relation("LiderCelula")
+  escola_lidera           Escola[]          @relation("LiderEscola")
+  supervisoes_lidera      Supervisao[]      @relation("Supervisor")
   presencas_aulas_escolas PresencaEscola[]
   presencas_cultos        PresencaCulto[]
 
-  turmaEscolaId String?
+  celulaId           String?
+  supervisaoId       String?
+  turmaEscolaId      String?
+  situacaoNoReinoId  String?
+  cargoDeLiderancaId String?
 
   accounts Account[]
   sessions Session[]
@@ -99,10 +103,10 @@ model VerificationToken {
 }
 
 model Celula {
-  id              String    @id @default(uuid())
+  id              String     @id @default(uuid())
   nome            String
-  lider           String?
-  supervisao      String?
+  lider           User?      @relation("LiderCelula", fields: [userId], references: [id])
+  supervisao      Supervisao @relation(fields: [supervisaoId], references: [id])
   cep             String?
   cidade          String?
   estado          String?
@@ -113,33 +117,35 @@ model Celula {
   date_que_ocorre DateTime?
   date_multipicar DateTime?
   supervisaoId    String
-  membros         String[]
+  membros         User[]
   userId          String?
-  date_create     DateTime  @default(now())
-  date_update     DateTime  @updatedAt
+  date_create     DateTime   @default(now())
+  date_update     DateTime   @updatedAt
 
   @@map("celula")
 }
 
 model Supervisao {
-  id              String   @id @default(uuid())
-  nome            String
-  cor             String
-  supervisor      String?
-  celulas         String[]
-  membros         String[]
-  nivelSupervisao String?
-  date_create     DateTime @default(now())
-  date_update     DateTime @updatedAt
+  id                String           @id @default(uuid())
+  nome              String
+  cor               String
+  supervisor        User?            @relation("Supervisor", fields: [userId], references: [id])
+  celulas           Celula[]
+  membros           User[]
+  nivelSupervisao   NivelSupervisao? @relation(fields: [nivelSupervisaoId], references: [id])
+  userId            String?
+  nivelSupervisaoId String?
+  date_create       DateTime         @default(now())
+  date_update       DateTime         @updatedAt
 
   @@map("supervisao") // Defina um nome de tabela personalizado, se necessário
 }
 
 model NivelSupervisao {
-  id         String   @id @default(uuid())
+  id         String       @id @default(uuid())
   nome       String
   descricao  String?
-  supervisao String[]
+  supervisao Supervisao[]
 
   @@map("nivel_supervisao")
 }
@@ -195,9 +201,9 @@ model Escola {
   id          String        @id @default(uuid())
   nome        String
   descricao   String?
-  lider       String?
+  lider       User?         @relation("LiderEscola", fields: [userId], references: [id])
   turmas      TurmaEscola[]
-  alunos      String[]
+  alunos      User[]
   userId      String?
   date_create DateTime      @default(now())
   date_update DateTime      @updatedAt
@@ -244,7 +250,7 @@ model Encontros {
   id            String   @id @default(uuid())
   nome          String
   descricao     String?
-  participantes String[]
+  participantes User[]
   date_create   DateTime @default(now())
   date_update   DateTime @updatedAt
 
@@ -254,7 +260,7 @@ model Encontros {
 model SituacaoNoReino {
   id          String   @id @default(uuid())
   nome        String
-  membros     String[]
+  membros     User[]
   date_create DateTime @default(now())
   date_update DateTime @updatedAt
 
@@ -266,7 +272,7 @@ model CargoDeLideranca {
   nome        String
   date_create DateTime @default(now())
   date_update DateTime @updatedAt
-  membros     String[]
+  membros     User[]
 
   @@map("cargo_de_lideranca")
 }
