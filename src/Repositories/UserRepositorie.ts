@@ -10,6 +10,7 @@ type UpdateUserInput = Prisma.UserUpdateInput & {
   encontros?: { connect: { id: string } }[];
   situacao_no_reino?: { connect: { id: string } };
   cargo_de_lideranca?: { connect: { id: string } };
+  TurmaEscola?: { connect: { id: string } };
 };
 
 interface EscolaConnect {
@@ -182,6 +183,8 @@ class UserRepositorie {
       encontros,
       situacao_no_reino,
       cargo_de_lideranca,
+      TurmaEscola,
+      date_nascimento, date_batizado, date_casamento,
       ...userData
     } = userDataForm;
 
@@ -189,11 +192,21 @@ class UserRepositorie {
   const user = await prisma.user.create({
     data: {
       ...userData,
+      date_nascimento, date_batizado, date_casamento,
       password,
     },
   });
 
   // Conecte os relacionamentos opcionais, se fornecidos
+  if (TurmaEscola) {
+    await prisma.user.update({
+      where: { id: user.id },
+      data: {
+        TurmaEscola: { connect: { id: TurmaEscola } },
+      },
+    });
+  }
+
   if (supervisao_pertence) {
     await prisma.user.update({
       where: { id: user.id },
@@ -241,16 +254,27 @@ class UserRepositorie {
       escolas,
       encontros,
       situacao_no_reino,
+      TurmaEscola,
+      date_nascimento, date_batizado, date_casamento,
       cargo_de_lideranca,
       ...userData
     } = userDataForm;
 
     const updateUserInput: UpdateUserInput = {
       ...userData,
+      date_nascimento, date_batizado, date_casamento,
       password,
     };
 
     // Conecte os relacionamentos opcionais apenas se forem fornecidos
+    if (TurmaEscola !== undefined) {
+      updateUserInput.TurmaEscola = {
+        connect: {
+          id: TurmaEscola,
+        },
+      };
+    }
+
     if (supervisao_pertence !== undefined) {
       updateUserInput.supervisao_pertence = {
         connect: {

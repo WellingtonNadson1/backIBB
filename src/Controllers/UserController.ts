@@ -36,6 +36,7 @@ const UserDataSchema = z.object({
   date_decisao: z.string().datetime().optional(),
   situacao_no_reino: z.string().optional(),
   cargo_de_lideranca: z.string().optional(),
+  TurmaEscola: z.string().optional(),
 })
 
 export type UserData = z.infer<typeof UserDataSchema>
@@ -97,9 +98,8 @@ class UserController {
 
     const hashPassword: string = bcrypt.hashSync(password, saltRounds)
 
-
     const user = await UserRepositorie.createUser({
-      ...userDataForm, password: hashPassword
+      ...userDataForm, date_nascimento, date_batizado, date_casamento, password: hashPassword
     });
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const { password: _, ...newUser  } = user
@@ -110,10 +110,27 @@ class UserController {
     Params: UserParams }>, reply: FastifyReply) {
     const id = request.params.id;
     const userDataForm = request.body as UserData;
+    let { date_nascimento, date_batizado, date_casamento, date_decisao } = userDataForm;
+    date_nascimento = formatDatatoISO8601(date_nascimento)
+    if (date_batizado) {
+      date_batizado = formatDatatoISO8601(date_batizado)
+    }
+    if (date_casamento) {
+      date_casamento = formatDatatoISO8601(date_casamento)
+    }
+    if (date_decisao) {
+      date_decisao = formatDatatoISO8601(date_decisao)
+    }
+    const { password } = userDataForm;
+    const saltRounds = 10;
+
+    const hashPassword: string = bcrypt.hashSync(password, saltRounds)
     const user = await UserRepositorie.updateUser(id, {
-      ...userDataForm,
+      ...userDataForm, date_nascimento, date_batizado, date_casamento, password: hashPassword
     });
-    return reply.code(202).send(user);
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    const { password: _, ...newUser  } = user
+    return reply.code(202).send(newUser);
   }
 
   async delete(request: FastifyRequest <{
