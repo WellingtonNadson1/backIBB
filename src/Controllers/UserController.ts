@@ -1,44 +1,44 @@
 import bcrypt from "bcrypt";
 import { FastifyReply, FastifyRequest } from 'fastify';
-import { Input, array, boolean, date, email, number, object, string } from "valibot";
+import { z } from "zod";
 import UserRepositorie from "../Repositories/UserRepositorie";
 
-const UserDataSchema = object({
-  email: string([email()]),
-  password: string(),
-  first_name: string(),
-  last_name: string(),
-  cpf: string(),
-  date_nascimento: date(),
-  sexo: string(),
-  telefone: string(),
-  escolaridade: string(),
-  profissao: string(),
-  batizado: boolean(),
-  date_batizado: date(),
-  is_discipulado: boolean(),
-  discipulador: string(),
-  supervisao:  string(),
-  celula: string(),
-  escolas: array(string()),
-  encontros: array(string()),
-  estado_civil: string(),
-  nome_conjuge: string(),
-  date_casamento: date(),
-  has_filho: boolean(),
-  quantidade_de_filho: number(),
-  cep: string(),
-  cidade: string(),
-  estado: string(),
-  bairro: string(),
-  endereco: string(),
-  numero_casa: string(),
-  date_decisao: date(),
-  situacao_no_reino: string(),
-  cargo_de_lideranca: string(),
+const UserDataSchema = z.object({
+  supervisao_pertence:  z.string().optional(),
+  celula: z.string().optional(),
+  escolas: z.string().array().optional(),
+  encontros: z.string().array().optional(),
+  email: z.string().email(),
+  password: z.string(),
+  first_name: z.string(),
+  last_name: z.string(),
+  cpf: z.string().optional(),
+  date_nascimento: z.string().datetime(),
+  sexo: z.string(),
+  telefone: z.string(),
+  escolaridade: z.string(),
+  profissao: z.string().optional(),
+  batizado: z.boolean(),
+  date_batizado: z.string().datetime().optional(),
+  is_discipulado: z.boolean(),
+  discipulador: z.string().optional(),
+  estado_civil: z.string(),
+  nome_conjuge: z.string().optional(),
+  date_casamento: z.string().datetime().optional(),
+  has_filho: z.boolean(),
+  quantidade_de_filho: z.number().optional(),
+  cep: z.string(),
+  cidade: z.string(),
+  estado: z.string(),
+  bairro: z.string(),
+  endereco: z.string(),
+  numero_casa: z.string(),
+  date_decisao: z.string().datetime().optional(),
+  situacao_no_reino: z.string().optional(),
+  cargo_de_lideranca: z.string().optional(),
 })
 
-export type UserData = Input<typeof UserDataSchema>
+export type UserData = z.infer<typeof UserDataSchema>
 
 export interface UserParams {
   id: string
