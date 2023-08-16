@@ -44,6 +44,11 @@ export interface UserParams {
   id: string
 }
 
+const formatDatatoISO8601 = (dataString: string) => {
+    const dataObj = new Date(dataString)
+    return dataObj.toISOString()
+  }
+
 class UserController {
 
   // Fazendo uso do Fastify
@@ -68,11 +73,23 @@ class UserController {
   async store(request: FastifyRequest, reply: FastifyReply) {
     const userDataForm = request.body as UserData;
     const { email } = userDataForm;
+    let { date_nascimento, date_batizado, date_casamento, date_decisao } = userDataForm;
     const userExist = await UserRepositorie.findByEmail(email);
     if (userExist) {
       return reply
         .code(404)
         .send({ message: "User already exist, please try other email!" });
+    }
+
+    date_nascimento = formatDatatoISO8601(date_nascimento)
+    if (date_batizado) {
+      date_batizado = formatDatatoISO8601(date_batizado)
+    }
+    if (date_casamento) {
+      date_casamento = formatDatatoISO8601(date_casamento)
+    }
+    if (date_decisao) {
+      date_decisao = formatDatatoISO8601(date_decisao)
     }
 
     const { password } = userDataForm;
