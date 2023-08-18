@@ -6,6 +6,7 @@ import UserRepositorie from "../Repositories/UserRepositorie";
 const UserDataSchema = z.object({
   supervisao_pertence:  z.string().optional(),
   celula: z.string().optional(),
+  image_url: z.string().optional(),
   escolas: z.string().array().optional(),
   encontros: z.string().array().optional(),
   email: z.string().email(),
@@ -37,6 +38,10 @@ const UserDataSchema = z.object({
   situacao_no_reino: z.string().optional(),
   cargo_de_lideranca: z.string().optional(),
   celula_lidera: z.string().array().optional(),
+  escola_lidera: z.string().array().optional(),
+  supervisoes_lidera: z.string().array().optional(),
+  presencas_aulas_escolas: z.string().array().optional(),
+  presencas_cultos: z.string().array().optional(),
   TurmaEscola: z.string().optional(),
 })
 

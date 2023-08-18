@@ -7,6 +7,10 @@ type UpdateUserInput = Prisma.UserUpdateInput & {
   supervisao_pertence?: { connect: { id: string } };
   celula?: { connect: { id: string } };
   celula_lidera?: { connect: { id: string } }[];
+  escola_lidera?: { connect: { id: string } }[];
+  supervisoes_lidera?: { connect: { id: string } }[];
+  presencas_aulas_escolas?: { connect: { id: string } }[];
+  presencas_cultos?: { connect: { id: string } }[];
   escolas?: { connect: { id: string } }[];
   encontros?: { connect: { id: string } }[];
   situacao_no_reino?: { connect: { id: string } };
@@ -15,6 +19,22 @@ type UpdateUserInput = Prisma.UserUpdateInput & {
 };
 
 interface CelulaLideraConnect {
+  connect: { id: string };
+}
+
+interface EscolaLideraConnect {
+  connect: { id: string };
+}
+
+interface SupervisoesLideraConnect {
+  connect: { id: string };
+}
+
+interface PresencasAulasEscolasConnect {
+  connect: { id: string };
+}
+
+interface PresencasCultosConnect {
   connect: { id: string };
 }
 
@@ -195,6 +215,10 @@ class UserRepositorie {
       supervisao_pertence,
       celula,
       celula_lidera,
+      escola_lidera,
+      supervisoes_lidera,
+      presencas_aulas_escolas,
+      presencas_cultos,
       escolas,
       encontros,
       situacao_no_reino,
@@ -257,6 +281,54 @@ class UserRepositorie {
         },
       });
     }
+    if (escola_lidera) {
+      await prisma.user.update({
+        where: { id: user.id },
+        data: {
+          escola_lidera: {
+            connect: escola_lidera.map((escolaLideraId) => ({
+              id: escolaLideraId,
+            })),
+          },
+        },
+      });
+    }
+    if (supervisoes_lidera) {
+      await prisma.user.update({
+        where: { id: user.id },
+        data: {
+          supervisoes_lidera: {
+            connect: supervisoes_lidera.map((supervisoesLideraId) => ({
+              id: supervisoesLideraId,
+            })),
+          },
+        },
+      });
+    }
+    if (presencas_aulas_escolas) {
+      await prisma.user.update({
+        where: { id: user.id },
+        data: {
+          presencas_aulas_escolas: {
+            connect: presencas_aulas_escolas.map((presencasAulasEscolasId) => ({
+              id: presencasAulasEscolasId,
+            })),
+          },
+        },
+      });
+    }
+    if (presencas_cultos) {
+      await prisma.user.update({
+        where: { id: user.id },
+        data: {
+          presencas_cultos: {
+            connect: presencas_cultos.map((presencasCultosId) => ({
+              id: presencasCultosId,
+            })),
+          },
+        },
+      });
+    }
 
     if (escolas) {
       await prisma.user.update({
@@ -287,6 +359,10 @@ class UserRepositorie {
       supervisao_pertence,
       celula,
       celula_lidera,
+      escola_lidera,
+      supervisoes_lidera,
+      presencas_aulas_escolas,
+      presencas_cultos,
       escolas,
       encontros,
       situacao_no_reino,
@@ -337,6 +413,38 @@ class UserRepositorie {
           id: celulaLideraId,
         },
       })) as CelulaLideraConnect[];
+    }
+
+    if (escola_lidera !== undefined) {
+      updateUserInput.escola_lidera = escola_lidera.map((escolaLideraId) => ({
+        connect: {
+          id: escolaLideraId,
+        },
+      })) as EscolaLideraConnect[];
+    }
+
+    if (supervisoes_lidera !== undefined) {
+      updateUserInput.supervisoes_lidera = supervisoes_lidera.map((supervisoesLideraId) => ({
+        connect: {
+          id: supervisoesLideraId,
+        },
+      })) as SupervisoesLideraConnect[];
+    }
+
+    if (presencas_aulas_escolas !== undefined) {
+      updateUserInput.presencas_aulas_escolas = presencas_aulas_escolas.map((presencasAulasEscolasId) => ({
+        connect: {
+          id: presencasAulasEscolasId,
+        },
+      })) as PresencasAulasEscolasConnect[];
+    }
+
+    if (presencas_cultos !== undefined) {
+      updateUserInput.presencas_cultos = presencas_cultos.map((presencasCultosId) => ({
+        connect: {
+          id: presencasCultosId,
+        },
+      })) as PresencasCultosConnect[];
     }
 
     if (escolas !== undefined) {
