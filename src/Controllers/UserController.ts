@@ -36,6 +36,7 @@ const UserDataSchema = z.object({
   date_decisao: z.string().datetime().optional(),
   situacao_no_reino: z.string().optional(),
   cargo_de_lideranca: z.string().optional(),
+  celula_lidera: z.string().array().optional(),
   TurmaEscola: z.string().optional(),
 })
 

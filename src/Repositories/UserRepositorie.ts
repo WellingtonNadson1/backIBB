@@ -6,12 +6,17 @@ const prisma = new PrismaClient();
 type UpdateUserInput = Prisma.UserUpdateInput & {
   supervisao_pertence?: { connect: { id: string } };
   celula?: { connect: { id: string } };
+  celula_lidera?: { connect: { id: string } }[];
   escolas?: { connect: { id: string } }[];
   encontros?: { connect: { id: string } }[];
   situacao_no_reino?: { connect: { id: string } };
   cargo_de_lideranca?: { connect: { id: string } };
   TurmaEscola?: { connect: { id: string } };
 };
+
+interface CelulaLideraConnect {
+  connect: { id: string };
+}
 
 interface EscolaConnect {
   connect: { id: string };
@@ -62,6 +67,11 @@ class UserRepositorie {
           },
         },
         celula: {
+          select: {
+            nome: true,
+          },
+        },
+        celula_lidera: {
           select: {
             nome: true,
           },
@@ -140,6 +150,11 @@ class UserRepositorie {
             nome: true,
           },
         },
+        celula_lidera: {
+          select: {
+            nome: true,
+          },
+        },
         situacao_no_reino: {
           select: {
             nome: true,
@@ -179,69 +194,89 @@ class UserRepositorie {
       password,
       supervisao_pertence,
       celula,
+      celula_lidera,
       escolas,
       encontros,
       situacao_no_reino,
       cargo_de_lideranca,
       TurmaEscola,
-      date_nascimento, date_batizado, date_casamento,
+      date_nascimento,
+      date_batizado,
+      date_casamento,
       ...userData
     } = userDataForm;
 
     // Crie o usuário sem os relacionamentos
-  const user = await prisma.user.create({
-    data: {
-      ...userData,
-      date_nascimento, date_batizado, date_casamento,
-      password,
-    },
-  });
-
-  // Conecte os relacionamentos opcionais, se fornecidos
-  if (TurmaEscola) {
-    await prisma.user.update({
-      where: { id: user.id },
+    const user = await prisma.user.create({
       data: {
-        TurmaEscola: { connect: { id: TurmaEscola } },
+        ...userData,
+        date_nascimento,
+        date_batizado,
+        date_casamento,
+        password,
       },
     });
-  }
 
-  if (supervisao_pertence) {
-    await prisma.user.update({
-      where: { id: user.id },
-      data: {
-        supervisao_pertence: { connect: { id: supervisao_pertence } },
-      },
-    });
-  }
+    // Conecte os relacionamentos opcionais, se fornecidos
+    if (TurmaEscola) {
+      await prisma.user.update({
+        where: { id: user.id },
+        data: {
+          TurmaEscola: { connect: { id: TurmaEscola } },
+        },
+      });
+    }
 
-  if (celula) {
-    await prisma.user.update({
-      where: { id: user.id },
-      data: {
-        celula: { connect: { id: celula } },
-      },
-    });
-  }
+    if (supervisao_pertence) {
+      await prisma.user.update({
+        where: { id: user.id },
+        data: {
+          supervisao_pertence: { connect: { id: supervisao_pertence } },
+        },
+      });
+    }
 
-  if (escolas) {
-    await prisma.user.update({
-      where: { id: user.id },
-      data: {
-        escolas: { connect: escolas.map((escolaId) => ({ id: escolaId })) },
-      },
-    });
-  }
+    if (celula) {
+      await prisma.user.update({
+        where: { id: user.id },
+        data: {
+          celula: { connect: { id: celula } },
+        },
+      });
+    }
 
-  if (encontros) {
-    await prisma.user.update({
-      where: { id: user.id },
-      data: {
-        encontros: { connect: encontros.map((encontId) => ({ id: encontId })) },
-      },
-    });
-  }
+    if (celula_lidera) {
+      await prisma.user.update({
+        where: { id: user.id },
+        data: {
+          celula_lidera: {
+            connect: celula_lidera.map((celulaLideraId) => ({
+              id: celulaLideraId,
+            })),
+          },
+        },
+      });
+    }
+
+    if (escolas) {
+      await prisma.user.update({
+        where: { id: user.id },
+        data: {
+          escolas: { connect: escolas.map((escolaId) => ({ id: escolaId })) },
+        },
+      });
+    }
+
+    if (encontros) {
+      await prisma.user.update({
+        where: { id: user.id },
+        data: {
+          encontros: {
+            connect: encontros.map((encontId) => ({ id: encontId })),
+          },
+        },
+      });
+    }
 
     return user;
   }
@@ -251,18 +286,23 @@ class UserRepositorie {
       password,
       supervisao_pertence,
       celula,
+      celula_lidera,
       escolas,
       encontros,
       situacao_no_reino,
       TurmaEscola,
-      date_nascimento, date_batizado, date_casamento,
+      date_nascimento,
+      date_batizado,
+      date_casamento,
       cargo_de_lideranca,
       ...userData
     } = userDataForm;
 
     const updateUserInput: UpdateUserInput = {
       ...userData,
-      date_nascimento, date_batizado, date_casamento,
+      date_nascimento,
+      date_batizado,
+      date_casamento,
       password,
     };
 
@@ -289,6 +329,14 @@ class UserRepositorie {
           id: celula,
         },
       };
+    }
+
+    if (celula_lidera !== undefined) {
+      updateUserInput.celula_lidera = celula_lidera.map((celulaLideraId) => ({
+        connect: {
+          id: celulaLideraId,
+        },
+      })) as CelulaLideraConnect[];
     }
 
     if (escolas !== undefined) {
@@ -330,8 +378,6 @@ class UserRepositorie {
       data: updateUserInput,
     });
   }
-
-
 
   async deleteUser(id: string) {
     return await prisma.user.delete({

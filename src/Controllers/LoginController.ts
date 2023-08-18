@@ -4,19 +4,21 @@ import jwt from 'jsonwebtoken';
 import UserRepositorie from "../Repositories/UserRepositorie";
 import { UserData } from "./UserController";
 
+  type TokenPayload = {
+    userId: string;
+    avatar: string | null;
+    email: string;
+    name: string | null;
+    supervisao_pertence: string | null;
+    cargo_de_lideranca: string | null;
+    celula_lidera: string | null;
+  }
+
 class LoginController {
   async login(request: FastifyRequest, reply: FastifyReply){
     // Dados de credenciais vindas do FrontEnd
     const { email, password } = request.body as UserData
     const JWT_SECRET = process.env.JWT_SECRET
-    console.log('JWT: ',JWT_SECRET)
-
-    interface TokenPayload {
-      userId: string;
-      avatar: string | null;
-      email: string;
-      name: string | null;
-    }
 
     // Function for generation token JWT after sing in
     const generateToken = (payload: TokenPayload): string => {
@@ -45,7 +47,10 @@ class LoginController {
       userId: user.id,
       email: user.email,
       name: user.first_name,
-      avatar: user.image_url
+      avatar: user.image_url,
+      supervisao_pertence: user.supervisaoId,
+      cargo_de_lideranca: user.cargoDeLiderancaId,
+      celula_lidera: user.celulaId,
     }
 
     const token = generateToken(tokenPayload)

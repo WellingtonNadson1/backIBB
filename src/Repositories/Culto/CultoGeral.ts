@@ -1,7 +1,15 @@
-import { PrismaClient } from "@prisma/client";
+import { Prisma, PrismaClient } from "@prisma/client";
 import { CultoGeralData } from "../../Controllers/Culto/CultoGeral";
 
 const prisma = new PrismaClient();
+
+type UpdateCultoGeralInput = Prisma.CultoGeralUpdateInput & {
+  lista_cultos_semanais?: { connect: { id: string } }[];
+};
+
+interface CultoGeralConnect {
+  connect: { id: string };
+}
 
 class CultoGeralRepositorie {
   async findAll() {
@@ -40,28 +48,43 @@ class CultoGeralRepositorie {
 
   async createCultoGeral(cultoGeralDataForm: CultoGeralData) {
     const { lista_cultos_semanais, ...CultoGeralData } = cultoGeralDataForm;
-    return await prisma.cultoGeral.create({
+    const cultoGeral = await prisma.cultoGeral.create({
       data: {
         ...CultoGeralData,
-        lista_cultos_semanais: {
-          connect: lista_cultos_semanais ? lista_cultos_semanais.map((cultoSemanaId) => ({ id: cultoSemanaId })) : [],
-        },
       },
     });
+    if (lista_cultos_semanais) {
+      await prisma.cultoGeral.update({
+        where: { id: cultoGeral.id },
+        data: {
+          lista_cultos_semanais: { connect: lista_cultos_semanais.map((escolaId) => ({ id: escolaId })) },
+        },
+      });
+    }
+
+    return cultoGeral
   }
 
   async updateCultoGerala(id: string, cultoGeralDataForm: CultoGeralData) {
     const { lista_cultos_semanais, ...CultoGeralData } = cultoGeralDataForm;
+
+    const updateCultoGeralInput: UpdateCultoGeralInput = {
+      ...CultoGeralData,
+    };
+
+    if (lista_cultos_semanais !== undefined) {
+      updateCultoGeralInput.lista_cultos_semanais = lista_cultos_semanais.map((cultoGeralId) => ({
+        connect: {
+          id: cultoGeralId,
+        },
+      })) as CultoGeralConnect[];
+    }
+
     return await prisma.cultoGeral.update({
       where: {
         id: id,
       },
-      data: {
-        ...CultoGeralData,
-        lista_cultos_semanais: {
-          connect: lista_cultos_semanais ? lista_cultos_semanais.map((cultoSemanaId) => ({ id: cultoSemanaId })) : [],
-        },
-      },
+      data: updateCultoGeralInput,
     });
   }
 
