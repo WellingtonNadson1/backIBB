@@ -27,6 +27,8 @@ class CelulaRepositorie {
             first_name: true,
           }
         },
+        date_que_ocorre: true,
+
       }
     })
   }
@@ -49,7 +51,14 @@ class CelulaRepositorie {
             id: true,
             first_name: true,
           }
-        }
+        },
+        supervisao: {
+          select: {
+            id: true,
+            nome: true,
+          }
+        },
+        date_que_ocorre: true,
       }
     })
   }

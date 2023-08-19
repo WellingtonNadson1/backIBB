@@ -114,7 +114,7 @@ model Celula {
   endereco        String?
   numero_casa     String?
   date_inicio     DateTime?
-  date_que_ocorre DateTime?
+  date_que_ocorre String?
   date_multipicar DateTime?
   supervisaoId    String
   membros         User[]
