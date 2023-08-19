@@ -6,6 +6,7 @@ import { UserData } from "./UserController";
 
   type TokenPayload = {
     userId: string;
+    role: string;
     avatar: string | null;
     email: string;
     name: string | null;
@@ -45,6 +46,7 @@ class LoginController {
 
     const tokenPayload: TokenPayload = {
       userId: user.id,
+      role: user.role,
       email: user.email,
       name: user.first_name,
       avatar: user.image_url,

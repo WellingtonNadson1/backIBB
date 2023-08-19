@@ -3,8 +3,20 @@ import { FastifyReply, FastifyRequest } from 'fastify';
 import { z } from "zod";
 import UserRepositorie from "../Repositories/UserRepositorie";
 
+enum Role {
+  USERLIDER = 'USERLIDER',
+  USERSUPERVISOR = 'USERSUPERVISOR',
+  USERCENTRAL = 'USERCENTRAL',
+  USERPASTOR = 'USERPASTOR',
+  MEMBER = 'MEMBER',
+  ADMIN = 'ADMIN',
+}
+
+const roleEnumValidator = (val: string): val is Role => Object.values(Role).includes(val as Role)
+
 const UserDataSchema = z.object({
   supervisao_pertence:  z.string().optional(),
+  role: z.string().refine(roleEnumValidator, { message: 'Valor de role inválido' }),
   celula: z.string().optional(),
   image_url: z.string().optional(),
   escolas: z.string().array().optional(),

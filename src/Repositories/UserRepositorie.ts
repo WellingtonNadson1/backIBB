@@ -242,6 +242,7 @@ class UserRepositorie {
     });
 
     // Conecte os relacionamentos opcionais, se fornecidos
+
     if (TurmaEscola) {
       await prisma.user.update({
         where: { id: user.id },

@@ -38,6 +38,7 @@ model Session {
 
 model User {
   id                  String    @id @default(uuid())
+  role                Role      @default(MEMBER)
   image_url           String?
   email               String    @unique
   first_name          String
@@ -275,4 +276,13 @@ model CargoDeLideranca {
   membros     User[]
 
   @@map("cargo_de_lideranca")
+}
+
+enum Role {
+  USERLIDER
+  USERSUPERVISOR
+  USERCENTRAL
+  USERPASTOR
+  MEMBER
+  ADMIN
 }
