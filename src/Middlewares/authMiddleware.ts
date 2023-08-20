@@ -9,11 +9,17 @@ export async function requireAuth(
   const JWT_SECRET = process.env.JWT_SECRET;
 
   if (
-    (["POST"].includes(request.method) && request.url === "/login")||
-    (["POST"].includes(request.method) && request.url === "/users")
+    (["POST"].includes(request.method) && request.url === "/login")
   ) {
     return;
   }
+
+  // if (
+  //   (["POST"].includes(request.method) && request.url === "/login")||
+  //   (["POST"].includes(request.method) && request.url === "/users")
+  // ) {
+  //   return;
+  // }
 
   if (!authHeader || !authHeader.startsWith("Bearer ")) {
     reply.code(401).send({ error: "Unauthorized" });

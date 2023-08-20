@@ -5,6 +5,7 @@ const prisma = new PrismaClient();
 
 type UpdateUserInput = Prisma.UserUpdateInput & {
   supervisao_pertence?: { connect: { id: string } };
+  role?:  string;
   celula?: { connect: { id: string } };
   celula_lidera?: { connect: { id: string } }[];
   escola_lidera?: { connect: { id: string } }[];
@@ -51,6 +52,7 @@ class UserRepositorie {
     return await prisma.user.findMany({
       select: {
         id: true,
+        role: true,
         image_url: true,
         email: true,
         first_name: true,
@@ -130,6 +132,7 @@ class UserRepositorie {
       },
       select: {
         id: true,
+        role: true,
         image_url: true,
         email: true,
         first_name: true,
@@ -230,7 +233,6 @@ class UserRepositorie {
       ...userData
     } = userDataForm;
 
-    // Crie o usuário sem os relacionamentos
     const user = await prisma.user.create({
       data: {
         ...userData,
@@ -238,125 +240,63 @@ class UserRepositorie {
         date_batizado,
         date_casamento,
         password,
+        TurmaEscola: TurmaEscola
+          ? { connect: { id: TurmaEscola } }
+          : undefined,
+        supervisao_pertence: supervisao_pertence
+          ? { connect: { id: supervisao_pertence } }
+          : undefined,
+        celula: celula
+          ? { connect: { id: celula } }
+          : undefined,
+        celula_lidera: {
+          connect: celula_lidera?.map((celulaLideraId) => ({
+            id: celulaLideraId,
+          })),
+        },
+        escola_lidera: {
+          connect: escola_lidera?.map((escolaLideraId) => ({
+            id: escolaLideraId,
+          })),
+        },
+        supervisoes_lidera: {
+          connect: supervisoes_lidera?.map((supervisoesLideraId) => ({
+            id: supervisoesLideraId,
+          })),
+        },
+        presencas_aulas_escolas: {
+          connect: presencas_aulas_escolas?.map((presencasAulasEscolasId) => ({
+            id: presencasAulasEscolasId,
+          })),
+        },
+        presencas_cultos: {
+          connect: presencas_cultos?.map((presencasCultosId) => ({
+            id: presencasCultosId,
+          })),
+        },
+        escolas: {
+          connect: escolas?.map((escolaId) => ({ id: escolaId })),
+        },
+        encontros: {
+          connect: encontros?.map((encontId) => ({ id: encontId })),
+        },
+        situacao_no_reino: situacao_no_reino
+          ? { connect: { id: situacao_no_reino } }
+          : undefined,
+        cargo_de_lideranca: cargo_de_lideranca
+          ? { connect: { id: cargo_de_lideranca } }
+          : undefined,
       },
     });
-
-    // Conecte os relacionamentos opcionais, se fornecidos
-
-    if (TurmaEscola) {
-      await prisma.user.update({
-        where: { id: user.id },
-        data: {
-          TurmaEscola: { connect: { id: TurmaEscola } },
-        },
-      });
-    }
-
-    if (supervisao_pertence) {
-      await prisma.user.update({
-        where: { id: user.id },
-        data: {
-          supervisao_pertence: { connect: { id: supervisao_pertence } },
-        },
-      });
-    }
-
-    if (celula) {
-      await prisma.user.update({
-        where: { id: user.id },
-        data: {
-          celula: { connect: { id: celula } },
-        },
-      });
-    }
-
-    if (celula_lidera) {
-      await prisma.user.update({
-        where: { id: user.id },
-        data: {
-          celula_lidera: {
-            connect: celula_lidera.map((celulaLideraId) => ({
-              id: celulaLideraId,
-            })),
-          },
-        },
-      });
-    }
-    if (escola_lidera) {
-      await prisma.user.update({
-        where: { id: user.id },
-        data: {
-          escola_lidera: {
-            connect: escola_lidera.map((escolaLideraId) => ({
-              id: escolaLideraId,
-            })),
-          },
-        },
-      });
-    }
-    if (supervisoes_lidera) {
-      await prisma.user.update({
-        where: { id: user.id },
-        data: {
-          supervisoes_lidera: {
-            connect: supervisoes_lidera.map((supervisoesLideraId) => ({
-              id: supervisoesLideraId,
-            })),
-          },
-        },
-      });
-    }
-    if (presencas_aulas_escolas) {
-      await prisma.user.update({
-        where: { id: user.id },
-        data: {
-          presencas_aulas_escolas: {
-            connect: presencas_aulas_escolas.map((presencasAulasEscolasId) => ({
-              id: presencasAulasEscolasId,
-            })),
-          },
-        },
-      });
-    }
-    if (presencas_cultos) {
-      await prisma.user.update({
-        where: { id: user.id },
-        data: {
-          presencas_cultos: {
-            connect: presencas_cultos.map((presencasCultosId) => ({
-              id: presencasCultosId,
-            })),
-          },
-        },
-      });
-    }
-
-    if (escolas) {
-      await prisma.user.update({
-        where: { id: user.id },
-        data: {
-          escolas: { connect: escolas.map((escolaId) => ({ id: escolaId })) },
-        },
-      });
-    }
-
-    if (encontros) {
-      await prisma.user.update({
-        where: { id: user.id },
-        data: {
-          encontros: {
-            connect: encontros.map((encontId) => ({ id: encontId })),
-          },
-        },
-      });
-    }
 
     return user;
   }
 
+
   async updateUser(id: string, userDataForm: UserData) {
     const {
       password,
+      role,
       supervisao_pertence,
       celula,
       celula_lidera,
@@ -384,6 +324,10 @@ class UserRepositorie {
     };
 
     // Conecte os relacionamentos opcionais apenas se forem fornecidos
+    if (role !== undefined) {
+      updateUserInput.role = role;
+    }
+
     if (TurmaEscola !== undefined) {
       updateUserInput.TurmaEscola = {
         connect: {
