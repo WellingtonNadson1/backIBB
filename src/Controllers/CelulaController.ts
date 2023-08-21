@@ -13,8 +13,9 @@ const CelulaDataSchema = object ({
   cep: string(),
   cidade: string(),
   estado: string(),
+  bairro: string(),
   endereco: string(),
-  numero: string(),
+  numero_casa: string(),
 })
 
 export type CelulaData = Input<typeof CelulaDataSchema>
