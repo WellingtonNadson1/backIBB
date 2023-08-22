@@ -69,8 +69,16 @@ const formatDatatoISO8601 = (dataString: string) => {
   }
 
 class UserController {
-
   // Fazendo uso do Fastify
+  async combinationRequests(request: FastifyRequest, reply: FastifyReply) {
+    try {
+      const data = await UserRepositorie.getCombinedData();
+      return reply.code(200).send(data);
+    } catch (error) {
+      return reply.code(500).send({ error: 'Failed to fetch combined data.' });
+    }
+  }
+
   async index(request: FastifyRequest, reply: FastifyReply) {
     const users = await UserRepositorie.findAll();
     if (!users) {

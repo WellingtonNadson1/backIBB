@@ -48,6 +48,19 @@ interface EncontrConnect {
 }
 
 class UserRepositorie {
+
+  async getCombinedData() {
+    const combinedData = await prisma.$transaction([
+      prisma.supervisao.findMany(),
+      prisma.escola.findMany(),
+      prisma.encontros.findMany(),
+      prisma.situacaoNoReino.findMany(),
+      prisma.cargoDeLideranca.findMany(),
+    ]);
+
+    return combinedData;
+  }
+
   async findAll() {
     return await prisma.user.findMany({
       select: {
