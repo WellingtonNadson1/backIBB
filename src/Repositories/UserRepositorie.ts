@@ -51,7 +51,16 @@ class UserRepositorie {
 
   async getCombinedData() {
     const combinedData = await prisma.$transaction([
-      prisma.supervisao.findMany(),
+      prisma.supervisao.findMany({
+        select: {
+          celulas: {
+            select: {
+              id: true,
+              nome: true,
+            }
+          }
+        }
+      }),
       prisma.escola.findMany(),
       prisma.encontros.findMany(),
       prisma.situacaoNoReino.findMany(),
