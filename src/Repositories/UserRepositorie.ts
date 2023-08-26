@@ -19,34 +19,6 @@ type UpdateUserInput = Prisma.UserUpdateInput & {
   TurmaEscola?: { connect: { id: string } };
 };
 
-interface CelulaLideraConnect {
-  connect: { id: string };
-}
-
-interface EscolaLideraConnect {
-  connect: { id: string };
-}
-
-interface SupervisoesLideraConnect {
-  connect: { id: string };
-}
-
-interface PresencasAulasEscolasConnect {
-  connect: { id: string };
-}
-
-interface PresencasCultosConnect {
-  connect: { id: string };
-}
-
-interface EscolaConnect {
-  connect: { id: string };
-}
-
-interface EncontrConnect {
-  connect: { id: string };
-}
-
 class UserRepositorie {
 
   async getCombinedData() {
@@ -377,59 +349,80 @@ class UserRepositorie {
     }
 
     if (celula_lidera !== undefined) {
-      updateUserInput.celula_lidera = celula_lidera.map((celulaLideraId) => ({
+      const celulaLideraIds = celula_lidera.map((celulaLideraId) => ({
+        id: celulaLideraId,
+      }));
+      updateUserInput.celula_lidera = celulaLideraIds.map((celulaLideraId) => ({
         connect: {
-          id: celulaLideraId,
+          id: celulaLideraId.id,
         },
-      })) as CelulaLideraConnect[];
+      }));
     }
 
     if (escola_lidera !== undefined) {
-      updateUserInput.escola_lidera = escola_lidera.map((escolaLideraId) => ({
+      const escolaLideraIds = escola_lidera.map((escolaLideraId) => ({
+        id: escolaLideraId,
+      }));
+      updateUserInput.escola_lidera = escolaLideraIds.map((escolaLideraId) => ({
         connect: {
-          id: escolaLideraId,
+          id: escolaLideraId.id,
         },
-      })) as EscolaLideraConnect[];
+      }));
     }
 
     if (supervisoes_lidera !== undefined) {
-      updateUserInput.supervisoes_lidera = supervisoes_lidera.map((supervisoesLideraId) => ({
+      const supervisoesLideraIds = supervisoes_lidera.map((supervisoesLideraId) => ({
+        id: supervisoesLideraId,
+      }));
+      updateUserInput.supervisoes_lidera = supervisoesLideraIds.map((supervisoesLideraId) => ({
         connect: {
-          id: supervisoesLideraId,
+          id: supervisoesLideraId.id,
         },
-      })) as SupervisoesLideraConnect[];
+      }));
     }
 
     if (presencas_aulas_escolas !== undefined) {
-      updateUserInput.presencas_aulas_escolas = presencas_aulas_escolas.map((presencasAulasEscolasId) => ({
+      const presencasAulasEscolas = presencas_aulas_escolas.map((presencasAulasEscolasId) => ({
+        id: presencasAulasEscolasId,
+      }));
+      updateUserInput.presencas_aulas_escolas = presencasAulasEscolas.map((presencasAulasEscolasId) => ({
         connect: {
-          id: presencasAulasEscolasId,
+          id: presencasAulasEscolasId.id,
         },
-      })) as PresencasAulasEscolasConnect[];
+      }));
     }
 
     if (presencas_cultos !== undefined) {
-      updateUserInput.presencas_cultos = presencas_cultos.map((presencasCultosId) => ({
+      const presencasCultos = presencas_cultos.map((presencasCultosId) => ({
+        id: presencasCultosId,
+      }));
+      updateUserInput.presencas_cultos = presencasCultos.map((presencasCultosId) => ({
         connect: {
-          id: presencasCultosId,
+          id: presencasCultosId.id,
         },
-      })) as PresencasCultosConnect[];
+      }));
     }
 
     if (escolas !== undefined) {
-      updateUserInput.escolas = escolas.map((escolaId) => ({
+      const escolasIds = escolas.map((escolaId) => ({
+        id: escolaId,
+      }));
+      updateUserInput.escolas = escolasIds.map((escolaId) => ({
         connect: {
-          id: escolaId,
+          id: escolaId.id,
         },
-      })) as EscolaConnect[];
+      }));
     }
 
     if (encontros !== undefined) {
-      updateUserInput.encontros = encontros.map((escolaId) => ({
+      const encontrosIds = encontros.map((encontroId) => ({
+        id: encontroId,
+      }));
+      updateUserInput.encontros = encontrosIds.map((encontroId) => ({
         connect: {
-          id: escolaId,
+          id: encontroId.id,
         },
-      })) as EncontrConnect[];
+      }));
     }
 
     if (situacao_no_reino !== undefined) {
