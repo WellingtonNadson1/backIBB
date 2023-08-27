@@ -81,36 +81,43 @@ class UserRepositorie {
         cargoDeLiderancaId: false,
         supervisao_pertence: {
           select: {
+            id: true,
             nome: true,
           },
         },
         celula: {
           select: {
+            id: true,
             nome: true,
           },
         },
         celula_lidera: {
           select: {
+            id: true,
             nome: true,
           },
         },
         situacao_no_reino: {
           select: {
+            id: true,
             nome: true,
           },
         },
         cargo_de_lideranca: {
           select: {
+            id: true,
             nome: true,
           },
         },
         escolas: {
           select: {
+            id: true,
             nome: true,
           },
         },
         encontros: {
           select: {
+            id: true,
             nome: true,
           },
         },
@@ -161,36 +168,43 @@ class UserRepositorie {
         cargoDeLiderancaId: false,
         supervisao_pertence: {
           select: {
+            id: true,
             nome: true,
           },
         },
         celula: {
           select: {
+            id: true,
             nome: true,
           },
         },
         celula_lidera: {
           select: {
+            id: true,
             nome: true,
           },
         },
         situacao_no_reino: {
           select: {
+            id: true,
             nome: true,
           },
         },
         cargo_de_lideranca: {
           select: {
+            id: true,
             nome: true,
           },
         },
         escolas: {
           select: {
+            id: true,
             nome: true,
           },
         },
         encontros: {
           select: {
+            id: true,
             nome: true,
           },
         },
@@ -200,6 +214,7 @@ class UserRepositorie {
       },
     });
   }
+
   async findByEmail(email: string) {
     return await prisma.user.findFirst({
       where: {

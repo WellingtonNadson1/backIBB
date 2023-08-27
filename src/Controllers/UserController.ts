@@ -108,7 +108,9 @@ class UserController {
         .send({ message: "User already exist, please try other email!" });
     }
 
-    date_nascimento = formatDatatoISO8601(date_nascimento)
+    if (date_nascimento) {
+      date_nascimento = formatDatatoISO8601(date_nascimento)
+    }
     if (date_batizado) {
       date_batizado = formatDatatoISO8601(date_batizado)
     }
@@ -137,7 +139,10 @@ class UserController {
     const id = request.params.id;
     const userDataForm = request.body as UserData;
     let { date_nascimento, date_batizado, date_casamento, date_decisao } = userDataForm;
-    date_nascimento = formatDatatoISO8601(date_nascimento)
+
+    if (date_nascimento) {
+      date_nascimento = formatDatatoISO8601(date_nascimento)
+    }
     if (date_batizado) {
       date_batizado = formatDatatoISO8601(date_batizado)
     }
