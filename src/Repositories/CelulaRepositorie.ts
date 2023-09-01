@@ -43,14 +43,17 @@ class CelulaRepositorie {
         nome: true,
         membros: {
           select: {
+            id: true,
             first_name: true,
             cargo_de_lideranca: {
               select : {
+                id: true,
                 nome: true
               }
             },
             situacao_no_reino: {
               select : {
+                id: true,
                 nome: true
               }
             }

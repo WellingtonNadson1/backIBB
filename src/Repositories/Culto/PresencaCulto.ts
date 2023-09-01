@@ -21,6 +21,7 @@ class PresencaCultoRepositorie {
         id: id,
       },
       select: {
+        id: true,
         status: true,
         membro: true,
         presenca_culto: true,

@@ -24,6 +24,7 @@ class CultoIndividualRepositorie {
             status: true,
             membro: {
               select: {
+                id: true,
                 first_name: true,
                 supervisao_pertence: true,
               }
@@ -51,9 +52,11 @@ class CultoIndividualRepositorie {
         status: true,
         presencas_culto: {
           select: {
+            id: true,
             status: true,
             membro: {
               select: {
+                id: true,
                 first_name: true,
                 supervisao_pertence: true,
               }

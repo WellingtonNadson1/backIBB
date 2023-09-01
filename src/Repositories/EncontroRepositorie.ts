@@ -31,6 +31,7 @@ class EncontroRepositorie {
         descricao: true,
         participantes: {
           select: {
+            id: true,
             first_name: true,
           }
         },
