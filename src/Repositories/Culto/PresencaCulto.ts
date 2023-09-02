@@ -48,6 +48,10 @@ class PresencaCultoRepositorie {
     });
   }
 
+  async createPresencaMembrosCulto(presencaMembrosCultoDataForm: PresencaCultoData){
+    return await prisma.presencaCulto.createMany({ data: presencaMembrosCultoDataForm })
+  }
+
   async updatePresencaCulto(id: string, presencaCultoDataForm: PresencaCultoData) {
     const { membro, ...presencaCultoData } = presencaCultoDataForm;
     return await prisma.presencaCulto.update({

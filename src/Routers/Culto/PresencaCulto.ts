@@ -8,6 +8,7 @@ const routerPresencaCulto = async (fastify: FastifyInstance) => {
   fastify.post("/presencacultos", PresencaCultoController.store);
   fastify.delete("/presencacultos/:id", PresencaCultoController.delete);
   fastify.put("/presencacultos/:id", PresencaCultoController.update);
+  fastify.post("/presencamembros", PresencaCultoController.many);
 
 };
 
