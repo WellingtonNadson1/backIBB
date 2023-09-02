@@ -30,10 +30,9 @@ class PresencaCultoRepositorie {
   }
 
   async createPresencaCulto(presencaCultoDataForm: PresencaCultoData) {
-    const { membro, presenca_culto, ...presencaCultoData } = presencaCultoDataForm;
+    const { membro, presenca_culto, status } = presencaCultoDataForm;
     return await prisma.presencaCulto.create({
       data: {
-        ...presencaCultoData,
         membro: {
           connect: {
             id: membro
@@ -43,7 +42,8 @@ class PresencaCultoRepositorie {
           connect: {
             id: presenca_culto
           }
-        }
+        },
+        status: Boolean(status)
       },
     });
   }
