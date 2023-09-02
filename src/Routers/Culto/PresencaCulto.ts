@@ -13,7 +13,7 @@ const routerPresencaCulto = async (fastify: FastifyInstance) => {
   fastify.post("/presencamembros", async (request: FastifyRequest, reply: FastifyReply) => {
     const data = request.body as { status: boolean; membro: string; presenca_culto: string; }[];
     const presencaCulto = await prisma.presencaCulto.createMany({
-      data: data?.map((item ) => ({
+      data: data.map((item ) => ({
         status: item.status,
         membroId: item.membro,
         presenca_cultoId: item.presenca_culto,
