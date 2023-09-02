@@ -43,7 +43,7 @@ class PresencaCultoRepositorie {
             id: presenca_culto
           }
         },
-        status: Boolean(status)
+        status: status
       },
     });
   }
