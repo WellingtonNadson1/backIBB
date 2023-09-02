@@ -30,7 +30,7 @@ class PresencaCultoRepositorie {
   }
 
   async createPresencaCulto(presencaCultoDataForm: PresencaCultoData) {
-    const { membro, ...presencaCultoData } = presencaCultoDataForm;
+    const { membro, presenca_culto, ...presencaCultoData } = presencaCultoDataForm;
     return await prisma.presencaCulto.create({
       data: {
         ...presencaCultoData,
@@ -41,26 +41,20 @@ class PresencaCultoRepositorie {
         },
         presenca_culto: {
           connect: {
-            id: presencaCultoData.presenca_culto
+            id: presenca_culto
           }
         }
       },
     });
   }
 
-  // async createPresencaMembrosCulto(presencaMembrosCultoData: PresencaCultoData[]){
-  //   const {membro, ...presencaMembrosCulto} = presencaMembrosCultoData
-  //   return await prisma.presencaCulto.createMany({
-  //     data:
-  //     ...presencaMembrosCulto,
-  //     membro: {
-  //       connect: membro?.map((userId) => ({
-  //         id: userId,
-  //       })),
-  //     },
-  //   })
-  // }
+  // async createPresencaMembrosCulto(presencaMembrosCultoData: PresencaCultoData[]) {
+  //   return await prisma.presencaCulto.create({
+  //     data: {
 
+  //   }}
+  //   )
+  // }
 
   async updatePresencaCulto(id: string, presencaCultoDataForm: PresencaCultoData) {
     const { membro, ...presencaCultoData } = presencaCultoDataForm;
