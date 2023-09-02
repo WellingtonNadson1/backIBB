@@ -1,5 +1,7 @@
-import { FastifyInstance } from 'fastify';
+import { PrismaClient } from "@prisma/client";
+import { FastifyInstance, FastifyReply, FastifyRequest } from "fastify";
 import { PresencaCultoController } from '../../Controllers/Culto';
+const prisma = new PrismaClient()
 
 const routerPresencaCulto = async (fastify: FastifyInstance) => {
   // ESCOLA
@@ -8,7 +10,17 @@ const routerPresencaCulto = async (fastify: FastifyInstance) => {
   fastify.post("/presencacultos", PresencaCultoController.store);
   fastify.delete("/presencacultos/:id", PresencaCultoController.delete);
   fastify.put("/presencacultos/:id", PresencaCultoController.update);
-  fastify.post("/presencamembros", PresencaCultoController.many);
+  fastify.post("/presencamembros", async (request: FastifyRequest, reply: FastifyReply) => {
+    const data: any = request.body;
+    const presencaCulto = await prisma.presencaCulto.createMany({
+      data: data.map((item: { status: any; membro: any; presenca_culto: any; }) => ({
+        status: item.status,
+        membroId: item.membro,
+        presenca_cultoId: item.presenca_culto,
+      })),
+    });
+    return { presencaCulto };
+  });
 
 };
 

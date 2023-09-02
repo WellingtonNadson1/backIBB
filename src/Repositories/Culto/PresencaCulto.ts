@@ -48,13 +48,18 @@ class PresencaCultoRepositorie {
     });
   }
 
-  async createPresencaMembrosCulto(presencaMembrosCultoData: PresencaCultoData[]){
-    const presencaMembrosCulto = presencaMembrosCultoData.map(item => ({
-      ...item,
-      userId: item.membro
-    }))
-    return await prisma.presencaCulto.createMany({ data: presencaMembrosCulto })
-  }
+  // async createPresencaMembrosCulto(presencaMembrosCultoData: PresencaCultoData[]){
+  //   const {membro, ...presencaMembrosCulto} = presencaMembrosCultoData
+  //   return await prisma.presencaCulto.createMany({
+  //     data:
+  //     ...presencaMembrosCulto,
+  //     membro: {
+  //       connect: membro?.map((userId) => ({
+  //         id: userId,
+  //       })),
+  //     },
+  //   })
+  // }
 
 
   async updatePresencaCulto(id: string, presencaCultoDataForm: PresencaCultoData) {
