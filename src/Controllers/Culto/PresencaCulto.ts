@@ -52,16 +52,18 @@ class PresencaCultoController {
 
   async many(request: FastifyRequest, reply: FastifyReply) {
     try {
-      const presencaCultoDataForm = request.body as PresencaCultoData;
-      const dataArray = Object.values(presencaCultoDataForm)
-      const presencaMembrosCulto = await PresencaCultoRepositorie.createPresencaMembrosCulto({
-        ...dataArray,
-      });
+      const presencaCultoDataForm = request.body as Record<string, any>;
+      const dataArray: PresencaCultoData[] = Object.values(presencaCultoDataForm).map(item => ({
+        ...item,
+        status: item.status === "true"
+      }))
+      const presencaMembrosCulto = await PresencaCultoRepositorie.createPresencaMembrosCulto(dataArray);
       return reply.code(201).send(presencaMembrosCulto);
     } catch (error) {
       return reply.code(400).send(error);
     }
   }
+
 
   async update(
     request: FastifyRequest<{
