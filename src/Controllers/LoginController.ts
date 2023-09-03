@@ -29,7 +29,7 @@ class LoginController {
       return jwt.sign(payload, JWT_SECRET, { expiresIn: '3h'})
     }
 
-    const user = await UserRepositorie.findByEmail(email);
+    const user = await UserRepositorie.findByEmail(email.toLowerCase());
 
     if (!user) {
       return reply
