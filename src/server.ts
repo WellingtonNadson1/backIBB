@@ -11,6 +11,7 @@ import routerLogin from "./Routers/LoginRouter";
 import routerSituacaoNoReino from "./Routers/SituacaoNoReino";
 import routerSupervisao from "./Routers/SupervisaoRouters";
 import routerUser from "./Routers/UserRouters";
+import routerLicoesCelula from "./Routers/upLoads/LicoesCelula";
 
 const PORT = process.env.PORT ? Number(process.env.PORT) : 3333;
 
@@ -29,6 +30,7 @@ const start = async () => {
     // app.register(routerEvento)
     await registerEscolaRoutes(app)
     await registerCultoRoutes(app)
+    app.register(routerLicoesCelula)
     app.register(routerEncontro)
     app.register(routerAccount)
     app.register(routerSupervisao)
