@@ -1,7 +1,10 @@
-import { FastifyReply, FastifyRequest } from "fastify";
+// import { FastifyReply, FastifyRequest } from 'fastify';
 // import { Input, array, date, object, string } from 'valibot';
-import UploadLicoesCelulasService from "../../services/UploadLicoesCelulasService";
+// import UploadLicoesCelulasService from "../../services/UploadLicoesCelulasService";
 // import CelulaRepositorie from "../Repositories/CelulaRepositorie";
+
+import { FastifyReply, FastifyRequest } from "fastify";
+import UploadLicoesCelulasService from "../../services/UploadLicoesCelulasService";
 
 // const CelulaDataSchema = object ({
 //   nome: string(),
@@ -24,6 +27,21 @@ import UploadLicoesCelulasService from "../../services/UploadLicoesCelulasServic
 // interface CelulaParams {
 //   id: string;
 // }
+
+// Defina uma interface personalizada para estender FastifyRequest
+interface CustomFastifyRequest extends FastifyRequest {
+  file: {
+    fieldname: string;
+    originalname: string;
+    encoding: string;
+    mimetype: string;
+    destination: string;
+    filename: string;
+    path: string;
+    size: number;
+    // Outras propriedades, se aplicável
+  };
+}
 
 class LicoesCelulaController {
   // Fazendo uso do Fastify
@@ -49,10 +67,11 @@ class LicoesCelulaController {
   //   return reply.code(200).send(celula);
   // }
 
-  async store(request: FastifyRequest, reply: FastifyReply) {
+  async store(request: CustomFastifyRequest, reply: FastifyReply) {
     try {
+      const file = request.file
       const uploadLicaoCelula = new UploadLicoesCelulasService();
-      await uploadLicaoCelula.execute()
+      await uploadLicaoCelula.execute(file)
       return reply.code(201).send('SUCESSO!');
     } catch (error) {
       return reply.code(400).send(error);

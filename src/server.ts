@@ -1,5 +1,6 @@
 import cors from "@fastify/cors";
 import Fastify, { FastifyInstance } from "fastify";
+import multer from "fastify-multer";
 import { requireAuth } from "./Middlewares/authMiddleware";
 import routerAccount from "./Routers/AccountRouters";
 import routerCargoslideranca from "./Routers/Cargoslideranca";
@@ -8,10 +9,13 @@ import registerCultoRoutes from "./Routers/Culto";
 import routerEncontro from "./Routers/EncontroRouters";
 import registerEscolaRoutes from "./Routers/Escola";
 import routerLogin from "./Routers/LoginRouter";
+import routerPresencaReuniaCelula from "./Routers/PresencaReuniaoCelula";
+import routerReuniaoSemanalCelula from "./Routers/ReuniaoCelula";
 import routerSituacaoNoReino from "./Routers/SituacaoNoReino";
 import routerSupervisao from "./Routers/SupervisaoRouters";
 import routerUser from "./Routers/UserRouters";
 import routerLicoesCelula from "./Routers/upLoads/LicoesCelula";
+// import routerLicoesCelula from "./Routers/upLoads/LicoesCelula";
 
 const PORT = process.env.PORT ? Number(process.env.PORT) : 3333;
 
@@ -22,6 +26,8 @@ app.register(cors, {
   methods: ["GET", "POST", "PUT", "PATCH", "DELETE"]
 })
 
+app.register(multer.contentParser)
+
 app.addHook("onRequest", requireAuth)
 
 const start = async () => {
@@ -30,6 +36,8 @@ const start = async () => {
     // app.register(routerEvento)
     await registerEscolaRoutes(app)
     await registerCultoRoutes(app)
+    app.register(routerReuniaoSemanalCelula)
+    app.register(routerPresencaReuniaCelula)
     app.register(routerLicoesCelula)
     app.register(routerEncontro)
     app.register(routerAccount)

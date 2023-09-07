@@ -11,6 +11,7 @@ type UpdateUserInput = Prisma.UserUpdateInput & {
   escola_lidera?: { connect: { id: string } }[];
   supervisoes_lidera?: { connect: { id: string } }[];
   presencas_aulas_escolas?: { connect: { id: string } }[];
+  presencas_reuniao_celula?: { connect: { id: string } }[];
   presencas_cultos?: { connect: { id: string } }[];
   escolas?: { connect: { id: string } }[];
   encontros?: { connect: { id: string } }[];
@@ -232,6 +233,7 @@ class UserRepositorie {
       escola_lidera,
       supervisoes_lidera,
       presencas_aulas_escolas,
+      presencas_reuniao_celula,
       presencas_cultos,
       escolas,
       encontros,
@@ -260,11 +262,11 @@ class UserRepositorie {
         celula: celula
           ? { connect: { id: celula } }
           : undefined,
-        celula_lidera: {
-          connect: celula_lidera?.map((celulaLideraId) => ({
+        celula_lidera: celula_lidera
+          ? { connect: celula_lidera?.map((celulaLideraId) => ({
             id: celulaLideraId,
-          })),
-        },
+          }))}
+          : undefined,
         escola_lidera: {
           connect: escola_lidera?.map((escolaLideraId) => ({
             id: escolaLideraId,
@@ -283,6 +285,11 @@ class UserRepositorie {
         presencas_cultos: {
           connect: presencas_cultos?.map((presencasCultosId) => ({
             id: presencasCultosId,
+          })),
+        },
+        presencas_reuniao_celula: {
+          connect: presencas_reuniao_celula?.map((presencasReuniaoCelulaId) => ({
+            id: presencasReuniaoCelulaId,
           })),
         },
         escolas: {
@@ -314,6 +321,7 @@ class UserRepositorie {
       escola_lidera,
       supervisoes_lidera,
       presencas_aulas_escolas,
+      presencas_reuniao_celula,
       presencas_cultos,
       escolas,
       encontros,
@@ -403,6 +411,17 @@ class UserRepositorie {
       updateUserInput.presencas_aulas_escolas = presencasAulasEscolas.map((presencasAulasEscolasId) => ({
         connect: {
           id: presencasAulasEscolasId.id,
+        },
+      }));
+    }
+
+    if (presencas_reuniao_celula !== undefined) {
+      const presencasReuniaoCelulas = presencas_reuniao_celula.map((presencasReuniaoCelulasId) => ({
+        id: presencasReuniaoCelulasId,
+      }));
+      updateUserInput.presencas_reuniao_celula = presencasReuniaoCelulas.map((presencasReuniaoCelulasId) => ({
+        connect: {
+          id: presencasReuniaoCelulasId.id,
         },
       }));
     }

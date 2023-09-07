@@ -29,6 +29,19 @@ class PresencaCultoRepositorie {
     });
   }
 
+  async findByIdCulto(presenca_culto: string) {
+    return await prisma.presencaCulto.findUnique({
+      where: {
+        id: presenca_culto,
+      },
+      select: {
+        id: true,
+        status: true,
+        presenca_culto: true,
+      },
+    });
+  }
+
   async createPresencaCulto(presencaCultoDataForm: PresencaCultoData) {
     const { membro, presenca_culto, status } = presencaCultoDataForm;
     return await prisma.presencaCulto.create({

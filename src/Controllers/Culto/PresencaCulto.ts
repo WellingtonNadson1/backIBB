@@ -38,6 +38,20 @@ class PresencaCultoController {
     return reply.code(200).send(presencaCulto);
   }
 
+  async searchByIdCulto(
+    request: FastifyRequest<{
+      Params: PresencaCultoParams;
+    }>,
+    reply: FastifyReply
+  ) {
+    const presenca_culto = request.body as string;
+    const presencaCultoIsRegister = await PresencaCultoRepositorie.findByIdCulto(presenca_culto);
+    if (!presencaCultoIsRegister) {
+      return reply.code(404).send({ message: "Presença not Register!" });
+    }
+    return reply.code(200).send(presencaCultoIsRegister);
+  }
+
   async store(request: FastifyRequest, reply: FastifyReply) {
     try {
       const presencaCultoDataForm = request.body as PresencaCultoData;
@@ -49,20 +63,6 @@ class PresencaCultoController {
       return reply.code(400).send(error);
     }
   }
-
-  // async many(request: FastifyRequest, reply: FastifyReply) {
-  //   try {
-  //     const presencaCultoMemberDataForm = request.body as PresencaCultoData[];
-  //     const dataArray = Object.values(presencaCultoMemberDataForm).map(item => ({
-  //       ...item,
-  //     }))
-  //     const presencaMembrosCulto = await PresencaCultoRepositorie.createPresencaMembrosCulto(dataArray);
-  //     return reply.code(201).send(presencaMembrosCulto);
-  //   } catch (error) {
-  //     return reply.code(400).send(error);
-  //   }
-  // }
-
 
   async update(
     request: FastifyRequest<{

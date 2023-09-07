@@ -53,6 +53,7 @@ const UserDataSchema = z.object({
   escola_lidera: z.string().array().optional(),
   supervisoes_lidera: z.string().array().optional(),
   presencas_aulas_escolas: z.string().array().optional(),
+  presencas_reuniao_celula: z.string().array().optional(),
   presencas_cultos: z.string().array().optional(),
   TurmaEscola: z.string().optional(),
 })

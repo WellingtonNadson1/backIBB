@@ -60,21 +60,22 @@ model User {
   endereco            String?
   numero_casa         String?
 
-  batizado                Boolean
-  is_discipulado          Boolean
-  discipulador            String?
-  supervisao_pertence     Supervisao?       @relation(fields: [supervisaoId], references: [id])
-  celula                  Celula?           @relation(fields: [celulaId], references: [id])
-  encontros               Encontros[]
-  escolas                 Escola[]
-  TurmaEscola             TurmaEscola?      @relation(fields: [turmaEscolaId], references: [id])
-  situacao_no_reino       SituacaoNoReino?  @relation(fields: [situacaoNoReinoId], references: [id])
-  cargo_de_lideranca      CargoDeLideranca? @relation(fields: [cargoDeLiderancaId], references: [id])
-  celula_lidera           Celula[]          @relation("LiderCelula")
-  escola_lidera           Escola[]          @relation("LiderEscola")
-  supervisoes_lidera      Supervisao[]      @relation("Supervisor")
-  presencas_aulas_escolas PresencaEscola[]
-  presencas_cultos        PresencaCulto[]
+  batizado                 Boolean
+  is_discipulado           Boolean
+  discipulador             String?
+  supervisao_pertence      Supervisao?             @relation(fields: [supervisaoId], references: [id])
+  celula                   Celula?                 @relation(fields: [celulaId], references: [id])
+  encontros                Encontros[]
+  escolas                  Escola[]
+  TurmaEscola              TurmaEscola?            @relation(fields: [turmaEscolaId], references: [id])
+  situacao_no_reino        SituacaoNoReino?        @relation(fields: [situacaoNoReinoId], references: [id])
+  cargo_de_lideranca       CargoDeLideranca?       @relation(fields: [cargoDeLiderancaId], references: [id])
+  celula_lidera            Celula[]                @relation("LiderCelula")
+  escola_lidera            Escola[]                @relation("LiderEscola")
+  supervisoes_lidera       Supervisao[]            @relation("Supervisor")
+  presencas_aulas_escolas  PresencaEscola[]
+  presencas_cultos         PresencaCulto[]
+  presencas_reuniao_celula PresencaReuniaoCelula[]
 
   celulaId           String?
   supervisaoId       String?
@@ -104,10 +105,10 @@ model VerificationToken {
 }
 
 model Celula {
-  id              String     @id @default(uuid())
+  id              String          @id @default(uuid())
   nome            String
-  lider           User?      @relation("LiderCelula", fields: [userId], references: [id])
-  supervisao      Supervisao @relation(fields: [supervisaoId], references: [id])
+  lider           User?           @relation("LiderCelula", fields: [userId], references: [id])
+  supervisao      Supervisao      @relation(fields: [supervisaoId], references: [id])
   cep             String?
   cidade          String?
   estado          String?
@@ -118,12 +119,33 @@ model Celula {
   date_que_ocorre String?
   date_multipicar DateTime?
   supervisaoId    String
+  reunioes_celula ReuniaoCelula[]
   membros         User[]
   userId          String?
-  date_create     DateTime   @default(now())
-  date_update     DateTime   @updatedAt
+  date_create     DateTime        @default(now())
+  date_update     DateTime        @updatedAt
 
   @@map("celula")
+}
+
+model ReuniaoCelula {
+  id                       String                  @id @default(uuid())
+  data_reuniao             DateTime?
+  status                   String
+  presencas_reuniao_celula PresencaReuniaoCelula[]
+  celula                   Celula?                 @relation(fields: [celulaId], references: [id])
+  celulaId                 String?
+
+  @@map("reuniao_celula")
+}
+
+model PresencaReuniaoCelula {
+  id                       String         @id @default(uuid())
+  status                   Boolean
+  membro                   User?          @relation(fields: [userId], references: [id])
+  userId                   String?
+  presencas_reuniao_celula ReuniaoCelula? @relation(fields: [reuniaoCelulaId], references: [id])
+  reuniaoCelulaId          String?
 }
 
 model Supervisao {

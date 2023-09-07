@@ -35,7 +35,7 @@ class CultoIndividualController {
     const id = request.params.id;
     const cultoIndividual = await CultoIndividualRepositorie.findById(id);
     if (!cultoIndividual) {
-      return reply.code(404).send({ message: "Aula not found!" });
+      return reply.code(404).send({ message: "Culto not found!" });
     }
     return reply.code(200).send(cultoIndividual);
   }

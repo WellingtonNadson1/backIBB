@@ -7,6 +7,7 @@ const CelulaDataSchema = object ({
   lider: string(),
   supervisao: string(),
   membros: array(string()),
+  reunioes_celula: array(string()),
   date_que_ocorre: string(),
   date_inicio: date(),
   date_multipicar: date(),

@@ -28,7 +28,20 @@ class CelulaRepositorie {
           }
         },
         date_que_ocorre: true,
-
+        reunioes_celula: {
+          select: {
+            id: true,
+            data_reuniao: true,
+            status: true,
+            presencas_reuniao_celula: {
+              select: {
+                id: true,
+                membro: true,
+                status: true,
+              }
+            }
+          }
+        }
       }
     })
   }
@@ -72,12 +85,26 @@ class CelulaRepositorie {
           }
         },
         date_que_ocorre: true,
+        reunioes_celula: {
+          select: {
+            id: true,
+            data_reuniao: true,
+            status: true,
+            presencas_reuniao_celula: {
+              select: {
+                id: true,
+                membro: true,
+                status: true,
+              }
+            }
+          }
+        }
       }
     })
   }
 
   async createCelula(celulaDataForm: CelulaData) {
-    const { membros, ...CelulaData } = celulaDataForm
+    const { membros, reunioes_celula, ...CelulaData } = celulaDataForm
 
     return await prisma.celula.create({
       data: {
@@ -94,14 +121,16 @@ class CelulaRepositorie {
         },
         membros: {
           connect: membros ? membros.map((membroId) => ({id: membroId})) : []
-
+        },
+        reunioes_celula: {
+          connect: reunioes_celula?.map((reuniaoCelulaId) => ({ id: reuniaoCelulaId })),
         },
       },
     })
   }
 
   async updateCelula(id: string, celulaDataForm: CelulaData) {
-    const { nome, lider, supervisao, membros, ...CelulaData } = celulaDataForm
+    const { nome, lider, reunioes_celula, supervisao, membros, ...CelulaData } = celulaDataForm
     return await prisma.celula.update({
       where: {
         id: id,
@@ -121,7 +150,9 @@ class CelulaRepositorie {
         },
         membros: {
           connect: membros?.map((membroId) => ({id: membroId}))
-
+        },
+        reunioes_celula: {
+          connect: reunioes_celula?.map((reuniaoCelulaId) => ({ id: reuniaoCelulaId })),
         },
       },
     })

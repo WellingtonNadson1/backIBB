@@ -70,7 +70,7 @@ class CultoSemanalRepositorie {
       await prisma.cultoSemanal.update({
         where: { id: cultoSemanal.id },
         data: {
-          cultos: { connect: cultos.map((escolaId) => ({ id: escolaId })) },
+          cultos: { connect: cultos.map((cultoId) => ({ id: cultoId })) },
         },
       });
     }
