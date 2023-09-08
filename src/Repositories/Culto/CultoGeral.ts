@@ -89,7 +89,7 @@ class CultoGeralRepositorie {
   }
 
   async deleteCultoGeral(id: string) {
-    await prisma.cultoGeral.delete({
+    return await prisma.cultoGeral.delete({
       where: {
         id: id,
       },

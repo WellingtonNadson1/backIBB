@@ -72,7 +72,7 @@ class CultoGeralController {
   ) {
     const id = request.params.id;
     await CultoGeralRepositorie.deleteCultoGeral(id);
-    return reply.code(204);
+    return reply.code(204).send();
   }
 }
 

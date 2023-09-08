@@ -109,7 +109,7 @@ class CultoSemanalRepositorie {
   }
 
   async deleteCultoSemanal(id: string) {
-    await prisma.cultoSemanal.delete({
+    return await prisma.cultoSemanal.delete({
       where: {
         id: id,
       },

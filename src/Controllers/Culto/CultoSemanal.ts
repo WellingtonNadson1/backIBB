@@ -73,7 +73,7 @@ class CultoSemanalController {
   ) {
     const id = request.params.id;
     await CultoSemanalRepositorie.deleteCultoSemanal(id);
-    return reply.code(204);
+    return reply.code(204).send();
   }
 }
 

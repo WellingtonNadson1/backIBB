@@ -60,7 +60,7 @@ class AccountController {
     Params: IAccountParams }>, reply: FastifyReply) {
     const id = request.params.id;
     await AccountRepositorie.deleteAccount(id);
-    return reply.code(204);
+    return reply.code(204).send();
   }
 
 }

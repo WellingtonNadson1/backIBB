@@ -33,7 +33,7 @@ class LoginController {
 
     if (!user) {
       return reply
-        .code(404)
+        .code(402)
         .send({ message: "Email or password invalid, please try again!" });
     }
 

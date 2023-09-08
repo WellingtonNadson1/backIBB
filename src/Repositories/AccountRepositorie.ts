@@ -84,7 +84,7 @@ class AccountRepositorie {
   }
 
   async deleteAccount(id: string) {
-    await prisma.account.delete({
+    return await prisma.account.delete({
       where: {
         id: id,
       },

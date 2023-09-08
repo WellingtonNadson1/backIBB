@@ -9,11 +9,53 @@ class PresencaReuniaoCelulaRepositorie {
       select: {
         id: true,
         status: true,
-        membro: true,
-        presencas_reuniao_celula: true,
+        membro: {
+          select: {
+            id: true,
+            first_name: true,
+            celula: {
+              select: {
+                nome: true,
+              }
+            }
+          }
+        },
+        which_reuniao_celula: true,
       },
     });
   }
+
+  async findFirst({
+    which_reuniao_celula,
+    membro,
+  }: {
+    which_reuniao_celula: string;
+    membro: string;
+  }) {
+    return await prisma.presencaReuniaoCelula.findFirst({
+      where: {
+        which_reuniao_celula: { id: which_reuniao_celula},
+        membro: { id: membro},
+      },
+      select: {
+        id: true,
+        status: true,
+        membro: {
+          select: {
+            id: true,
+            first_name: true,
+            celula: {
+              select: {
+                nome: true,
+              }
+            }
+          }
+        },
+        which_reuniao_celula: true,
+      },
+    });
+  }
+
 
   async findById(id: string) {
     return await prisma.presencaReuniaoCelula.findUnique({
@@ -23,14 +65,24 @@ class PresencaReuniaoCelulaRepositorie {
       select: {
         id: true,
         status: true,
-        membro: true,
-        presencas_reuniao_celula: true,
+        membro: {
+          select: {
+            id: true,
+            first_name: true,
+            celula: {
+              select: {
+                nome: true,
+              }
+            }
+          }
+        },
+        which_reuniao_celula: true,
       },
     });
   }
 
   async createPresencaReuniaCelula(presencaCultoDataForm: PresencaReuniaoCelulaData) {
-    const { membro, presencas_reuniao_celula, status } = presencaCultoDataForm;
+    const { membro, which_reuniao_celula, status } = presencaCultoDataForm;
     return await prisma.presencaReuniaoCelula.create({
       data: {
         membro: {
@@ -38,9 +90,9 @@ class PresencaReuniaoCelulaRepositorie {
             id: membro
           }
         },
-        presencas_reuniao_celula: {
+        which_reuniao_celula: {
           connect: {
-            id: presencas_reuniao_celula
+            id: which_reuniao_celula
           }
         },
         status: status
@@ -61,9 +113,9 @@ class PresencaReuniaoCelulaRepositorie {
             id: membro
           }
         },
-        presencas_reuniao_celula: {
+        which_reuniao_celula: {
           connect: {
-            id: presencaReuniaoCelulaData.presencas_reuniao_celula
+            id: presencaReuniaoCelulaData.which_reuniao_celula
           }
         }
       },
@@ -71,7 +123,7 @@ class PresencaReuniaoCelulaRepositorie {
   }
 
   async deletePresencaReuniaoCelula(id: string) {
-    await prisma.presencaReuniaoCelula.delete({
+    return await prisma.presencaReuniaoCelula.delete({
       where: {
         id: id,
       },

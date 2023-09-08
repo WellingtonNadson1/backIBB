@@ -67,7 +67,7 @@ class CargosliderancaRepositorie {
   }
 
   async deleteCargoslideranca(id: string) {
-    await prisma.cargoDeLideranca.delete({
+    return await prisma.cargoDeLideranca.delete({
       where: {
         id: id,
       },

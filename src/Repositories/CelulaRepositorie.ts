@@ -33,7 +33,7 @@ class CelulaRepositorie {
             id: true,
             data_reuniao: true,
             status: true,
-            presencas_reuniao_celula: {
+            presencas_membros_reuniao_celula: {
               select: {
                 id: true,
                 membro: true,
@@ -90,7 +90,7 @@ class CelulaRepositorie {
             id: true,
             data_reuniao: true,
             status: true,
-            presencas_reuniao_celula: {
+            presencas_membros_reuniao_celula: {
               select: {
                 id: true,
                 membro: true,

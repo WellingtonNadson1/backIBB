@@ -67,7 +67,7 @@ class SituacaoNoReinoRepositorie {
   }
 
   async deleteSituacaoNoReino(id: string) {
-    await prisma.situacaoNoReino.delete({
+    return await prisma.situacaoNoReino.delete({
       where: {
         id: id,
       },

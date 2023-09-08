@@ -120,7 +120,7 @@ class SupervisiaoRepositorie {
   }
 
   async deleteSupervisao(id: string) {
-    await prisma.supervisao.delete({
+    return await prisma.supervisao.delete({
       where: {
         id: id,
       },

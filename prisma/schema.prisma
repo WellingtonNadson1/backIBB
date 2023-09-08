@@ -129,23 +129,23 @@ model Celula {
 }
 
 model ReuniaoCelula {
-  id                       String                  @id @default(uuid())
-  data_reuniao             DateTime?
-  status                   String
-  presencas_reuniao_celula PresencaReuniaoCelula[]
-  celula                   Celula?                 @relation(fields: [celulaId], references: [id])
-  celulaId                 String?
+  id                               String                  @id @default(uuid())
+  data_reuniao                     DateTime?
+  status                           String
+  presencas_membros_reuniao_celula PresencaReuniaoCelula[]
+  celula                           Celula?                 @relation(fields: [celulaId], references: [id], onDelete: Cascade)
+  celulaId                         String?
 
   @@map("reuniao_celula")
 }
 
 model PresencaReuniaoCelula {
-  id                       String         @id @default(uuid())
-  status                   Boolean
-  membro                   User?          @relation(fields: [userId], references: [id])
-  userId                   String?
-  presencas_reuniao_celula ReuniaoCelula? @relation(fields: [reuniaoCelulaId], references: [id])
-  reuniaoCelulaId          String?
+  id                   String         @id @default(uuid())
+  status               Boolean
+  membro               User?          @relation(fields: [userId], references: [id])
+  userId               String?
+  which_reuniao_celula ReuniaoCelula? @relation(fields: [reuniaoCelulaId], references: [id], onDelete: Cascade)
+  reuniaoCelulaId      String?
 }
 
 model Supervisao {
@@ -215,7 +215,7 @@ model PresencaCulto {
   status            Boolean //Pode ter um status (presente, ausente, justificado, etc.)
   membro            User?            @relation(fields: [userId], references: [id])
   userId            String?
-  presenca_culto    CultoIndividual? @relation(fields: [cultoIndividualId], references: [id])
+  presenca_culto    CultoIndividual? @relation(fields: [cultoIndividualId], references: [id], onDelete: Cascade)
   cultoIndividualId String?
 }
 

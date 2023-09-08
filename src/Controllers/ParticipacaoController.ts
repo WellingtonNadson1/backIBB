@@ -54,7 +54,7 @@ class ParticipacaoController {
     Params: ParticipacaoParams }>, reply: FastifyReply) {
     const { id } = request.params
     await ParticipacaoRepositorie.deleteParticipacao( id );
-    return reply.code(204);
+    return reply.code(204).send();
   }
 }
 

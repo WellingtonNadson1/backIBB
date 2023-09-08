@@ -19,39 +19,40 @@ import routerLicoesCelula from "./Routers/upLoads/LicoesCelula";
 
 const PORT = process.env.PORT ? Number(process.env.PORT) : 3333;
 
-const app: FastifyInstance = Fastify({logger: true});
+const app: FastifyInstance = Fastify({ logger: true });
 
 app.register(cors, {
   origin: "*",
-  methods: ["GET", "POST", "PUT", "PATCH", "DELETE"]
-})
+  methods: ["GET", "POST", "PUT", "PATCH", "DELETE"],
+});
 
-app.register(multer.contentParser)
+app.register(multer.contentParser);
 
-app.addHook("onRequest", requireAuth)
+app.addHook("onRequest", requireAuth);
 
 const start = async () => {
   try {
-    app.register(routerLogin)
+    app.register(routerLogin);
     // app.register(routerEvento)
-    await registerEscolaRoutes(app)
-    await registerCultoRoutes(app)
-    app.register(routerReuniaoSemanalCelula)
-    app.register(routerPresencaReuniaCelula)
-    app.register(routerLicoesCelula)
-    app.register(routerEncontro)
-    app.register(routerAccount)
-    app.register(routerSupervisao)
-    app.register(routerSituacaoNoReino)
-    app.register(routerCargoslideranca)
-    app.register(routerCelula)
-    app.register(routerUser) // tipo um middleware do express
+    await registerEscolaRoutes(app);
+    await registerCultoRoutes(app);
+    app.register(routerReuniaoSemanalCelula);
+    app.register(routerPresencaReuniaCelula);
+    app.register(routerLicoesCelula);
+    app.register(routerEncontro);
+    app.register(routerAccount);
+    app.register(routerSupervisao);
+    app.register(routerSituacaoNoReino);
+    app.register(routerCargoslideranca);
+    app.register(routerCelula);
+    app.register(routerUser); // tipo um middleware do express
     await app.listen({
-      host: '0.0.0.0',
-      port: PORT })
+      host: "0.0.0.0",
+      port: PORT,
+    });
   } catch (err) {
-    app.log.error(err)
-    process.exit(1)
+    app.log.error(err);
+    process.exit(1);
   }
-}
-start()
+};
+start();

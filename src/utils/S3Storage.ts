@@ -13,7 +13,9 @@ const accessKey = process.env.ACCESS_KEY;
 const secretAccessKey = process.env.SECRET_ACCESS_KEY;
 
 if (!bucketRegion || !accessKey || !secretAccessKey) {
-  console.error("Certifique-se de definir as variáveis de ambiente corretamente.");
+  console.error(
+    "Certifique-se de definir as variáveis de ambiente corretamente."
+  );
   process.exit(1);
 }
 
@@ -60,4 +62,3 @@ class S3Storage {
 }
 
 export default S3Storage;
-

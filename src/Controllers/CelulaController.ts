@@ -83,7 +83,7 @@ class CelulaController {
   ) {
     const id = request.params.id;
     await CelulaRepositorie.deleteCelula(id);
-    return reply.code(204);
+    return reply.code(204).send();
   }
 }
 

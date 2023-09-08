@@ -74,7 +74,7 @@ class EncontroController {
   ) {
     const id = request.params.id;
     await EncontroRepositorie.deleteEncontro(id);
-    return reply.code(204);
+    return reply.code(204).send();
   }
 }
 

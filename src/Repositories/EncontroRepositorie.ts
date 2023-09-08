@@ -70,7 +70,7 @@ class EncontroRepositorie {
   }
 
   async deleteEncontro(id: string) {
-    await prisma.encontros.delete({
+    return await prisma.encontros.delete({
       where: {
         id: id,
       },

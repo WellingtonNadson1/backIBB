@@ -74,7 +74,7 @@ class CultoIndividualController {
   ) {
     const id = request.params.id;
     await CultoIndividualRepositorie.deleteCultoIndividual(id);
-    return reply.code(204);
+    return reply.code(204).send();
   }
 }
 

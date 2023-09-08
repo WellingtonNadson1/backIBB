@@ -9,7 +9,48 @@ class PresencaCultoRepositorie {
       select: {
         id: true,
         status: true,
-        membro: true,
+        membro: {
+          select: {
+            id: true,
+            first_name: true,
+            celula: {
+              select: {
+                nome: true,
+              }
+            }
+          }
+        },
+        presenca_culto: true,
+      },
+    });
+  }
+
+  async findFirst({
+    presenca_culto,
+    membro,
+  }: {
+    presenca_culto: string;
+    membro: string;
+  }) {
+    return await prisma.presencaCulto.findFirst({
+      where: {
+        presenca_culto: { id: presenca_culto },
+        membro: { id: membro },
+      },
+      select: {
+        id: true,
+        status: true,
+        membro: {
+          select: {
+            id: true,
+            first_name: true,
+            celula: {
+              select: {
+                nome: true,
+              }
+            }
+          }
+        },
         presenca_culto: true,
       },
     });
@@ -23,7 +64,17 @@ class PresencaCultoRepositorie {
       select: {
         id: true,
         status: true,
-        membro: true,
+        membro: {
+          select: {
+            id: true,
+            first_name: true,
+            celula: {
+              select: {
+                nome: true,
+              }
+            }
+          }
+        },
         presenca_culto: true,
       },
     });
@@ -92,7 +143,7 @@ class PresencaCultoRepositorie {
   }
 
   async deletePresencaCulto(id: string) {
-    await prisma.presencaCulto.delete({
+    return await prisma.presencaCulto.delete({
       where: {
         id: id,
       },

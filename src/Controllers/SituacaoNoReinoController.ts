@@ -69,7 +69,7 @@ class SituacaoNoReinoController {
   ) {
     const id = request.params.id;
     await SituacaoNoReinoRepositorie.deleteSituacaoNoReino(id);
-    return reply.code(204);
+    return reply.code(204).send();
   }
 }
 

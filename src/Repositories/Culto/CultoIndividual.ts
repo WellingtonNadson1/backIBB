@@ -133,7 +133,7 @@ class CultoIndividualRepositorie {
   }
 
   async deleteCultoIndividual(id: string) {
-    await prisma.cultoIndividual.delete({
+    return await prisma.cultoIndividual.delete({
       where: {
         id: id,
       },

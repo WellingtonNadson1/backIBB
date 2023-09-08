@@ -69,7 +69,7 @@ class CargosliderancaController {
   ) {
     const id = request.params.id;
     await CargosliderancaRepositorie.deleteCargoslideranca(id);
-    return reply.code(204);
+    return reply.code(204).send();
   }
 }
 

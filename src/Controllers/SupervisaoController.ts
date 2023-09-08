@@ -59,7 +59,7 @@ class SupervisaoController {
     Params: SupervisaoParams }>, reply: FastifyReply) {
     const id = request.params.id;
     await SupervisaoRepositorie.deleteSupervisao(id);
-    return reply.code(204);
+    return reply.code(204).send();
   }
 }
 
