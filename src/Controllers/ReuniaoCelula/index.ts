@@ -1,3 +1,4 @@
+import { startOfDay } from "date-fns";
 import { FastifyReply, FastifyRequest } from "fastify";
 import { Input, array, date, object, string } from "valibot";
 import ReuniaoCelulaRepositorie from "../../Repositories/ReuniaoCelula";
@@ -45,8 +46,11 @@ class ReuniaoSemanalCelulaController {
 
       const { data_reuniao, celula } = reuniaoCelulaDataForm
 
+      // Ajuste a data para considerar apenas a parte da data (ano, mês e dia)
+      const data_reuniaoSemHorario = startOfDay(new Date(data_reuniao))
+
       const reuniaoCelulaExist = await ReuniaoCelulaRepositorie.findFirst({
-        data_reuniao: data_reuniao,
+        data_reuniao: data_reuniaoSemHorario,
         celula: celula,
       });
 
@@ -56,7 +60,7 @@ class ReuniaoSemanalCelulaController {
           .send({ message: "Presença de Culto já registrada para hoje!" });
       }
 
-      // Se não existir, crie a presença
+      // Se não existir, crie a reunião
       const presencaCulto = await ReuniaoCelulaRepositorie.createReuniaoCelula({
         ...reuniaoCelulaDataForm,
       });
