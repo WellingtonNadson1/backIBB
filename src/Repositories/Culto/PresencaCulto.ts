@@ -81,9 +81,9 @@ class PresencaCultoRepositorie {
   }
 
   async findByIdCulto(presenca_culto: string) {
-    return await prisma.presencaCulto.findUnique({
+    return await prisma.presencaCulto.findFirst({
       where: {
-        id: presenca_culto,
+        cultoIndividualId: presenca_culto,
       },
       select: {
         id: true,

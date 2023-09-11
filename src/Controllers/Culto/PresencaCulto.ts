@@ -44,7 +44,8 @@ class PresencaCultoController {
     }>,
     reply: FastifyReply
   ) {
-    const presenca_culto = request.body as string;
+    const presenca_culto = request.params.id;
+    
     const presencaCultoIsRegister =
       await PresencaCultoRepositorie.findByIdCulto(presenca_culto);
     if (!presencaCultoIsRegister) {
