@@ -10,6 +10,7 @@ import routerEncontro from "./Routers/EncontroRouters";
 import registerEscolaRoutes from "./Routers/Escola";
 import routerLogin from "./Routers/LoginRouter";
 import routerPresencaReuniaCelula from "./Routers/PresencaReuniaoCelula";
+import routerRelatorioPresencaCulto from "./Routers/Relatorios/RelatorioCultosSupervisao";
 import routerReuniaoSemanalCelula from "./Routers/ReuniaoCelula";
 import routerSituacaoNoReino from "./Routers/SituacaoNoReino";
 import routerSupervisao from "./Routers/SupervisaoRouters";
@@ -36,6 +37,7 @@ const start = async () => {
     // app.register(routerEvento)
     await registerEscolaRoutes(app);
     await registerCultoRoutes(app);
+    app.register(routerRelatorioPresencaCulto);
     app.register(routerReuniaoSemanalCelula);
     app.register(routerPresencaReuniaCelula);
     app.register(routerLicoesCelula);
