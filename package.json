@@ -7,7 +7,7 @@
     "bcrypt": "^5.1.0",
     "date-fns": "^2.30.0",
     "dotenv": "^16.3.1",
-    "fastify": "^4.22.2",
+    "fastify": "^4.23.1",
     "fastify-multer": "^2.0.3",
     "fastify-plugin": "^4.5.1",
     "jsonwebtoken": "^9.0.1",
