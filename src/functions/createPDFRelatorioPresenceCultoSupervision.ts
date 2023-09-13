@@ -31,6 +31,7 @@ export default function createPDFRelatorioPresenceCultoSupervision(reply: Fastif
 
   pdfDoc.on("end", () => {
     const result = Buffer.concat(chunks)
+    reply.header('Content-Type', 'application/pdf')
     return reply.code(201).send(result);
   })
 }
