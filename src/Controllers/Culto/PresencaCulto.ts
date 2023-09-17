@@ -12,8 +12,8 @@ export type PresencaCultoData = Input<typeof PresencaCultoDataSchema>;
 
 interface PresencaCultoParams {
   id: string;
-  celulaId: string;
-  presenca_culto: string;
+  celula: string;
+  culto: string;
 }
 
 class PresencaCultoController {
@@ -44,10 +44,12 @@ class PresencaCultoController {
     request: FastifyRequest,
     reply: FastifyReply
   ) {
-    const {presenca_culto, celulaId} = request.query as PresencaCultoParams;
+    const {culto, celula} = request.query as PresencaCultoParams;
+    console.log('culto: ', culto)
+    console.log('celula: ', celula)
 
     const presencaCultoIsRegister =
-      await PresencaCultoRepositorie.findByIdCulto(presenca_culto, celulaId);
+      await PresencaCultoRepositorie.findByIdCulto(culto, celula);
     if (!presencaCultoIsRegister) {
       return reply.code(404).send({ message: "Presença not Register!" });
     }

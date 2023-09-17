@@ -80,11 +80,11 @@ class PresencaCultoRepositorie {
     });
   }
 
-  async findByIdCulto(presenca_culto: string, celulaId: string) {
+  async findByIdCulto(culto: string, celula: string) {
     return await prisma.presencaCulto.findFirst({
       where: {
-        cultoIndividualId: presenca_culto,
-        membro: {id: celulaId}
+        cultoIndividualId: culto,
+        membro: {id: celula}
       },
       select: {
         id: true,
