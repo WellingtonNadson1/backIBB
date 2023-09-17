@@ -84,7 +84,7 @@ class PresencaCultoRepositorie {
     return await prisma.presencaCulto.findFirst({
       where: {
         cultoIndividualId: presenca_culto,
-        userId: celulaId
+        membro: {id: celulaId}
       },
       select: {
         id: true,
