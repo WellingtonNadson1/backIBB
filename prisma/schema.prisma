@@ -83,7 +83,7 @@ model User {
   turmaEscolaId      String?
   situacaoNoReinoId  String?
   cargoDeLiderancaId String?
-  userId String @unique
+  userId String @unique @default("")
 
   // accounts Account[]
   sessions Session[]
@@ -95,7 +95,7 @@ model User {
   date_create    DateTime  @default(now())
   date_update    DateTime  @updatedAt
 
-  @@map("users") // Defina um nome de tabela personalizado, se necessário
+  @@map("user") // Defina um nome de tabela personalizado, se necessário
 }
 
 model RefreshToken {
