@@ -1,4 +1,4 @@
-import { FastifyInstance } from 'fastify';
+import { FastifyInstance } from "fastify";
 import LoginController from "../Controllers/LoginController";
 
 // const routerUser = Router();
@@ -9,7 +9,6 @@ const routerLogin = async (fastify: FastifyInstance) => {
   fastify.post("/login", LoginController.login);
   // fastify.delete("/celulas/:id", LoginController.delete);
   // fastify.put("/celulas/:id", LoginController.update);
-
 };
 
 export default routerLogin;

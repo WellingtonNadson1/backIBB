@@ -76,14 +76,14 @@ model User {
   presencas_aulas_escolas  PresencaEscola[]
   presencas_cultos         PresencaCulto[]
   presencas_reuniao_celula PresencaReuniaoCelula[]
-  refreshTokens RefreshToken[]
+  refreshTokens RefreshToken?
 
   celulaId           String?
   supervisaoId       String?
   turmaEscolaId      String?
   situacaoNoReinoId  String?
   cargoDeLiderancaId String?
-  userIdRefresh String @unique @default("")
+  userIdRefresh String 
 
   // accounts Account[]
   sessions Session[]
@@ -102,7 +102,7 @@ model RefreshToken {
   id String    @id @default(uuid())
   expiresIn    Int
   user      User @relation(fields: [userIdRefresh], references: [id])
-  userIdRefresh String
+  userIdRefresh String @unique
   @@map("refresh_token")
 }
 
