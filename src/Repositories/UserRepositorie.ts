@@ -5,7 +5,7 @@ const prisma = new PrismaClient();
 
 type UpdateUserInput = Prisma.UserUpdateInput & {
   supervisao_pertence?: { connect: { id: string } };
-  role?:  string;
+  role?: string;
   celula?: { connect: { id: string } };
   celula_lidera?: { connect: { id: string } }[];
   escola_lidera?: { connect: { id: string } }[];
@@ -21,7 +21,6 @@ type UpdateUserInput = Prisma.UserUpdateInput & {
 };
 
 class UserRepositorie {
-
   async getCombinedData() {
     const combinedData = await prisma.$transaction([
       prisma.supervisao.findMany({
@@ -32,9 +31,9 @@ class UserRepositorie {
             select: {
               id: true,
               nome: true,
-            }
-          }
-        }
+            },
+          },
+        },
       }),
       prisma.escola.findMany(),
       prisma.encontros.findMany(),
@@ -243,6 +242,7 @@ class UserRepositorie {
       date_nascimento,
       date_batizado,
       date_casamento,
+      userIdRefresh,
       ...userData
     } = userDataForm;
 
@@ -253,19 +253,17 @@ class UserRepositorie {
         date_batizado,
         date_casamento,
         password,
-        TurmaEscola: TurmaEscola
-          ? { connect: { id: TurmaEscola } }
-          : undefined,
+        TurmaEscola: TurmaEscola ? { connect: { id: TurmaEscola } } : undefined,
         supervisao_pertence: supervisao_pertence
           ? { connect: { id: supervisao_pertence } }
           : undefined,
-        celula: celula
-          ? { connect: { id: celula } }
-          : undefined,
+        celula: celula ? { connect: { id: celula } } : undefined,
         celula_lidera: celula_lidera
-          ? { connect: celula_lidera?.map((celulaLideraId) => ({
-            id: celulaLideraId,
-          }))}
+          ? {
+              connect: celula_lidera?.map((celulaLideraId) => ({
+                id: celulaLideraId,
+              })),
+            }
           : undefined,
         escola_lidera: {
           connect: escola_lidera?.map((escolaLideraId) => ({
@@ -288,9 +286,11 @@ class UserRepositorie {
           })),
         },
         presencas_reuniao_celula: {
-          connect: presencas_reuniao_celula?.map((presencasReuniaoCelulaId) => ({
-            id: presencasReuniaoCelulaId,
-          })),
+          connect: presencas_reuniao_celula?.map(
+            (presencasReuniaoCelulaId) => ({
+              id: presencasReuniaoCelulaId,
+            })
+          ),
         },
         escolas: {
           connect: escolas?.map((escolaId) => ({ id: escolaId })),
@@ -298,9 +298,12 @@ class UserRepositorie {
         encontros: {
           connect: encontros?.map((encontId) => ({ id: encontId })),
         },
+        userIdRefresh,
+
         situacao_no_reino: situacao_no_reino
           ? { connect: { id: situacao_no_reino } }
           : undefined,
+
         cargo_de_lideranca: cargo_de_lideranca
           ? { connect: { id: cargo_de_lideranca } }
           : undefined,
@@ -309,7 +312,6 @@ class UserRepositorie {
 
     return user;
   }
-
 
   async updateUser(id: string, userDataForm: UserData) {
     const {
@@ -394,47 +396,61 @@ class UserRepositorie {
     }
 
     if (supervisoes_lidera !== undefined) {
-      const supervisoesLideraIds = supervisoes_lidera.map((supervisoesLideraId) => ({
-        id: supervisoesLideraId,
-      }));
-      updateUserInput.supervisoes_lidera = supervisoesLideraIds.map((supervisoesLideraId) => ({
-        connect: {
-          id: supervisoesLideraId.id,
-        },
-      }));
+      const supervisoesLideraIds = supervisoes_lidera.map(
+        (supervisoesLideraId) => ({
+          id: supervisoesLideraId,
+        })
+      );
+      updateUserInput.supervisoes_lidera = supervisoesLideraIds.map(
+        (supervisoesLideraId) => ({
+          connect: {
+            id: supervisoesLideraId.id,
+          },
+        })
+      );
     }
 
     if (presencas_aulas_escolas !== undefined) {
-      const presencasAulasEscolas = presencas_aulas_escolas.map((presencasAulasEscolasId) => ({
-        id: presencasAulasEscolasId,
-      }));
-      updateUserInput.presencas_aulas_escolas = presencasAulasEscolas.map((presencasAulasEscolasId) => ({
-        connect: {
-          id: presencasAulasEscolasId.id,
-        },
-      }));
+      const presencasAulasEscolas = presencas_aulas_escolas.map(
+        (presencasAulasEscolasId) => ({
+          id: presencasAulasEscolasId,
+        })
+      );
+      updateUserInput.presencas_aulas_escolas = presencasAulasEscolas.map(
+        (presencasAulasEscolasId) => ({
+          connect: {
+            id: presencasAulasEscolasId.id,
+          },
+        })
+      );
     }
 
     if (presencas_reuniao_celula !== undefined) {
-      const presencasReuniaoCelulas = presencas_reuniao_celula.map((presencasReuniaoCelulasId) => ({
-        id: presencasReuniaoCelulasId,
-      }));
-      updateUserInput.presencas_reuniao_celula = presencasReuniaoCelulas.map((presencasReuniaoCelulasId) => ({
-        connect: {
-          id: presencasReuniaoCelulasId.id,
-        },
-      }));
+      const presencasReuniaoCelulas = presencas_reuniao_celula.map(
+        (presencasReuniaoCelulasId) => ({
+          id: presencasReuniaoCelulasId,
+        })
+      );
+      updateUserInput.presencas_reuniao_celula = presencasReuniaoCelulas.map(
+        (presencasReuniaoCelulasId) => ({
+          connect: {
+            id: presencasReuniaoCelulasId.id,
+          },
+        })
+      );
     }
 
     if (presencas_cultos !== undefined) {
       const presencasCultos = presencas_cultos.map((presencasCultosId) => ({
         id: presencasCultosId,
       }));
-      updateUserInput.presencas_cultos = presencasCultos.map((presencasCultosId) => ({
-        connect: {
-          id: presencasCultosId.id,
-        },
-      }));
+      updateUserInput.presencas_cultos = presencasCultos.map(
+        (presencasCultosId) => ({
+          connect: {
+            id: presencasCultosId.id,
+          },
+        })
+      );
     }
 
     if (escolas !== undefined) {

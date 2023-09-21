@@ -1,12 +1,12 @@
+import { PrismaClient } from "@prisma/client";
 import bcrypt from "bcrypt";
 import { FastifyReply, FastifyRequest } from "fastify";
-import jwt from "jsonwebtoken";
 import UserRepositorie from "../Repositories/UserRepositorie";
 import { GenerateRfreshToken } from "../provider/GenerateRefreshToken";
+import { GenerateToken } from "../provider/GenerateToken";
 import { UserData } from "./UserController";
 
 type TokenPayload = {
-  userId: string;
   role: string;
   avatar: string | null;
   email: string;
@@ -16,19 +16,12 @@ type TokenPayload = {
   celula_lidera: string | null;
 };
 
+const prisma = new PrismaClient();
+
 class LoginController {
   async login(request: FastifyRequest, reply: FastifyReply) {
     // Dados de credenciais vindas do FrontEnd
     const { email, password } = request.body as UserData;
-    const JWT_SECRET = process.env.JWT_SECRET;
-
-    // Function for generation token JWT after sing in
-    const generateToken = (payload: TokenPayload): string => {
-      if (typeof JWT_SECRET === "undefined") {
-        throw new Error("JWT_TOKEN is not defined in the enviroment");
-      }
-      return jwt.sign(payload, JWT_SECRET, { expiresIn: "20s" });
-    };
 
     const user = await UserRepositorie.findByEmail(email.toLowerCase());
 
@@ -46,7 +39,6 @@ class LoginController {
     }
 
     const tokenPayload: TokenPayload = {
-      userId: user.id,
       role: user.role,
       email: user.email,
       name: user.first_name,
@@ -56,7 +48,16 @@ class LoginController {
       celula_lidera: user.celulaId,
     };
 
-    const token = generateToken(tokenPayload);
+    // Function for generation token JWT after sing in
+    const generateToken = new GenerateToken();
+    const token = await generateToken.execute(user.id, tokenPayload);
+
+    await prisma.refreshToken.deleteMany({
+      where: {
+        userIdRefresh: user.id,
+      },
+    });
+
     const generateRefreshToken = new GenerateRfreshToken();
     const refreshToken = await generateRefreshToken.execute(user.id);
 

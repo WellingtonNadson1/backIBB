@@ -14,6 +14,9 @@ export async function requireAuth(
   if (["POST"].includes(request.method) && request.url === "/users") {
     return;
   }
+  if (["POST"].includes(request.method) && request.url === "/refresh-token") {
+    return;
+  }
 
   if (!authToken || !authToken.startsWith("Bearer ")) {
     reply.code(401).send({ error: "Unauthorized" });
