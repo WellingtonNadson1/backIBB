@@ -87,9 +87,10 @@ const routerRelatorioPresencaCulto = async (fastify: FastifyInstance) => {
     // })
   });
 
-  // fastify.get('/relatorio/presencacultos/:id', RelatorioPresencaCultoController.show);
-  // fastify.get('/relatorio/presencacultosbycelula/:id', RelatorioPresencaCultoController.searchByIdCulto);
+//  fastify.get('/relatorio/presencacultos/:id', RelatorioPresencaCultoController.show);
+//  fastify.get('/relatorio/presencacultosbycelula/:id', RelatorioPresencaCultoController.searchByIdCulto);
 
 };
 
 export default routerRelatorioPresencaCulto;
+
