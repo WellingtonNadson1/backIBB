@@ -40,12 +40,23 @@ const routerRelatorioPresencaCulto = async (fastify: FastifyInstance) => {
 
     const docDefinitions: TDocumentDefinitions = {
       defaultStyle: { font: "Helvetica" },
+      pageOrientation: 'landscape',
       content: [
+        {text: 'Relatório de Frequência de Membros aos Cultos', style: 'subheader'},
         {
-          pageOrientation: 'landscape',
           table: {
+            widths: [60, 'auto', 'auto', 'auto', 'auto', 'auto',
+            'auto', 'auto', 'auto', 'auto', 'auto', 'auto', 'auto', 'auto',
+            'auto', 'auto', 'auto', 'auto', 'auto', 'auto', 'auto', 'auto',
+            'auto', 'auto', 'auto', 'auto', 'auto', 'auto', 'auto', 'auto'],
+            headerRows: 2,
             body: [
-            res && [`SUPERVISOR(A): ${res()}`, `MÊS: ${dayjs().month()} - ${dayjs().year()}`]
+              [{text: `SUPERVISOR(A): ${res()}`, style: 'tableHeader', colSpan: 15, fillColor: '#FF0000', alignment: 'center'}, {}, {text: `MÊS: ${dayjs().month()} - ${dayjs().year()}`, style: 'tableHeader', alignment: 'center'}],
+              [{text: `CÉLULAS: 12`, style: 'tableHeader', colSpan: 15, fillColor: '#FF0000', alignment: 'center'}, {}, {text: `QNT. CULTOS - DOM: 08, QUA: 04, CPD's: 04`, style: 'tableHeader', alignment: 'center'}],
+              [{text: `CÉLULAS: 12`, style: 'tableHeader', colSpan: 10, fillColor: '#FFD9D9', alignment: 'center'}, {}, {text: `1ª SEM`, style: 'tableHeader', colSpan: 5, fillColor: '#FFD9D9', alignment: 'center'}, {},
+               {text: `2ª SEM`, style: 'tableHeader', colSpan: 5, fillColor: '#FFD9D9', alignment: 'center'}, {}, {text: `3ª SEM`, style: 'tableHeader', colSpan: 5, fillColor: '#FFD9D9', alignment: 'center'}, {},
+               {text: `4ª SEM`, style: 'tableHeader', colSpan: 5, fillColor: '#FFD9D9', alignment: 'center'},],
+
             ]
           }
         }
