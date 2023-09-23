@@ -6,6 +6,8 @@ import { TDocumentDefinitions } from "pdfmake/interfaces";
 import PdfPrinter from "pdfmake";
 import dayjs from "dayjs";
 import { PrismaClient } from "@prisma/client";
+import { Writable } from "stream";
+
 
 const prisma = new PrismaClient()
 
@@ -61,7 +63,7 @@ class RelatorioPresencaCultoController {
           pageOrientation: 'landscape',
           table: {
             body: [
-            res && [`SUPERVISOR(A): ${res}`, `MÊS: ${dayjs().month()} - ${dayjs().year()}`]
+            res && [`SUPERVISOR(A): ${res()}`, `MÊS: ${dayjs().month()} - ${dayjs().year()}`]
             ]
           }
         }
@@ -70,18 +72,23 @@ class RelatorioPresencaCultoController {
 
     const pdfDoc = printer.createPdfKitDocument(docDefinitions)
 
-    const chunks: any[] = []
+    const buffer = await new Promise((resolve, reject) => {
+      const chunks:  Buffer[] = [];
+      const stream = new Writable({
+         write: (chunk, _, next) => {
+            chunks.push(chunk);
+            next();
+         }
+      });
+      stream.once('error', (err) => reject(err));
+      stream.once('close', () => resolve(Buffer.concat(chunks)));
 
-    pdfDoc.on("data", (chunk) => {
-      chunks.push(chunk)
-    })
-    pdfDoc.end()
+      pdfDoc.pipe(stream);
+      pdfDoc.end();
+    });
 
-    pdfDoc.on("end", () => {
-      const result = Buffer.concat(chunks)
-      reply.header('Content-Type', 'application/pdf')
-      return reply.code(201).send(result);
-    })
+    reply.type('application/pdf').code(200).send(buffer);
+
   }
 
   async show(
