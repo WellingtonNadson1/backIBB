@@ -9,6 +9,8 @@ class PresencaCultoRepositorie {
       select: {
         id: true,
         status: true,
+        userId: true, // Inclua o campo userId
+        cultoIndividualId: true, // Inclua o campo cultoIndividualId
         membro: {
           select: {
             id: true,
@@ -21,6 +23,8 @@ class PresencaCultoRepositorie {
           }
         },
         presenca_culto: true,
+        date_create: true, // Inclua o campo date_create
+        date_update: true, // Inclua o campo date_update
       },
     });
   }
@@ -96,6 +100,9 @@ class PresencaCultoRepositorie {
 
   async createPresencaCulto(presencaCultoDataForm: PresencaCultoData) {
     const { membro, presenca_culto, status } = presencaCultoDataForm;
+    // const date_create = new Date(); // Defina a data e hora atual
+    // const date_update = date_create; // Defina a mesma data e hora para date_update
+
     return await prisma.presencaCulto.create({
       data: {
         membro: {
@@ -108,7 +115,9 @@ class PresencaCultoRepositorie {
             id: presenca_culto
           }
         },
-        status: status
+        status: status,
+        // date_create: date_create,
+        // date_update: date_update,
       },
     });
   }

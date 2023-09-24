@@ -8,24 +8,6 @@ datasource db {
   directUrl = env("DIRECT_URL")
 }
 
-// MODELS
-// model Account {
-//   id            String  @id @default(uuid())
-//   userId        String
-//   type          String
-//   refresh_token String? @db.Text
-//   access_token  String? @db.Text
-//   expires_at    Int?
-//   token_type    String?
-//   scope         String?
-//   id_token      String? @db.Text
-//   session_state String?
-
-//   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-//   @@map("account")
-// }
-
 model Session {
   id           String   @id @default(uuid())
   sessionToken String   @unique
@@ -37,95 +19,91 @@ model Session {
 }
 
 model User {
-  id                  String    @id @default(uuid())
-  role                Role      @default(MEMBER)
-  image_url           String?
-  email               String    @unique
-  first_name          String
-  last_name           String?
-  cpf                 String?
-  date_nascimento     DateTime?
-  sexo                String?
-  telefone            String?
-  escolaridade        String?
-  profissao           String?
-  estado_civil        String?
-  nome_conjuge        String?
-  has_filho           Boolean
-  quantidade_de_filho Int?
-  cep                 String?
-  cidade              String?
-  estado              String?
-  bairro              String?
-  endereco            String?
-  numero_casa         String?
-
+  id                       String                  @id @default(uuid())
+  image_url                String?
+  email                    String                  @unique
+  first_name               String
+  last_name                String?
+  cpf                      String?
+  date_nascimento          DateTime?
+  sexo                     String?
+  telefone                 String?
+  escolaridade             String?
+  profissao                String?
+  estado_civil             String?
+  nome_conjuge             String?
+  has_filho                Boolean
   batizado                 Boolean
   is_discipulado           Boolean
   discipulador             String?
-  supervisao_pertence      Supervisao?             @relation(fields: [supervisaoId], references: [id])
-  celula                   Celula?                 @relation(fields: [celulaId], references: [id])
-  encontros                Encontros[]
-  escolas                  Escola[]
-  TurmaEscola              TurmaEscola?            @relation(fields: [turmaEscolaId], references: [id])
-  situacao_no_reino        SituacaoNoReino?        @relation(fields: [situacaoNoReinoId], references: [id])
-  cargo_de_lideranca       CargoDeLideranca?       @relation(fields: [cargoDeLiderancaId], references: [id])
+  date_casamento           DateTime?
+  date_batizado            DateTime?
+  date_decisao             DateTime?
+  date_create              DateTime                @default(now())
+  date_update              DateTime                @updatedAt
+  password                 String?
+  turmaEscolaId            String?
+  cep                      String?
+  cidade                   String?
+  endereco                 String?
+  estado                   String?
+  numero_casa              String?
+  bairro                   String?
+  cargoDeLiderancaId       String?
+  celulaId                 String?
+  situacaoNoReinoId        String?
+  supervisaoId             String?
+  quantidade_de_filho      Int?
+  role                     Role                    @default(MEMBER)
+  userIdRefresh            String?
+  presencas_cultos         PresencaCulto[]
+  presencas_aulas_escolas  PresencaEscola[]
+  presencas_reuniao_celula PresencaReuniaoCelula[]
   celula_lidera            Celula[]                @relation("LiderCelula")
   escola_lidera            Escola[]                @relation("LiderEscola")
+  refreshTokens            RefreshToken?
+  sessions                 Session[]
   supervisoes_lidera       Supervisao[]            @relation("Supervisor")
-  presencas_aulas_escolas  PresencaEscola[]
-  presencas_cultos         PresencaCulto[]
-  presencas_reuniao_celula PresencaReuniaoCelula[]
-  refreshTokens RefreshToken?
+  cargo_de_lideranca       CargoDeLideranca?       @relation(fields: [cargoDeLiderancaId], references: [id])
+  celula                   Celula?                 @relation(fields: [celulaId], references: [id])
+  situacao_no_reino        SituacaoNoReino?        @relation(fields: [situacaoNoReinoId], references: [id])
+  supervisao_pertence      Supervisao?             @relation(fields: [supervisaoId], references: [id])
+  TurmaEscola              TurmaEscola?            @relation(fields: [turmaEscolaId], references: [id])
+  encontros                Encontros[]             @relation("EncontrosToUser")
+  escolas                  Escola[]                @relation("EscolaToUser")
 
-  celulaId           String?
-  supervisaoId       String?
-  turmaEscolaId      String?
-  situacaoNoReinoId  String?
-  cargoDeLiderancaId String?
-  userIdRefresh String 
-
-  // accounts Account[]
-  sessions Session[]
-  password String?
-
-  date_casamento DateTime?
-  date_batizado  DateTime?
-  date_decisao   DateTime?
-  date_create    DateTime  @default(now())
-  date_update    DateTime  @updatedAt
-
-  @@map("user") // Defina um nome de tabela personalizado, se necessário
+  @@map("user")
 }
 
 model RefreshToken {
-  id String    @id @default(uuid())
-  expiresIn    Int
-  user      User @relation(fields: [userIdRefresh], references: [id])
+  id            String @id @default(uuid())
+  expiresIn     Int
   userIdRefresh String @unique
+  user          User   @relation(fields: [userIdRefresh], references: [id])
+
   @@map("refresh_token")
 }
 
 model Celula {
   id              String          @id @default(uuid())
   nome            String
-  lider           User?           @relation("LiderCelula", fields: [userId], references: [id])
-  supervisao      Supervisao      @relation(fields: [supervisaoId], references: [id])
   cep             String?
   cidade          String?
   estado          String?
-  bairro          String?
   endereco        String?
-  numero_casa     String?
   date_inicio     DateTime?
   date_que_ocorre String?
   date_multipicar DateTime?
-  supervisaoId    String
-  reunioes_celula ReuniaoCelula[]
-  membros         User[]
-  userId          String?
   date_create     DateTime        @default(now())
   date_update     DateTime        @updatedAt
+  supervisaoId    String
+  userId          String?
+  numero_casa     String?
+  bairro          String?
+  supervisao      Supervisao      @relation(fields: [supervisaoId], references: [id])
+  lider           User?           @relation("LiderCelula", fields: [userId], references: [id])
+  reunioes_celula ReuniaoCelula[]
+  membros         User[]
 
   @@map("celula")
 }
@@ -134,9 +112,11 @@ model ReuniaoCelula {
   id                               String                  @id @default(uuid())
   data_reuniao                     DateTime?
   status                           String
+  celulaId                         String?
+  date_create                      DateTime                @default(now())
+  date_update                      DateTime
   presencas_membros_reuniao_celula PresencaReuniaoCelula[]
   celula                           Celula?                 @relation(fields: [celulaId], references: [id], onDelete: Cascade)
-  celulaId                         String?
 
   @@map("reuniao_celula")
 }
@@ -144,45 +124,48 @@ model ReuniaoCelula {
 model PresencaReuniaoCelula {
   id                   String         @id @default(uuid())
   status               Boolean
-  membro               User?          @relation(fields: [userId], references: [id])
   userId               String?
-  which_reuniao_celula ReuniaoCelula? @relation(fields: [reuniaoCelulaId], references: [id], onDelete: Cascade)
   reuniaoCelulaId      String?
+  date_create          DateTime       @default(now())
+  date_update          DateTime       @updatedAt
+  which_reuniao_celula ReuniaoCelula? @relation(fields: [reuniaoCelulaId], references: [id], onDelete: Cascade)
+  membro               User?          @relation(fields: [userId], references: [id])
 }
 
 model Supervisao {
   id                String           @id @default(uuid())
   nome              String
   cor               String
-  supervisor        User?            @relation("Supervisor", fields: [userId], references: [id])
-  celulas           Celula[]
-  membros           User[]
-  nivelSupervisao   NivelSupervisao? @relation(fields: [nivelSupervisaoId], references: [id])
-  userId            String?
-  nivelSupervisaoId String?
   date_create       DateTime         @default(now())
   date_update       DateTime         @updatedAt
+  nivelSupervisaoId String?
+  userId            String?
+  celulas           Celula[]
+  nivelSupervisao   NivelSupervisao? @relation(fields: [nivelSupervisaoId], references: [id])
+  supervisor        User?            @relation("Supervisor", fields: [userId], references: [id])
+  membros           User[]
 
-  @@map("supervisao") // Defina um nome de tabela personalizado, se necessário
+  @@map("supervisao")
 }
 
 model NivelSupervisao {
-  id         String       @id @default(uuid())
-  nome       String
-  descricao  String?
-  supervisao Supervisao[]
+  id          String       @id @default(uuid())
+  nome        String
+  descricao   String?
+  date_create DateTime     @default(now())
+  date_update DateTime
+  supervisao  Supervisao[]
 
   @@map("nivel_supervisao")
 }
 
-// Model das Presencas nos Cultos / Eventos (conferências)
 model CultoGeral {
   id                    String         @id @default(uuid())
   nome                  String
   descricao             String?
-  lista_cultos_semanais CultoSemanal[]
   date_create           DateTime       @default(now())
   date_update           DateTime       @updatedAt
+  lista_cultos_semanais CultoSemanal[]
 
   @@map("culto_geral")
 }
@@ -191,11 +174,11 @@ model CultoSemanal {
   id           String            @id @default(uuid())
   nome         String
   descricao    String?
-  cultos       CultoIndividual[]
-  cultoGeral   CultoGeral?       @relation(fields: [cultoGeralId], references: [id])
   cultoGeralId String?
   date_create  DateTime          @default(now())
   date_update  DateTime          @updatedAt
+  cultos       CultoIndividual[]
+  cultoGeral   CultoGeral?       @relation(fields: [cultoGeralId], references: [id])
 
   @@map("culto_semanal")
 }
@@ -204,34 +187,37 @@ model CultoIndividual {
   id                 String          @id @default(uuid())
   data_inicio_culto  DateTime
   data_termino_culto DateTime
-  status             String // status (realizada, cancelada, etc.)
+  status             String
+  cultoSemanalId     String?
+  date_create        DateTime        @default(now())
+  date_update        DateTime
   presencas_culto    PresencaCulto[]
   culto_semana       CultoSemanal?   @relation(fields: [cultoSemanalId], references: [id])
-  cultoSemanalId     String?
 
   @@map("culto_individual")
 }
 
 model PresencaCulto {
   id                String           @id @default(uuid())
-  status            Boolean //Pode ter um status (presente, ausente, justificado, etc.)
-  membro            User?            @relation(fields: [userId], references: [id])
+  status            Boolean
   userId            String?
-  presenca_culto    CultoIndividual? @relation(fields: [cultoIndividualId], references: [id], onDelete: Cascade)
   cultoIndividualId String?
+  date_create       DateTime         @default(now())
+  date_update       DateTime         @updatedAt
+  presenca_culto    CultoIndividual? @relation(fields: [cultoIndividualId], references: [id], onDelete: Cascade)
+  membro            User?            @relation(fields: [userId], references: [id])
 }
 
-// Model das Presencas nas aulas das Escolas
 model Escola {
   id          String        @id @default(uuid())
   nome        String
   descricao   String?
-  lider       User?         @relation("LiderEscola", fields: [userId], references: [id])
-  turmas      TurmaEscola[]
-  alunos      User[]
   userId      String?
   date_create DateTime      @default(now())
   date_update DateTime      @updatedAt
+  lider       User?         @relation("LiderEscola", fields: [userId], references: [id])
+  turmas      TurmaEscola[]
+  alunos      User[]        @relation("EscolaToUser")
 
   @@map("escola")
 }
@@ -240,15 +226,15 @@ model TurmaEscola {
   id             String       @id @default(uuid())
   nome           String
   descricao      String?
-  escola         Escola?      @relation(fields: [escolaId], references: [id])
-  escolaId       String?
-  aulas_marcadas AulaEscola[]
-  alunos         User[]
-  userId         String?
   date_inicio    DateTime?
   date_conclusao DateTime?
+  userId         String?
+  escolaId       String?
   date_create    DateTime     @default(now())
   date_update    DateTime     @updatedAt
+  aulas_marcadas AulaEscola[]
+  escola         Escola?      @relation(fields: [escolaId], references: [id])
+  alunos         User[]
 
   @@map("turma_escola")
 }
@@ -256,28 +242,32 @@ model TurmaEscola {
 model AulaEscola {
   id            String           @id @default(uuid())
   data_aula     DateTime
-  status        String // status (realizada, cancelada, etc.)
-  presencas     PresencaEscola[]
-  turma         TurmaEscola?     @relation(fields: [turmaEscolaId], references: [id])
+  status        String
   turmaEscolaId String?
+  date_create   DateTime         @default(now())
+  date_update   DateTime
+  turma         TurmaEscola?     @relation(fields: [turmaEscolaId], references: [id])
+  presencas     PresencaEscola[]
 }
 
 model PresencaEscola {
   id                        String      @id @default(uuid())
-  status                    String //Pode ter um status (presente, ausente, justificado, etc.)
-  aluno                     User?       @relation(fields: [userId], references: [id])
+  status                    String
   userId                    String?
-  aula_presenca_qual_escola AulaEscola? @relation(fields: [aulaEscolaId], references: [id])
   aulaEscolaId              String?
+  date_create               DateTime    @default(now())
+  date_update               DateTime
+  aula_presenca_qual_escola AulaEscola? @relation(fields: [aulaEscolaId], references: [id])
+  aluno                     User?       @relation(fields: [userId], references: [id])
 }
 
 model Encontros {
   id            String   @id @default(uuid())
   nome          String
   descricao     String?
-  participantes User[]
   date_create   DateTime @default(now())
   date_update   DateTime @updatedAt
+  participantes User[]   @relation("EncontrosToUser")
 
   @@map("encontros")
 }
@@ -285,9 +275,9 @@ model Encontros {
 model SituacaoNoReino {
   id          String   @id @default(uuid())
   nome        String
-  membros     User[]
   date_create DateTime @default(now())
   date_update DateTime @updatedAt
+  membros     User[]
 
   @@map("situacao_no_reino")
 }
