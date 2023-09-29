@@ -51,18 +51,19 @@ class ReuniaoSemanalCelulaController {
 
       const data_reuniaoSemHorario = startOfDay(new Date(data_reuniao))
 
-      const reuniaoCelulaExist = await prisma.$queryRaw`
-      SELECT *
-      FROM reuniaoCelula
-      WHERE DATE(data_reuniao) = DATE(${data_reuniaoSemHorario})
-      AND celula = ${celula}
-      `;
+     const reuniaoCelulaExist = await prisma.$queryRaw`
+  SELECT *
+  FROM ReuniaoCelula
+  WHERE DATE(data_reuniao) = ${data_reuniaoSemHorario}
+    AND celula = ${celula}
+`;
 
-      if (reuniaoCelulaExist.length > 0) {
-      return reply
-      .code(409)
-      .send({ message: "Presença de Culto já registrada para hoje!" });
-      }
+if (reuniaoCelulaExist.length > 0) {
+  return reply
+    .code(409)
+    .send({ message: "Presença de Culto já registrada para hoje!" });
+}
+
 
       // Se não existir, crie a reunião
       const presencaCulto = await ReuniaoCelulaRepositorie.createReuniaoCelula({
