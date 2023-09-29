@@ -54,9 +54,10 @@ class ReuniaoSemanalCelulaController {
      const reuniaoCelulaExist = await prisma.$queryRaw`
   SELECT *
   FROM ReuniaoCelula
-  WHERE DATE(data_reuniao) = ${data_reuniaoSemHorario}
-    AND celula = ${celula}
-`;
+  WHERE DATE(data_reuniao) = ?
+    AND celula = ?
+`, data_reuniaoSemHorario, celula;
+
 
 if (reuniaoCelulaExist.length > 0) {
   return reply
