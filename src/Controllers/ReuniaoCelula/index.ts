@@ -49,9 +49,11 @@ class ReuniaoSemanalCelulaController {
 
       const { data_reuniao, celula } = reuniaoCelulaDataForm
 
+      const data_reuniaoSemHorario = startOfDay(new Date(data_reuniao))
+
       const reuniaoCelulaExist = await prisma.$queryRaw`
       SELECT *
-      FROM ReuniaoCelula
+      FROM reuniaoCelula
       WHERE DATE(data_reuniao) = DATE(${data_reuniaoSemHorario})
       AND celula = ${celula}
       `;
