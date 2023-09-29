@@ -2,6 +2,9 @@ import { startOfDay } from "date-fns";
 import { FastifyReply, FastifyRequest } from "fastify";
 import { Input, array, date, object, string } from "valibot";
 import ReuniaoCelulaRepositorie from "../../Repositories/ReuniaoCelula";
+import { Prisma, PrismaClient } from "@prisma/client";
+
+const prisma = new PrismaClient();
 
 const ReuniaoCelulaDataSchema = object({
   data_reuniao: date(),
