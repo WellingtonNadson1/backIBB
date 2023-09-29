@@ -46,18 +46,17 @@ class ReuniaoSemanalCelulaController {
 
       const { data_reuniao, celula } = reuniaoCelulaDataForm
 
-      // Ajuste a data para considerar apenas a parte da data (ano, mês e dia)
-      const data_reuniaoSemHorario = startOfDay(new Date(data_reuniao))
+      const reuniaoCelulaExist = await prisma.$queryRaw`
+      SELECT *
+      FROM ReuniaoCelula
+      WHERE DATE(data_reuniao) = DATE(${data_reuniaoSemHorario})
+      AND celula = ${celula}
+      `;
 
-      const reuniaoCelulaExist = await ReuniaoCelulaRepositorie.findFirst({
-        data_reuniao: data_reuniaoSemHorario,
-        celula: celula,
-      });
-
-      if (reuniaoCelulaExist) {
-        return reply
-          .code(409)
-          .send({ message: "Presença de Culto já registrada para hoje!" });
+      if (reuniaoCelulaExist.length > 0) {
+      return reply
+      .code(409)
+      .send({ message: "Presença de Culto já registrada para hoje!" });
       }
 
       // Se não existir, crie a reunião
