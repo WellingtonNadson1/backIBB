@@ -1,19 +1,12 @@
-import { startOfDay } from "date-fns";
 import { FastifyReply, FastifyRequest } from "fastify";
-import { Input, array, date, object, string } from "valibot";
 import ReuniaoCelulaRepositorie from "../../Repositories/ReuniaoCelula";
-import { Prisma, PrismaClient } from "@prisma/client";
 
-const prisma = new PrismaClient();
-
-const ReuniaoCelulaDataSchema = object({
-  data_reuniao: date(),
-  status: string(), // status (realizada, cancelada, etc.)
-  presencas_membros_reuniao_celula: array(string()),
-  celula: string(),
-});
-
-export type ReuniaoCelulaData = Input<typeof ReuniaoCelulaDataSchema>;
+export interface ReuniaoCelulaData {
+  data_reuniao: Date,
+  status: string,
+  presencas_membros_reuniao_celula: string[],
+  celula: string,
+};
 
 interface ReuniaoCelulaParams {
   id: string;
