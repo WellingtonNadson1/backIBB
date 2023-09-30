@@ -145,14 +145,14 @@ class ReuniaoCelulaRepositorie {
     const currentDate = new Date()
     const reuniaoCelula = await prisma.reuniaoCelula.create({
       data: {
-        data_reuniao,
         celula: {
           connect: {
             id: celula
           }
         },
+        data_reuniao: data_reuniao,
         date_update: currentDate,
-        status,
+        status: status,
     }});
     // Conecte os relacionamentos opcionais, se fornecidos
     if (presencas_membros_reuniao_celula) {
