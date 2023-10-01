@@ -74,35 +74,36 @@ class CultoIndividualRepositorie {
   }
 
   async createCultoIndividual(cultoIndividualDataForm: CultoIndividualData) {
-    const { presencas_culto, culto_semana, data_inicio_culto, data_termino_culto, status } = cultoIndividualDataForm;
+    const { data } = cultoIndividualDataForm;
+
     console.log('Dados recebidos do frontend', cultoIndividualDataForm);
 
-    console.log('Data Início (antes de criar)', data_inicio_culto);
-    console.log('Data Término (antes de criar)', data_termino_culto);
+    console.log('Data Início (antes de criar)', data.data_inicio_culto);
+    console.log('Data Término (antes de criar)', data.data_termino_culto);
 
     const cultoIndividual = await prisma.cultoIndividual.create({
       data: {
-        data_inicio_culto: data_inicio_culto,
-        data_termino_culto: data_termino_culto,
-        status: status,
+        data_inicio_culto: data.data_inicio_culto,
+        data_termino_culto: data.data_termino_culto,
+        status: data.status,
         date_update: new Date()
       },
     });
     // Conecte os relacionamentos opcionais, se fornecidos
-  if (culto_semana) {
+  if (data.culto_semana) {
     await prisma.cultoIndividual.update({
       where: { id: cultoIndividual.id },
       data: {
-        culto_semana: { connect: { id: culto_semana } },
+        culto_semana: { connect: { id: data.culto_semana } },
       },
     });
   }
 
-    if (presencas_culto) {
+    if (data.presencas_culto) {
       await prisma.cultoIndividual.update({
         where: { id: cultoIndividual.id },
         data: {
-          presencas_culto: { connect: presencas_culto.map((cultoIndividualId) => ({ id: cultoIndividualId })) },
+          presencas_culto: { connect: data.presencas_culto.map((cultoIndividualId) => ({ id: cultoIndividualId })) },
         },
       });
     }
@@ -111,22 +112,25 @@ class CultoIndividualRepositorie {
   }
 
   async updateCultoIndividual(id: string, cultoIndividualDataForm: CultoIndividualData) {
-    const { presencas_culto, culto_semana, ...CultoIndividualData } = cultoIndividualDataForm;
+    const { data } = cultoIndividualDataForm;
     const updateCultoIndividualInput: UpdateCultoIndividualInput = {
-      ...CultoIndividualData,
+        data_inicio_culto: data.data_inicio_culto,
+        data_termino_culto: data.data_termino_culto,
+        status: data.status,
+        date_update: new Date(),
     };
 
     // Conecte os relacionamentos opcionais apenas se forem fornecidos
-    if (culto_semana !== undefined) {
+    if (data.culto_semana !== undefined) {
       updateCultoIndividualInput.culto_semana = {
         connect: {
-          id: culto_semana,
+          id: data.culto_semana,
         },
       };
     }
 
-    if (presencas_culto !== undefined) {
-      updateCultoIndividualInput.presencas_culto = presencas_culto.map((presencaCultoId) => ({
+    if (data.presencas_culto !== undefined) {
+      updateCultoIndividualInput.presencas_culto = data.presencas_culto.map((presencaCultoId) => ({
         connect: {
           id: presencaCultoId,
         },

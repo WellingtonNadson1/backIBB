@@ -3,11 +3,13 @@ import { Input, array, date, object, string } from 'valibot';
 import { CultoIndividualRepositorie } from "../../Repositories/Culto";
 
 const CultoIndividualDataSchema = object ({
+  data: object ({
   data_inicio_culto: date(),
   data_termino_culto: date(),
   status: string(), // status (realizada, cancelada, etc.)
   presencas_culto: array(string()),
   culto_semana: string(),
+})
 })
 
 export type CultoIndividualData = Input<typeof CultoIndividualDataSchema>
@@ -45,8 +47,8 @@ class CultoIndividualController {
       const cultoIndividualDataForm = request.body as CultoIndividualData;
 console.log('Dados recebidos do frontend - Controller', cultoIndividualDataForm);
 
-console.log('Data Início (antes de criar) Controller', cultoIndividualDataForm.data_inicio_culto);
-console.log('Data Término (antes de criar) Controller', cultoIndividualDataForm.data_termino_culto);
+console.log('Data Início (antes de criar) Controller', cultoIndividualDataForm.data.data_inicio_culto);
+console.log('Data Término (antes de criar) Controller', cultoIndividualDataForm.data.data_termino_culto);
 
 
       const cultoIndividual = await CultoIndividualRepositorie.createCultoIndividual({
