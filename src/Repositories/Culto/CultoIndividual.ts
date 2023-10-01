@@ -77,8 +77,8 @@ class CultoIndividualRepositorie {
     const { presencas_culto, culto_semana, data_inicio_culto, data_termino_culto, status } = cultoIndividualDataForm;
     console.log('Dados recebidos do frontend', cultoIndividualDataForm);
 
-    console.log('Data Início (antes de criar)', cultoIndividualDataForm.data_inicio_culto);
-    console.log('Data Término (antes de criar)', cultoIndividualDataForm.data_termino_culto);
+    console.log('Data Início (antes de criar)', data_inicio_culto);
+    console.log('Data Término (antes de criar)', data_termino_culto);
 
     const cultoIndividual = await prisma.cultoIndividual.create({
       data: {
