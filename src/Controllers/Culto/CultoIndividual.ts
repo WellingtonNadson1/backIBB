@@ -43,6 +43,12 @@ class CultoIndividualController {
   async store(request: FastifyRequest, reply: FastifyReply) {
     try {
       const cultoIndividualDataForm = request.body as CultoIndividualData;
+console.log('Dados recebidos do frontend - Controller', cultoIndividualDataForm);
+
+console.log('Data Início (antes de criar) Controller', cultoIndividualDataForm.data_inicio_culto);
+console.log('Data Término (antes de criar) Controller', cultoIndividualDataForm.data_termino_culto);
+
+
       const cultoIndividual = await CultoIndividualRepositorie.createCultoIndividual({
         ...cultoIndividualDataForm,
       });
