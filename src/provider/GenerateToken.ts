@@ -20,7 +20,7 @@ class GenerateToken {
 
     const token = sign(payload, JWT_SECRET, {
       subject: userId,
-      expiresIn: "20h",
+      expiresIn: "180d",
     });
     return token;
   }
