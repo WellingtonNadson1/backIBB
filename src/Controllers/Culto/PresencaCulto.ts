@@ -18,6 +18,11 @@ interface PresencaCultoParams {
 
 class PresencaCultoController {
   // Fazendo uso do Fastify
+  findLog(request: FastifyRequest, reply: FastifyReply) {
+    const presencasCultos = PresencaCultoRepositorie.findLog();
+    return reply.send(presencasCultos);
+  }
+
   async index(request: FastifyRequest, reply: FastifyReply) {
     const presencasCultos = await PresencaCultoRepositorie.findAll();
     if (!presencasCultos) {

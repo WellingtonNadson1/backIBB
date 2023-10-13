@@ -1,11 +1,30 @@
 import { PrismaClient } from "@prisma/client";
 import { PresencaCultoData } from "../../Controllers/Culto/PresencaCulto";
+import utc from "dayjs/plugin/utc"
+import timezone from "dayjs/plugin/timezone"
+import dayjs from "dayjs";
+
+dayjs.extend(utc);
+dayjs.extend(timezone);
+
+// Defina o fuso horário para o Brasil
+// dayjs.tz.setDefault('America/Sao_Paulo');
+
+// Registre uma data com o fuso horário do Brasil
+// console.log('Data Brasil: ', dataBrasil)
 
 const prisma = new PrismaClient();
 
 class PresencaCultoRepositorie {
+  findLog() {
+    const dataBrasil = dayjs().tz('America/Sao_Paulo');
+    const date_create = dataBrasil.format('YYYY-MM-DDTHH:mm:ss.SSS[Z]')
+    const dataBrasilDate = new Date(date_create);
+    console.log('Data Brasil (Date):', dataBrasilDate);
+  }
   async findAll() {
     return await prisma.presencaCulto.findMany({
+
       select: {
         id: true,
         status: true,
@@ -100,8 +119,10 @@ class PresencaCultoRepositorie {
 
   async createPresencaCulto(presencaCultoDataForm: PresencaCultoData) {
     const { membro, presenca_culto, status } = presencaCultoDataForm;
-    // const date_create = new Date(); // Defina a data e hora atual
-    // const date_update = date_create; // Defina a mesma data e hora para date_update
+    const dataBrasil = dayjs().tz('America/Sao_Paulo');
+    const date_create = dataBrasil.format('YYYY-MM-DDTHH:mm:ss.SSS[Z]')
+    const dataBrasilDate = new Date(date_create);
+    const date_update = dataBrasilDate;
 
     return await prisma.presencaCulto.create({
       data: {
@@ -116,8 +137,8 @@ class PresencaCultoRepositorie {
           }
         },
         status: status,
-        // date_create: date_create,
-        // date_update: date_update,
+        date_create: dataBrasilDate,
+        date_update: date_update,
       },
     });
   }

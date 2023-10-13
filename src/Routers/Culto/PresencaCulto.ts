@@ -2,6 +2,7 @@ import { FastifyInstance } from "fastify";
 import { PresencaCultoController } from '../../Controllers/Culto';
 
 const routerPresencaCulto = async (fastify: FastifyInstance) => {
+  fastify.get("/presencacultos/log", PresencaCultoController.findLog);
   fastify.get("/presencacultos", PresencaCultoController.index);
   fastify.get('/presencacultos/:id', PresencaCultoController.show);
   fastify.get(`/presencacultosbycelula/:culto/:lider`, PresencaCultoController.searchByIdCulto);

@@ -1,5 +1,11 @@
 import { PrismaClient } from "@prisma/client";
 import { PresencaReuniaoCelulaData } from "../../Controllers/PresencaReuniaoCelula";
+import utc from "dayjs/plugin/utc"
+import timezone from "dayjs/plugin/timezone"
+import dayjs from "dayjs";
+
+dayjs.extend(utc);
+dayjs.extend(timezone);
 
 const prisma = new PrismaClient();
 
@@ -83,6 +89,10 @@ class PresencaReuniaoCelulaRepositorie {
 
   async createPresencaReuniaCelula(presencaCultoDataForm: PresencaReuniaoCelulaData) {
     const { membro, which_reuniao_celula, status } = presencaCultoDataForm;
+    const dataBrasil = dayjs().tz('America/Sao_Paulo');
+    const date_create = dataBrasil.format('YYYY-MM-DDTHH:mm:ss.SSS[Z]')
+    const dataBrasilDate = new Date(date_create);
+    const date_update = dataBrasilDate;
     return await prisma.presencaReuniaoCelula.create({
       data: {
         membro: {
@@ -95,7 +105,9 @@ class PresencaReuniaoCelulaRepositorie {
             id: which_reuniao_celula
           }
         },
-        status: status
+        status: status,
+        date_create: dataBrasilDate,
+        date_update: date_update,
       },
     });
   }
