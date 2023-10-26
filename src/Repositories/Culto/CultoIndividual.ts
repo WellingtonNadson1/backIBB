@@ -1,7 +1,6 @@
 import { Prisma, PrismaClient } from "@prisma/client";
-import { CultoIndividualData } from "../../Controllers/Culto/CultoIndividual";
-
-const prisma = new PrismaClient();
+import { CultoIndividualData, CultoIndividualForDate } from "../../Controllers/Culto/CultoIndividual";
+import prisma from "../../services/prisma";
 
 type UpdateCultoIndividualInput = Prisma.CultoIndividualUpdateInput & {
   presencas_culto?: { connect: { id: string } }[];
@@ -12,8 +11,53 @@ interface CultoIndividualConnect {
 }
 
 class CultoIndividualRepositorie {
+  async findAllIntervall( startDate: Date, endDate: Date ) {
+
+    return await prisma?.cultoIndividual.findMany({
+      where: {
+        // Filtrar por data_inicio_culto dentro do intervalo
+        data_inicio_culto: {
+          gte: startDate, // Data de início maior ou igual à data inicial
+          lte: endDate,   // Data de início menor ou igual à data final
+        }
+      },
+      select: {
+        id: true,
+        data_inicio_culto: true,
+        presencas_culto: {
+          select: {
+            status: true,
+            membro: {
+              select: {
+                id: true,
+                first_name: true,
+                supervisao_pertence: {
+                  select: {
+                    id: true,
+                    nome: true,
+                  }
+                },
+                celula: {
+                  select: {
+                    id: true,
+                    nome: true,
+                  }
+                }
+              }
+            },
+          }
+        },
+        culto_semana: {
+          select: {
+            nome: true
+          },
+        },
+      },
+    });
+  }
+
   async findAll() {
-    return await prisma.cultoIndividual.findMany({
+    return await prisma?.cultoIndividual.findMany({
       select: {
         id: true,
         data_inicio_culto: true,
@@ -42,7 +86,7 @@ class CultoIndividualRepositorie {
   }
 
   async findById(id: string) {
-    return await prisma.cultoIndividual.findUnique({
+    return await prisma?.cultoIndividual.findUnique({
       where: {
         id: id,
       },
@@ -81,7 +125,7 @@ class CultoIndividualRepositorie {
     console.log('Data Início (antes de criar)', data.data_inicio_culto);
     console.log('Data Término (antes de criar)', data.data_termino_culto);
 
-    const cultoIndividual = await prisma.cultoIndividual.create({
+    const cultoIndividual = await prisma?.cultoIndividual.create({
       data: {
         data_inicio_culto: data.data_inicio_culto,
         data_termino_culto: data.data_termino_culto,
@@ -91,8 +135,8 @@ class CultoIndividualRepositorie {
     });
     // Conecte os relacionamentos opcionais, se fornecidos
   if (data.culto_semana) {
-    await prisma.cultoIndividual.update({
-      where: { id: cultoIndividual.id },
+    await prisma?.cultoIndividual.update({
+      where: { id: cultoIndividual?.id },
       data: {
         culto_semana: { connect: { id: data.culto_semana } },
       },
@@ -100,8 +144,8 @@ class CultoIndividualRepositorie {
   }
 
     if (data.presencas_culto) {
-      await prisma.cultoIndividual.update({
-        where: { id: cultoIndividual.id },
+      await prisma?.cultoIndividual.update({
+        where: { id: cultoIndividual?.id },
         data: {
           presencas_culto: { connect: data.presencas_culto.map((cultoIndividualId) => ({ id: cultoIndividualId })) },
         },
@@ -136,7 +180,7 @@ class CultoIndividualRepositorie {
         },
       })) as CultoIndividualConnect[];
     }
-    return await prisma.cultoIndividual.update({
+    return await prisma?.cultoIndividual.update({
       where: {
         id: id,
       },
@@ -145,7 +189,7 @@ class CultoIndividualRepositorie {
   }
 
   async deleteCultoIndividual(id: string) {
-    return await prisma.cultoIndividual.delete({
+    return await prisma?.cultoIndividual.delete({
       where: {
         id: id,
       },

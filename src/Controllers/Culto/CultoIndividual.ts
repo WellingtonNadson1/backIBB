@@ -12,7 +12,13 @@ const CultoIndividualDataSchema = object ({
 })
 })
 
+const CultoIndividualForDateSchema = object ({
+    startDate: date(),
+    endDate: date(),
+})
+
 export type CultoIndividualData = Input<typeof CultoIndividualDataSchema>
+export type CultoIndividualForDate = Input<typeof CultoIndividualForDateSchema>
 
 interface CultoIndividualParams {
   id: string;
@@ -20,6 +26,18 @@ interface CultoIndividualParams {
 
 class CultoIndividualController {
   // Fazendo uso do Fastify
+  async forDate(request: FastifyRequest<{
+    Params: CultoIndividualForDate;
+  }>, reply: FastifyReply) {
+  
+    const { startDate, endDate } = request.body as CultoIndividualForDate
+    const cultosIndividuaisForDate = await CultoIndividualRepositorie.findAllIntervall(startDate, endDate);
+    if (!cultosIndividuaisForDate) {
+      return reply.code(500).send({ error: "Internal Server Error" });
+    }
+    return reply.send(cultosIndividuaisForDate);
+  }
+
   async index(request: FastifyRequest, reply: FastifyReply) {
     const cultosIndividuais = await CultoIndividualRepositorie.findAll();
     if (!cultosIndividuais) {

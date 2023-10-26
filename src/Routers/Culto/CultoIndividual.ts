@@ -3,6 +3,7 @@ import { CultoIndividualController } from '../../Controllers/Culto';
 
 const routerCultoIndividual = async (fastify: FastifyInstance) => {
   // TURMA ESCOLA
+  fastify.post("/cultosindividuais/fordate", CultoIndividualController.forDate);
   fastify.get("/cultosindividuais", CultoIndividualController.index);
   fastify.get('/cultosindividuais/:id', CultoIndividualController.show);
   fastify.post("/cultosindividuais", CultoIndividualController.store);
