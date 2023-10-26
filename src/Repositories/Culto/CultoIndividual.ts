@@ -21,7 +21,9 @@ class CultoIndividualRepositorie {
             presencas_culto: {
                 some: {
                     membro: {
-                        supervisaoId: { equals: superVisionId }
+                      supervisao_pertence: {
+                        id: { equals: superVisionId }
+                      },
                     }
                 }
             }
@@ -32,7 +34,9 @@ class CultoIndividualRepositorie {
             presencas_culto: {
                 where: {
                     membro: {
-                        supervisaoId: { equals: superVisionId }
+                      supervisao_pertence: {
+                        id: { equals: superVisionId }
+                      },
                     }
                 },
                 select: {
