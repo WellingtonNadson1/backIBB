@@ -15,6 +15,7 @@ const CultoIndividualDataSchema = object ({
 const CultoIndividualForDateSchema = object ({
     startDate: date(),
     endDate: date(),
+    superVisionId: string()
 })
 
 export type CultoIndividualData = Input<typeof CultoIndividualDataSchema>
@@ -30,8 +31,8 @@ class CultoIndividualController {
     Params: CultoIndividualForDate;
   }>, reply: FastifyReply) {
   
-    const { startDate, endDate } = request.body as CultoIndividualForDate
-    const cultosIndividuaisForDate = await CultoIndividualRepositorie.findAllIntervall(startDate, endDate);
+    const { startDate, endDate, superVisionId } = request.body as CultoIndividualForDate
+    const cultosIndividuaisForDate = await CultoIndividualRepositorie.findAllIntervall(startDate, endDate, superVisionId);
     if (!cultosIndividuaisForDate) {
       return reply.code(500).send({ error: "Internal Server Error" });
     }

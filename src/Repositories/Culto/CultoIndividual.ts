@@ -11,50 +11,63 @@ interface CultoIndividualConnect {
 }
 
 class CultoIndividualRepositorie {
-  async findAllIntervall( startDate: Date, endDate: Date ) {
-
-    return await prisma?.cultoIndividual.findMany({
-      where: {
-        // Filtrar por data_inicio_culto dentro do intervalo
-        data_inicio_culto: {
-          gte: startDate, // Data de início maior ou igual à data inicial
-          lte: endDate,   // Data de início menor ou igual à data final
-        }
-      },
-      select: {
-        id: true,
-        data_inicio_culto: true,
-        presencas_culto: {
-          select: {
-            status: true,
-            membro: {
-              select: {
-                id: true,
-                first_name: true,
-                supervisao_pertence: {
-                  select: {
-                    id: true,
-                    nome: true,
-                  }
-                },
-                celula: {
-                  select: {
-                    id: true,
-                    nome: true,
-                  }
-                }
-              }
+  async findAllIntervall(startDate: Date, endDate: Date, superVisionId: string) {
+    const result = await prisma?.cultoIndividual.findMany({
+        where: {
+            data_inicio_culto: {
+                gte: startDate,
+                lte: endDate,
             },
-          }
+            presencas_culto: {
+                some: {
+                    membro: {
+                        supervisaoId: { equals: superVisionId }
+                    }
+                }
+            }
         },
-        culto_semana: {
-          select: {
-            nome: true
-          },
+        select: {
+            id: true,
+            data_inicio_culto: true,
+            presencas_culto: {
+                where: {
+                    membro: {
+                        supervisaoId: { equals: superVisionId }
+                    }
+                },
+                select: {
+                    status: true,
+                    membro: {
+                        select: {
+                            id: true,
+                            first_name: true,
+                            supervisao_pertence: {
+                                select: {
+                                    id: true,
+                                    nome: true,
+                                }
+                            },
+                            celula: {
+                                select: {
+                                    id: true,
+                                    nome: true,
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            culto_semana: {
+                select: {
+                    nome: true
+                },
+            },
         },
-      },
     });
-  }
+    await prisma?.$disconnect();
+    return result;
+}
+
 
   async findAll() {
     return await prisma?.cultoIndividual.findMany({
