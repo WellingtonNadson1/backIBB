@@ -28,6 +28,9 @@ class CultoIndividualRepositorie {
                 }
             }
         },
+        orderBy: {
+          data_inicio_culto: 'asc' // Ordena em ordem crescente
+      },
         select: {
             id: true,
             data_inicio_culto: true,
