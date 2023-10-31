@@ -8,6 +8,7 @@ const routerCelula = async (fastify: FastifyInstance) => {
   fastify.get('/celulas/:id', CelulaController.show);
   fastify.post("/celulas", CelulaController.store);
   fastify.delete("/celulas/:id", CelulaController.delete);
+  fastify.put("/celulas", CelulaController.updateForDate);
   fastify.put("/celulas/:id", CelulaController.update);
 
 };

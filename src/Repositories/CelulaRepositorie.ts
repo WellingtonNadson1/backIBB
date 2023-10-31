@@ -1,11 +1,10 @@
-import { PrismaClient } from "@prisma/client";
 import { CelulaData } from "../Controllers/CelulaController";
-
-const prisma = new PrismaClient();
+import prisma from ".././services/prisma";
+import { Prisma } from "@prisma/client";
 
 class CelulaRepositorie {
   async findAll() {
-    return await prisma.celula.findMany({
+    return await prisma?.celula.findMany({
       select: {
         id: true,
         nome: true,
@@ -47,7 +46,7 @@ class CelulaRepositorie {
   }
 
   async findById(id: string){
-    return await prisma.celula.findUnique({
+    return await prisma?.celula.findUnique({
       where: {
         id: id,
       },
@@ -106,7 +105,7 @@ class CelulaRepositorie {
   async createCelula(celulaDataForm: CelulaData) {
     const { membros, reunioes_celula, ...CelulaData } = celulaDataForm
 
-    return await prisma.celula.create({
+    return await prisma?.celula.create({
       data: {
         ...CelulaData,
         lider: {
@@ -131,7 +130,7 @@ class CelulaRepositorie {
 
   async updateCelula(id: string, celulaDataForm: CelulaData) {
     const { nome, lider, reunioes_celula, supervisao, membros, ...CelulaData } = celulaDataForm
-    return await prisma.celula.update({
+    return await prisma?.celula.update({
       where: {
         id: id,
       },
@@ -159,8 +158,76 @@ class CelulaRepositorie {
 
   }
 
+  async updateDateCelula(id: string, newDate: string) {
+    // Consulte a célula existente para obter os dados atuais
+    const existingCelula = await prisma?.celula.findUnique({
+      where: {
+        id: id,
+      },
+      include: {
+        // Inclua as relações que você deseja manter sem modificação
+        lider: true,
+        supervisao: true,
+        membros: true,
+        reunioes_celula: true,
+      },
+    });
+  
+    if (!existingCelula) {
+      throw new Error(`Célula com ID ${id} não encontrada.`);
+    }
+  
+    // Crie um objeto de dados de atualização que inclui a nova data
+    const updateData: Prisma.CelulaUpdateInput = {
+      date_que_ocorre: newDate,
+    };
+  
+    // Mantenha as relações existentes sem modificação
+  if (existingCelula.lider) {
+    updateData.lider = {
+      connect: {
+        id: existingCelula.lider.id,
+      },
+    };
+  }
+
+  if (existingCelula.supervisao) {
+    updateData.supervisao = {
+      connect: {
+        id: existingCelula.supervisao.id,
+      },
+    };
+  }
+
+  if (existingCelula.membros) {
+    updateData.membros = {
+      connect: existingCelula.membros.map((membro) => ({
+        id: membro.id,
+      })),
+    };
+  }
+
+  if (existingCelula.reunioes_celula) {
+    updateData.reunioes_celula = {
+      connect: existingCelula.reunioes_celula.map((reuniao) => ({
+        id: reuniao.id,
+      })),
+    };
+  }
+
+  // Atualize a célula com os novos dados de data
+  const updatedCelula = await prisma?.celula.update({
+    where: {
+      id: id,
+    },
+    data: updateData,
+  });
+
+  return updatedCelula;
+  }
+
   async deleteCelula(id: string) {
-    await prisma.celula.delete({
+    await prisma?.celula.delete({
       where: {
         id: id,
       },

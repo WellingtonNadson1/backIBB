@@ -21,6 +21,13 @@ const CelulaDataSchema = object ({
 
 export type CelulaData = Input<typeof CelulaDataSchema>
 
+const CelulaChangeDateSchema = object ({
+  id: string(),
+  date_que_ocorre: string(),
+})
+
+export type CelulaChangeDate = Input<typeof  CelulaChangeDateSchema>
+
 interface CelulaParams {
   id: string;
 }
@@ -59,6 +66,17 @@ class CelulaController {
     } catch (error) {
       return reply.code(400).send(error);
     }
+  }
+
+  async updateForDate(
+    request: FastifyRequest<{
+      Params: CelulaParams;
+    }>,
+    reply: FastifyReply
+  ) {
+    const { id, date_que_ocorre } = request.body as CelulaChangeDate;
+    const celula = await CelulaRepositorie.updateDateCelula(id, date_que_ocorre);
+    return reply.code(202).send(celula);
   }
 
   async update(
