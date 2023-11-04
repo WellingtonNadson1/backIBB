@@ -44,6 +44,7 @@ class CultoIndividualRepositorie {
                 },
                 select: {
                     id: true,
+                    status: true,
                     membro: {
                         select: {
                             id: true,
