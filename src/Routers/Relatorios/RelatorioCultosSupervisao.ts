@@ -58,6 +58,12 @@ const routerRelatorioPresencaCulto = async (fastify: FastifyInstance) => {
           status: true,
           cultoIndividualId: true,
           date_create: true,
+          presenca_culto: {
+            select: {
+              status: true,
+              id: true
+            }
+          }
         },
       },
       celula: {
