@@ -1,8 +1,4 @@
 import { FastifyInstance, FastifyReply, FastifyRequest } from "fastify";
-import RelatorioPresencaCultoController from "../../Controllers/RelatorioPresencaCultoController";
-import PdfPrinter from "pdfmake";
-import { TDocumentDefinitions } from "pdfmake/interfaces";
-import { Writable } from "stream";
 import { PrismaClient } from "@prisma/client";
 import dayjs from "dayjs";
 
@@ -28,8 +24,8 @@ const routerRelatorioPresencaCulto = async (fastify: FastifyInstance) => {
 
   // ESCOLA
   fastify.get("/relatorio/presencacultos", async (request: FastifyRequest, reply: FastifyReply) => {
-    const dataInicio = dayjs('2023-10-01'); // Data de início do intervalo
-    const dataFim = dayjs('2023-10-12'); // Data de fim do intervalo
+    const dataInicio = dayjs('2023-10-01').format('YYYY-MM-DDTHH:mm:ssZ[Z]'); // Data de início do intervalo
+    const dataFim = dayjs('2023-10-12').format('YYYY-MM-DDTHH:mm:ssZ[Z]'); // Data de fim do intervalo
 
     // Consulta para buscar membros da supervisão que compareceram aos cultos no intervalo de tempo
     const membrosCompareceramCultos = await prisma.user.findMany({
@@ -39,8 +35,8 @@ const routerRelatorioPresencaCulto = async (fastify: FastifyInstance) => {
           some: {
             presenca_culto: {
               data_inicio_culto: {
-                gte: dataInicio.toISOString(), // Data de início do intervalo
-                lte: dataFim.toISOString(), // Data de fim do intervalo
+                gte: dataInicio, // Data de início do intervalo
+                lte: dataFim, // Data de fim do intervalo
               },
             },
           },
@@ -58,12 +54,6 @@ const routerRelatorioPresencaCulto = async (fastify: FastifyInstance) => {
           status: true,
           cultoIndividualId: true,
           date_create: true,
-          presenca_culto: {
-            select: {
-              status: true,
-              id: true
-            }
-          }
         },
       },
       celula: {

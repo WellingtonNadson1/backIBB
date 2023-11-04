@@ -34,11 +34,6 @@ class PresencaCultoRepositorie {
             }
           }
         },
-        presenca_culto: {
-          select: {
-            
-          }
-        },
         date_create: true,
         date_update: true,
       },
