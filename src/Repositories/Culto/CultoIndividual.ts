@@ -1,5 +1,5 @@
-import { Prisma, PrismaClient } from "@prisma/client";
-import { CultoIndividualData, CultoIndividualForDate } from "../../Controllers/Culto/CultoIndividual";
+import { Prisma } from "@prisma/client";
+import { CultoIndividualData } from "../../Controllers/Culto/CultoIndividual";
 import prisma from "../../services/prisma";
 
 type UpdateCultoIndividualInput = Prisma.CultoIndividualUpdateInput & {
@@ -43,11 +43,23 @@ class CultoIndividualRepositorie {
                     }
                 },
                 select: {
-                    status: true,
+                    id: true,
                     membro: {
                         select: {
                             id: true,
                             first_name: true,
+                            presencas_cultos: {
+                              select: {
+                                status: true,
+                                cultoIndividualId: true,
+                                presenca_culto: {
+                                  select: {
+                                    id: true,
+                                    status: true,
+                                  }
+                                }
+                              }
+                            },
                             supervisao_pertence: {
                                 select: {
                                     id: true,

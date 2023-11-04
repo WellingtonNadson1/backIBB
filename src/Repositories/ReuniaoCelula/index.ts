@@ -1,5 +1,11 @@
 import { Prisma, PrismaClient } from "@prisma/client";
 import { ReuniaoCelulaData } from "../../Controllers/ReuniaoCelula";
+import utc from "dayjs/plugin/utc"
+import timezone from "dayjs/plugin/timezone"
+import dayjs from "dayjs";
+
+dayjs.extend(utc);
+dayjs.extend(timezone);
 
 const prisma = new PrismaClient();
 
@@ -142,7 +148,10 @@ class ReuniaoCelulaRepositorie {
 
   async createReuniaoCelula(reuniaoCelulaDataForm: ReuniaoCelulaData) {
     const { presencas_membros_reuniao_celula, celula, status, data_reuniao } = reuniaoCelulaDataForm;
-    const currentDate = new Date()
+    const dataBrasil = dayjs().tz('America/Sao_Paulo');
+    const date_create = dataBrasil.format('YYYY-MM-DDTHH:mm:ss.SSS[Z]')
+    const date_createBrasilDate = new Date(date_create);
+    const date_update = date_createBrasilDate;
     const reuniaoCelula = await prisma.reuniaoCelula.create({
       data: {
         celula: {
@@ -150,8 +159,8 @@ class ReuniaoCelulaRepositorie {
             id: celula
           }
         },
-        data_reuniao: data_reuniao,
-        date_update: currentDate,
+        data_reuniao: date_createBrasilDate,
+        date_update: date_update,
         status: status,
     }});
     // Conecte os relacionamentos opcionais, se fornecidos

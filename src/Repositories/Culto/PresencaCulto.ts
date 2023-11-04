@@ -7,12 +7,6 @@ import dayjs from "dayjs";
 dayjs.extend(utc);
 dayjs.extend(timezone);
 
-// Defina o fuso horário para o Brasil
-// dayjs.tz.setDefault('America/Sao_Paulo');
-
-// Registre uma data com o fuso horário do Brasil
-// console.log('Data Brasil: ', dataBrasil)
-
 const prisma = new PrismaClient();
 
 class PresencaCultoRepositorie {
@@ -24,12 +18,11 @@ class PresencaCultoRepositorie {
   }
   async findAll() {
     return await prisma.presencaCulto.findMany({
-
       select: {
         id: true,
         status: true,
-        userId: true, // Inclua o campo userId
-        cultoIndividualId: true, // Inclua o campo cultoIndividualId
+        userId: true,
+        cultoIndividualId: true,
         membro: {
           select: {
             id: true,
@@ -41,9 +34,13 @@ class PresencaCultoRepositorie {
             }
           }
         },
-        presenca_culto: true,
-        date_create: true, // Inclua o campo date_create
-        date_update: true, // Inclua o campo date_update
+        presenca_culto: {
+          select: {
+            
+          }
+        },
+        date_create: true,
+        date_update: true,
       },
     });
   }
@@ -142,14 +139,6 @@ class PresencaCultoRepositorie {
       },
     });
   }
-
-  // async createPresencaMembrosCulto(presencaMembrosCultoData: PresencaCultoData[]) {
-  //   return await prisma.presencaCulto.create({
-  //     data: {
-
-  //   }}
-  //   )
-  // }
 
   async updatePresencaCulto(id: string, presencaCultoDataForm: PresencaCultoData) {
     const { membro, ...presencaCultoData } = presencaCultoDataForm;
