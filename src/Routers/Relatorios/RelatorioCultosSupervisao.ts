@@ -24,8 +24,8 @@ const routerRelatorioPresencaCulto = async (fastify: FastifyInstance) => {
 
   // ESCOLA
   fastify.get("/relatorio/presencacultos", async (request: FastifyRequest, reply: FastifyReply) => {
-    const dataInicio = dayjs('2023-10-01').format('YYYY-MM-DDTHH:mm:ssZ[Z]'); // Data de início do intervalo
-    const dataFim = dayjs('2023-10-12').format('YYYY-MM-DDTHH:mm:ssZ[Z]'); // Data de fim do intervalo
+    const dataInicio = dayjs('2023-10-01').toISOString(); // Data de início do intervalo
+    const dataFim = dayjs('2023-10-12').toISOString(); // Data de fim do intervalo
 
     // Consulta para buscar membros da supervisão que compareceram aos cultos no intervalo de tempo
     const membrosCompareceramCultos = await prisma.user.findMany({
