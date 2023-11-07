@@ -74,16 +74,16 @@ class CelulaRepositorie {
         lider: {
           select: {
             id: true,
-            first_name: true,
           }
         },
         supervisao: {
           select: {
             id: true,
-            nome: true,
           }
         },
         date_que_ocorre: true,
+        date_inicio: true,
+        date_multipicar: true,
         reunioes_celula: {
           select: {
             id: true,
