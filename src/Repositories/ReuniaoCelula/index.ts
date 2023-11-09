@@ -27,7 +27,7 @@ class ReuniaoCelulaRepositorie {
     data_reuniao: Date,
     celula: string,
   }) {
-    return prisma.$queryRaw`SELECT * FROM ReuniaoCelula WHERE DATE(data_reuniao) = DATE('${data_reuniao}') AND celula = '${celula}'`;
+    return prisma.$queryRaw`SELECT * FROM reuniao_celula WHERE DATE(data_reuniao) = DATE('${data_reuniao}') AND celula = '${celula}'`;
   }
 
   async findAll() {
