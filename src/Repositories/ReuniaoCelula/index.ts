@@ -12,7 +12,9 @@ const prisma = new PrismaClient().$extends({
     reuniaoCelula: {
       async findFirst({ model, operation, args, query }) {
         // take incoming `where` and set `data_reuniao`
-        args.where = { ...args.where, data_reuniao: { equals: args.where?.data_reuniao?.toString().substring(0, 10) } }
+        if (typeof args.where?.data_reuniao === 'string') {
+          args.where = { ...args.where, data_reuniao: { equals: dayjs(args.where?.data_reuniao).toISOString().substring(0, 10) } }
+        }
 
         return query(args)
       },
@@ -66,7 +68,7 @@ class ReuniaoCelulaRepositorie {
     data_reuniao: Date,
     celula: string,
   } ) {
-    const dataReuniaoModify = dayjs(data_reuniao).toString().substring(0,10)
+    const dataReuniaoModify = dayjs(data_reuniao).toISOString().substring(0,10)
     return await prisma.reuniaoCelula.findFirst({
       where: {
         data_reuniao: dataReuniaoModify,
