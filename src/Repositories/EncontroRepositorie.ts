@@ -1,11 +1,11 @@
-import { PrismaClient } from "@prisma/client";
 import { EncontroData } from "../Controllers/EncontroController";
+import { createPrismaInstance, disconnectPrisma } from "../services/prisma";
 
-const prisma = new PrismaClient();
+const prisma = createPrismaInstance()
 
 class EncontroRepositorie {
   async findAll() {
-    return await prisma.encontros.findMany({
+    const result = await prisma?.encontros.findMany({
       select: {
         id: true,
         nome: true,
@@ -18,10 +18,12 @@ class EncontroRepositorie {
         },
       }
     })
+    await disconnectPrisma()
+    return result
   }
 
   async findById(id: string){
-    return await prisma.encontros.findUnique({
+    const result = await prisma?.encontros.findUnique({
       where: {
         id: id,
       },
@@ -37,11 +39,13 @@ class EncontroRepositorie {
         },
       }
     })
+    await disconnectPrisma()
+    return result
   }
 
   async createEncontro(eencontroDataForm: EncontroData) {
     const { participantes, ...EncontroData } = eencontroDataForm
-    return await prisma.encontros.create({
+    const result = await prisma?.encontros.create({
       data: {
         ...EncontroData,
         participantes: {
@@ -50,11 +54,13 @@ class EncontroRepositorie {
         },
       },
     })
+    await disconnectPrisma()
+    return result
   }
 
   async updateEncontro(id: string, escolaDataForm: EncontroData) {
     const { participantes, ...EncontroData } = escolaDataForm
-    return await prisma.encontros.update({
+    const result = await prisma?.encontros.update({
       where: {
         id: id,
       },
@@ -66,15 +72,18 @@ class EncontroRepositorie {
         },
       },
     })
-
+    await disconnectPrisma()
+    return result
   }
 
   async deleteEncontro(id: string) {
-    return await prisma.encontros.delete({
+    const result = await prisma?.encontros.delete({
       where: {
         id: id,
       },
     })
+    await disconnectPrisma()
+    return result
   }
 }
 

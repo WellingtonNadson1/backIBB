@@ -1,17 +1,17 @@
-import { PrismaClient } from "@prisma/client";
 import { PresencaReuniaoCelulaData } from "../../Controllers/PresencaReuniaoCelula";
 import utc from "dayjs/plugin/utc"
 import timezone from "dayjs/plugin/timezone"
 import dayjs from "dayjs";
+import { createPrismaInstance, disconnectPrisma } from "../../services/prisma";
 
 dayjs.extend(utc);
 dayjs.extend(timezone);
 
-const prisma = new PrismaClient();
+const prisma = createPrismaInstance()
 
 class PresencaReuniaoCelulaRepositorie {
   async findAll() {
-    return await prisma.presencaReuniaoCelula.findMany({
+    const result = await prisma?.presencaReuniaoCelula.findMany({
       select: {
         id: true,
         status: true,
@@ -29,11 +29,13 @@ class PresencaReuniaoCelulaRepositorie {
         which_reuniao_celula: true,
       },
     });
+    await disconnectPrisma()
+    return result;
   }
 
   async findPresenceRegistered(
     id: string) {
-    return await prisma.presencaReuniaoCelula.findFirst({
+    const result = await prisma?.presencaReuniaoCelula.findFirst({
       where: {
         which_reuniao_celula: { id: id},
       },
@@ -54,6 +56,8 @@ class PresencaReuniaoCelulaRepositorie {
         which_reuniao_celula: true,
       },
     });
+    await disconnectPrisma()
+    return result;
   }
 
   async findFirst({
@@ -63,7 +67,7 @@ class PresencaReuniaoCelulaRepositorie {
     which_reuniao_celula: string;
     membro: string;
   }) {
-    return await prisma.presencaReuniaoCelula.findFirst({
+    const result = await prisma?.presencaReuniaoCelula.findFirst({
       where: {
         which_reuniao_celula: { id: which_reuniao_celula},
         membro: { id: membro},
@@ -85,11 +89,13 @@ class PresencaReuniaoCelulaRepositorie {
         which_reuniao_celula: true,
       },
     });
+    await disconnectPrisma()
+    return result;
   }
 
 
   async findById(id: string) {
-    return await prisma.presencaReuniaoCelula.findUnique({
+    const result = await prisma?.presencaReuniaoCelula.findUnique({
       where: {
         id: id,
       },
@@ -110,6 +116,8 @@ class PresencaReuniaoCelulaRepositorie {
         which_reuniao_celula: true,
       },
     });
+    await disconnectPrisma()
+    return result;
   }
 
   async createPresencaReuniaCelula(presencaCultoDataForm: PresencaReuniaoCelulaData) {
@@ -118,7 +126,7 @@ class PresencaReuniaoCelulaRepositorie {
     const date_create = dataBrasil.format('YYYY-MM-DDTHH:mm:ss.SSS[Z]')
     const dataBrasilDate = new Date(date_create);
     const date_update = dataBrasilDate;
-    return await prisma.presencaReuniaoCelula.create({
+    const result = await prisma?.presencaReuniaoCelula.create({
       data: {
         membro: {
           connect: {
@@ -135,11 +143,13 @@ class PresencaReuniaoCelulaRepositorie {
         date_update: date_update,
       },
     });
+    await disconnectPrisma()
+    return result;
   }
 
   async updatePresencaReuniaoCelula(id: string, presencaReuniaoCelulaDataForm: PresencaReuniaoCelulaData) {
     const { membro, ...presencaReuniaoCelulaData } = presencaReuniaoCelulaDataForm;
-    return await prisma.presencaReuniaoCelula.update({
+    const result = await prisma?.presencaReuniaoCelula.update({
       where: {
         id: id,
       },
@@ -157,14 +167,18 @@ class PresencaReuniaoCelulaRepositorie {
         }
       },
     });
+    await disconnectPrisma()
+    return result;
   }
 
   async deletePresencaReuniaoCelula(id: string) {
-    return await prisma.presencaReuniaoCelula.delete({
+    const result = await prisma?.presencaReuniaoCelula.delete({
       where: {
         id: id,
       },
     });
+    await disconnectPrisma()
+    return result;
   }
 }
 

@@ -1,4 +1,4 @@
-import { Prisma, PrismaClient } from "@prisma/client";
+import { Prisma } from "@prisma/client";
 import { CultoGeralData } from "../../Controllers/Culto/CultoGeral";
 import { createPrismaInstance, disconnectPrisma } from "../../services/prisma";
 
@@ -15,7 +15,7 @@ interface CultoGeralConnect {
 
 class CultoGeralRepositorie {
   async findAll() {
-    return await prisma.cultoGeral.findMany({
+    return await prisma?.cultoGeral.findMany({
       select: {
         id: true,
         nome: true,
@@ -32,7 +32,7 @@ class CultoGeralRepositorie {
   }
 
   async findById(id: string) {
-    return await prisma.cultoGeral.findUnique({
+    return await prisma?.cultoGeral.findUnique({
       where: {
         id: id,
       },
@@ -52,13 +52,13 @@ class CultoGeralRepositorie {
 
   async createCultoGeral(cultoGeralDataForm: CultoGeralData) {
     const { lista_cultos_semanais, ...CultoGeralData } = cultoGeralDataForm;
-    const cultoGeral = await prisma.cultoGeral.create({
+    const cultoGeral = await prisma?.cultoGeral.create({
       data: {
         ...CultoGeralData,
       },
     });
     if (lista_cultos_semanais) {
-      await prisma.cultoGeral.update({
+      await prisma?.cultoGeral.update({
         where: { id: cultoGeral.id },
         data: {
           lista_cultos_semanais: { connect: lista_cultos_semanais.map((escolaId) => ({ id: escolaId })) },
@@ -85,7 +85,7 @@ class CultoGeralRepositorie {
       })) as CultoGeralConnect[];
     }
 
-    return await prisma.cultoGeral.update({
+    return await prisma?.cultoGeral.update({
       where: {
         id: id,
       },
@@ -94,7 +94,7 @@ class CultoGeralRepositorie {
   }
 
   async deleteCultoGeral(id: string) {
-    return await prisma.cultoGeral.delete({
+    return await prisma?.cultoGeral.delete({
       where: {
         id: id,
       },

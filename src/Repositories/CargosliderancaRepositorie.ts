@@ -1,11 +1,11 @@
-import { PrismaClient } from "@prisma/client";
 import { CargosliderancaData } from "../Controllers/CargosliderancaController";
+import { createPrismaInstance, disconnectPrisma } from "../services/prisma";
 
-const prisma = new PrismaClient();
+const prisma = createPrismaInstance()
 
 class CargosliderancaRepositorie {
   async findAll() {
-    return await prisma.cargoDeLideranca.findMany({
+    const result = await prisma?.cargoDeLideranca.findMany({
       select: {
         id: true,
         nome: true,
@@ -17,10 +17,12 @@ class CargosliderancaRepositorie {
         },
       }
     });
+    await disconnectPrisma()
+    return result;
   }
 
   async findById(id: string){
-    const cargoLiderancaExistById = await prisma.cargoDeLideranca.findUnique({
+    const cargoLiderancaExistById = await prisma?.cargoDeLideranca.findUnique({
       where: {
         id: id,
       },
@@ -36,12 +38,13 @@ class CargosliderancaRepositorie {
         },
       }
     })
+    await disconnectPrisma()
     return cargoLiderancaExistById
   }
 
   async createCargoslideranca(cargoLiderancaDataForm: CargosliderancaData) {
     const { nome, membros } = cargoLiderancaDataForm
-    return await prisma.cargoDeLideranca.create({
+    const result = await prisma?.cargoDeLideranca.create({
       data: {
         nome,
         membros: {
@@ -49,11 +52,13 @@ class CargosliderancaRepositorie {
         },
       },
     });
+    await disconnectPrisma()
+    return result;
   }
 
   async updateCargoslideranca(id: string, cargoLiderancaDataForm: CargosliderancaData) {
     const { nome, membros } = cargoLiderancaDataForm
-    return await prisma.cargoDeLideranca.update({
+    const result = await prisma?.cargoDeLideranca.update({
       where: {
         id: id,
       },
@@ -64,14 +69,18 @@ class CargosliderancaRepositorie {
         },
       },
     });
+    await disconnectPrisma()
+    return result;
   }
 
   async deleteCargoslideranca(id: string) {
-    return await prisma.cargoDeLideranca.delete({
+    const result = await prisma?.cargoDeLideranca.delete({
       where: {
         id: id,
       },
     });
+    await disconnectPrisma()
+    return result;
   }
 }
 

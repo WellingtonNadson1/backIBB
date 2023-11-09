@@ -1,11 +1,11 @@
-import { PrismaClient } from "@prisma/client";
 import { SupervisaoData } from "../Controllers/SupervisaoController";
+import { createPrismaInstance, disconnectPrisma } from "../services/prisma";
 
-const prisma = new PrismaClient();
+const prisma = createPrismaInstance()
 
 class SupervisiaoRepositorie {
   async findAll() {
-    return await prisma.supervisao.findMany({
+    const result = await prisma.supervisao.findMany({
       select: {
         id: true,
         nome: true,
@@ -30,6 +30,8 @@ class SupervisiaoRepositorie {
         },
       }
     });
+    await disconnectPrisma()
+    return result
   }
 
   async findById(id: string){
@@ -69,12 +71,13 @@ class SupervisiaoRepositorie {
         },
       }
     })
+    await disconnectPrisma()
     return supervisaoExistById
   }
 
   async createSupervisao(supervisaoDataForm: SupervisaoData) {
     const { nome, cor, supervisor, celulas, membros } = supervisaoDataForm
-    return await prisma.supervisao.create({
+    const result = await prisma.supervisao.create({
       data: {
         nome,
         cor,
@@ -92,11 +95,13 @@ class SupervisiaoRepositorie {
         },
       },
     });
+    await disconnectPrisma()
+    return result
   }
 
   async updateSupervisao(id: string, supervisaoDataForm: SupervisaoData) {
     const { nome, cor, supervisor, celulas, membros } = supervisaoDataForm
-    return await prisma.supervisao.update({
+    const result = await prisma.supervisao.update({
       where: {
         id: id,
       },
@@ -117,14 +122,18 @@ class SupervisiaoRepositorie {
         },
       },
     });
+    await disconnectPrisma()
+    return result
   }
 
   async deleteSupervisao(id: string) {
-    return await prisma.supervisao.delete({
+    const result = await prisma.supervisao.delete({
       where: {
         id: id,
       },
     });
+    await disconnectPrisma()
+    return result
   }
 }
 

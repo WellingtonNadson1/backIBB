@@ -1,10 +1,13 @@
 import { CelulaData } from "../Controllers/CelulaController";
-import prisma from ".././services/prisma";
 import { Prisma } from "@prisma/client";
+import { createPrismaInstance, disconnectPrisma } from "../services/prisma";
+
+const prisma = createPrismaInstance()
+
 
 class CelulaRepositorie {
   async findAll() {
-    return await prisma?.celula.findMany({
+    const result = await prisma?.celula.findMany({
       select: {
         id: true,
         nome: true,
@@ -43,10 +46,12 @@ class CelulaRepositorie {
         }
       }
     })
+    await disconnectPrisma()
+    return result
   }
 
   async findById(id: string){
-    return await prisma?.celula.findUnique({
+    const result = await prisma?.celula.findUnique({
       where: {
         id: id,
       },
@@ -100,12 +105,14 @@ class CelulaRepositorie {
         }
       }
     })
+    await disconnectPrisma()
+    return result
   }
 
   async createCelula(celulaDataForm: CelulaData) {
     const { membros, reunioes_celula, ...CelulaData } = celulaDataForm
 
-    return await prisma?.celula.create({
+    const result = await prisma?.celula.create({
       data: {
         ...CelulaData,
         lider: {
@@ -126,11 +133,13 @@ class CelulaRepositorie {
         },
       },
     })
+    await disconnectPrisma()
+    return result
   }
 
   async updateCelula(id: string, celulaDataForm: CelulaData) {
     const { nome, lider, reunioes_celula, supervisao, membros, ...CelulaData } = celulaDataForm
-    return await prisma?.celula.update({
+    const result = await prisma?.celula.update({
       where: {
         id: id,
       },
@@ -155,7 +164,8 @@ class CelulaRepositorie {
         },
       },
     })
-
+    await disconnectPrisma()
+    return result
   }
 
   async updateDateCelula(id: string, newDate: string) {
@@ -222,16 +232,18 @@ class CelulaRepositorie {
     },
     data: updateData,
   });
-
+  await disconnectPrisma()
   return updatedCelula;
   }
 
   async deleteCelula(id: string) {
-    await prisma?.celula.delete({
+    const result = await prisma?.celula.delete({
       where: {
         id: id,
       },
     })
+  await disconnectPrisma()
+  return result
   }
 }
 

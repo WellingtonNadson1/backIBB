@@ -1,7 +1,8 @@
-import { Prisma, PrismaClient } from "@prisma/client";
+import { Prisma } from "@prisma/client";
 import { UserData } from "../Controllers/UserController";
+import { createPrismaInstance, disconnectPrisma } from "../services/prisma";
 
-const prisma = new PrismaClient();
+const prisma = createPrismaInstance()
 
 type UpdateUserInput = Prisma.UserUpdateInput & {
   supervisao_pertence?: { connect: { id: string } };
@@ -22,8 +23,8 @@ type UpdateUserInput = Prisma.UserUpdateInput & {
 
 class UserRepositorie {
   async getCombinedData() {
-    const combinedData = await prisma.$transaction([
-      prisma.supervisao.findMany({
+    const combinedData = await prisma?.$transaction([
+      prisma?.supervisao.findMany({
         select: {
           id: true,
           nome: true,
@@ -35,17 +36,17 @@ class UserRepositorie {
           },
         },
       }),
-      prisma.escola.findMany(),
-      prisma.encontros.findMany(),
-      prisma.situacaoNoReino.findMany(),
-      prisma.cargoDeLideranca.findMany(),
+      prisma?.escola.findMany(),
+      prisma?.encontros.findMany(),
+      prisma?.situacaoNoReino.findMany(),
+      prisma?.cargoDeLideranca.findMany(),
     ]);
-
+    await disconnectPrisma()
     return combinedData;
   }
 
   async findAll() {
-    return await prisma.user.findMany({
+    const result = await prisma?.user.findMany({
       select: {
         id: true,
         role: true,
@@ -126,10 +127,12 @@ class UserRepositorie {
         password: false,
       },
     });
+    await disconnectPrisma()
+    return result
   }
 
   async findById(id: string) {
-    return await prisma.user.findUnique({
+    const result = await prisma?.user.findUnique({
       where: {
         id: id,
       },
@@ -213,14 +216,18 @@ class UserRepositorie {
         password: false,
       },
     });
+    await disconnectPrisma()
+    return result
   }
 
   async findByEmail(email: string) {
-    return await prisma.user.findFirst({
+    const result = await prisma?.user.findFirst({
       where: {
         email: email,
       },
     });
+    await disconnectPrisma()
+    return result
   }
 
   async createUser(userDataForm: UserData) {
@@ -246,7 +253,7 @@ class UserRepositorie {
       ...userData
     } = userDataForm;
 
-    const user = await prisma.user.create({
+    const user = await prisma?.user.create({
       data: {
         ...userData,
         date_nascimento,
@@ -309,7 +316,7 @@ class UserRepositorie {
           : undefined,
       },
     });
-
+    await disconnectPrisma()
     return user;
   }
 
@@ -491,20 +498,24 @@ class UserRepositorie {
       };
     }
 
-    return await prisma.user.update({
+    const result = await prisma?.user.update({
       where: {
         id: id,
       },
       data: updateUserInput,
     });
+    await disconnectPrisma()
+    return result
   }
 
   async deleteUser(id: string) {
-    return await prisma.user.delete({
+    const result = await prisma?.user.delete({
       where: {
         id: id,
       },
     });
+    await disconnectPrisma()
+    return result
   }
 }
 

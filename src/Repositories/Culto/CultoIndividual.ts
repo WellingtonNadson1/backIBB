@@ -1,6 +1,9 @@
 import { Prisma } from "@prisma/client";
 import { CultoIndividualData } from "../../Controllers/Culto/CultoIndividual";
-import prisma from "../../services/prisma";
+import { createPrismaInstance, disconnectPrisma } from "../../services/prisma";
+
+const prisma = createPrismaInstance()
+
 
 type UpdateCultoIndividualInput = Prisma.CultoIndividualUpdateInput & {
   presencas_culto?: { connect: { id: string } }[];
@@ -84,13 +87,13 @@ class CultoIndividualRepositorie {
             },
         },
     });
-    await prisma?.$disconnect();
+    await disconnectPrisma()
     return result;
 }
 
 
   async findAll() {
-    return await prisma?.cultoIndividual.findMany({
+    const result = await prisma?.cultoIndividual.findMany({
       select: {
         id: true,
         data_inicio_culto: true,
@@ -116,10 +119,12 @@ class CultoIndividualRepositorie {
         },
       },
     });
+    await disconnectPrisma()
+    return result;
   }
 
   async findById(id: string) {
-    return await prisma?.cultoIndividual.findUnique({
+    const result = await prisma?.cultoIndividual.findUnique({
       where: {
         id: id,
       },
@@ -148,6 +153,8 @@ class CultoIndividualRepositorie {
         },
       },
     });
+    await disconnectPrisma()
+    return result;
   }
 
   async createCultoIndividual(cultoIndividualDataForm: CultoIndividualData) {
@@ -184,7 +191,7 @@ class CultoIndividualRepositorie {
         },
       });
     }
-
+    await disconnectPrisma()
     return cultoIndividual
   }
 
@@ -213,20 +220,24 @@ class CultoIndividualRepositorie {
         },
       })) as CultoIndividualConnect[];
     }
-    return await prisma?.cultoIndividual.update({
+    const result = await prisma?.cultoIndividual.update({
       where: {
         id: id,
       },
       data: updateCultoIndividualInput,
     });
+    await disconnectPrisma()
+    return result;
   }
 
   async deleteCultoIndividual(id: string) {
-    return await prisma?.cultoIndividual.delete({
+    const result = await prisma?.cultoIndividual.delete({
       where: {
         id: id,
       },
     });
+    await disconnectPrisma()
+    return result;
   }
 }
 

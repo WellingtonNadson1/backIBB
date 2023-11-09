@@ -1,13 +1,13 @@
-import { PrismaClient } from "@prisma/client";
 import { PresencaCultoData } from "../../Controllers/Culto/PresencaCulto";
 import utc from "dayjs/plugin/utc"
 import timezone from "dayjs/plugin/timezone"
 import dayjs from "dayjs";
+import { createPrismaInstance, disconnectPrisma } from "../../services/prisma";
 
 dayjs.extend(utc);
 dayjs.extend(timezone);
 
-const prisma = new PrismaClient();
+const prisma = createPrismaInstance()
 
 class PresencaCultoRepositorie {
   findLog() {
@@ -17,7 +17,7 @@ class PresencaCultoRepositorie {
     console.log('Data Brasil (Date):', dataBrasilDate);
   }
   async findAll() {
-    return await prisma.presencaCulto.findMany({
+    const result = await prisma.presencaCulto.findMany({
       select: {
         id: true,
         status: true,
@@ -38,6 +38,8 @@ class PresencaCultoRepositorie {
         date_update: true,
       },
     });
+    await disconnectPrisma()
+    return result;
   }
 
   async findFirst({
@@ -47,7 +49,7 @@ class PresencaCultoRepositorie {
     presenca_culto: string;
     membro: string;
   }) {
-    return await prisma.presencaCulto.findFirst({
+    const result = await prisma.presencaCulto.findFirst({
       where: {
         presenca_culto: { id: presenca_culto },
         membro: { id: membro },
@@ -69,10 +71,12 @@ class PresencaCultoRepositorie {
         presenca_culto: true,
       },
     });
+    await disconnectPrisma()
+    return result;
   }
 
   async findById(id: string) {
-    return await prisma.presencaCulto.findUnique({
+    const result = await prisma.presencaCulto.findUnique({
       where: {
         id: id,
       },
@@ -93,10 +97,12 @@ class PresencaCultoRepositorie {
         presenca_culto: true,
       },
     });
+    await disconnectPrisma()
+    return result;
   }
 
   async findByIdCulto(culto: string, lider: string) {
-    return await prisma.presencaCulto.findFirst({
+    const result = await prisma.presencaCulto.findFirst({
       where: {
         cultoIndividualId: culto,
         membro: {id: lider}
@@ -107,6 +113,8 @@ class PresencaCultoRepositorie {
         presenca_culto: true,
       },
     });
+    await disconnectPrisma()
+    return result;
   }
 
   async createPresencaCulto(presencaCultoDataForm: PresencaCultoData) {
@@ -116,7 +124,7 @@ class PresencaCultoRepositorie {
     const dataBrasilDate = new Date(date_create);
     const date_update = dataBrasilDate;
 
-    return await prisma.presencaCulto.create({
+    const result = await prisma.presencaCulto.create({
       data: {
         membro: {
           connect: {
@@ -133,11 +141,13 @@ class PresencaCultoRepositorie {
         date_update: date_update,
       },
     });
+    await disconnectPrisma()
+    return result;
   }
 
   async updatePresencaCulto(id: string, presencaCultoDataForm: PresencaCultoData) {
     const { membro, ...presencaCultoData } = presencaCultoDataForm;
-    return await prisma.presencaCulto.update({
+    const result = await prisma.presencaCulto.update({
       where: {
         id: id,
       },
@@ -155,14 +165,18 @@ class PresencaCultoRepositorie {
         }
       },
     });
+    await disconnectPrisma()
+    return result;
   }
 
   async deletePresencaCulto(id: string) {
-    return await prisma.presencaCulto.delete({
+    const result = await prisma.presencaCulto.delete({
       where: {
         id: id,
       },
     });
+    await disconnectPrisma()
+    return result;
   }
 }
 

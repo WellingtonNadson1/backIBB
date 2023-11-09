@@ -1,11 +1,11 @@
-import { PrismaClient } from "@prisma/client";
 import { SituacaoNoReinoData } from "../Controllers/SituacaoNoReinoController";
+import { createPrismaInstance, disconnectPrisma } from "../services/prisma";
 
-const prisma = new PrismaClient();
+const prisma = createPrismaInstance()
 
 class SituacaoNoReinoRepositorie {
   async findAll() {
-    return await prisma.situacaoNoReino.findMany({
+    const result = await prisma?.situacaoNoReino.findMany({
       select: {
         id: true,
         nome: true,
@@ -17,10 +17,13 @@ class SituacaoNoReinoRepositorie {
         },
       }
     });
+
+    await disconnectPrisma()
+    return result
   }
 
   async findById(id: string){
-    const situacaoNoReinoExistById = await prisma.situacaoNoReino.findUnique({
+    const situacaoNoReinoExistById = await prisma?.situacaoNoReino.findUnique({
       where: {
         id: id,
       },
@@ -36,12 +39,13 @@ class SituacaoNoReinoRepositorie {
         },
       }
     })
+    await disconnectPrisma()
     return situacaoNoReinoExistById
   }
 
   async createSituacaoNoReino(situacaoNoReinoDataForm: SituacaoNoReinoData) {
     const { nome, membros } = situacaoNoReinoDataForm
-    return await prisma.situacaoNoReino.create({
+    const result = await prisma?.situacaoNoReino.create({
       data: {
         nome,
         membros: {
@@ -49,11 +53,13 @@ class SituacaoNoReinoRepositorie {
         },
       },
     });
+    await disconnectPrisma()
+    return result
   }
 
   async updateSituacaoNoReino(id: string, situacaoNoReinoDataForm: SituacaoNoReinoData) {
     const { nome, membros } = situacaoNoReinoDataForm
-    return await prisma.situacaoNoReino.update({
+    const result = await prisma?.situacaoNoReino.update({
       where: {
         id: id,
       },
@@ -64,14 +70,18 @@ class SituacaoNoReinoRepositorie {
         },
       },
     });
+    await disconnectPrisma()
+    return result
   }
 
   async deleteSituacaoNoReino(id: string) {
-    return await prisma.situacaoNoReino.delete({
+    const result = await prisma?.situacaoNoReino.delete({
       where: {
         id: id,
       },
     });
+    await disconnectPrisma()
+    return result
   }
 }
 

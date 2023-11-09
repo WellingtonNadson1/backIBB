@@ -1,7 +1,8 @@
-import { Prisma, PrismaClient } from "@prisma/client";
+import { Prisma } from "@prisma/client";
 import { CultoSemanalData } from "../../Controllers/Culto/CultoSemanal";
+import { createPrismaInstance, disconnectPrisma } from "../../services/prisma";
 
-const prisma = new PrismaClient();
+const prisma = createPrismaInstance()
 
 type UpdateCultoSemanalInput = Prisma.CultoSemanalUpdateInput & {
   cultos?: { connect: { id: string } }[];
@@ -13,7 +14,7 @@ interface CultoSemanalConnect {
 
 class CultoSemanalRepositorie {
   async findAll() {
-    return await prisma.cultoSemanal.findMany({
+    const result = await prisma?.cultoSemanal.findMany({
       select: {
         id: true,
         nome: true,
@@ -27,10 +28,12 @@ class CultoSemanalRepositorie {
         },
       },
     });
+    await disconnectPrisma()
+    return result;
   }
 
   async findById(id: string) {
-    return await prisma.cultoSemanal.findUnique({
+    const result = await prisma?.cultoSemanal.findUnique({
       where: {
         id: id,
       },
@@ -46,11 +49,13 @@ class CultoSemanalRepositorie {
         },
       },
     });
+    await disconnectPrisma()
+    return result;
   }
 
   async createCultoSemanal(cultoSemanalDataForm: CultoSemanalData) {
     const { cultos, cultoGeral, ...CultoSemanalData } = cultoSemanalDataForm;
-    const cultoSemanal = await prisma.cultoSemanal.create({
+    const cultoSemanal = await prisma?.cultoSemanal.create({
       data: {
         ...CultoSemanalData,
       },
@@ -58,7 +63,7 @@ class CultoSemanalRepositorie {
 
       // Conecte os relacionamentos opcionais, se fornecidos
   if (cultoGeral) {
-    await prisma.cultoSemanal.update({
+    await prisma?.cultoSemanal.update({
       where: { id: cultoSemanal.id },
       data: {
         cultoGeral: { connect: { id: cultoGeral } },
@@ -67,13 +72,14 @@ class CultoSemanalRepositorie {
   }
 
     if (cultos) {
-      await prisma.cultoSemanal.update({
+      await prisma?.cultoSemanal.update({
         where: { id: cultoSemanal.id },
         data: {
           cultos: { connect: cultos.map((cultoId) => ({ id: cultoId })) },
         },
       });
     }
+    await disconnectPrisma()
     return cultoSemanal
   }
 
@@ -100,20 +106,24 @@ class CultoSemanalRepositorie {
       })) as CultoSemanalConnect[];
     }
 
-    return await prisma.cultoSemanal.update({
+    const result = await prisma?.cultoSemanal.update({
       where: {
         id: id,
       },
       data: updateCultoSemanalInput,
     });
+    await disconnectPrisma()
+    return result;
   }
 
   async deleteCultoSemanal(id: string) {
-    return await prisma.cultoSemanal.delete({
+    const result = await prisma?.cultoSemanal.delete({
       where: {
         id: id,
       },
     });
+    await disconnectPrisma()
+    return result;
   }
 }
 
