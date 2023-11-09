@@ -29,7 +29,7 @@ class ReuniaoCelulaRepositorie {
   }) {
 
     console.log('Data Reunia: ', data_reuniao)
-    return prisma.$queryRaw`SELECT * FROM reuniao_celula WHERE DATE(data_reuniao) = DATE(${data_reuniao}) AND celulaId = ${celula}`;
+    return prisma.$queryRaw`SELECT * FROM reuniao_celula WHERE DATE(data_reuniao) = DATE(${data_reuniao}) AND "celulaId" = ${celula}`;
   }
 
   async findAll() {
