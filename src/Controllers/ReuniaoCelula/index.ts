@@ -42,14 +42,14 @@ class ReuniaoSemanalCelulaController {
 
       const { data_reuniao, celula } = reuniaoCelulaDataForm
 
-      const reuniaoCelulaExist = await ReuniaoCelulaRepositorie.findFirst({
+      const reuniaoCelulaExist = await ReuniaoCelulaRepositorie.reuniaoCelulaExist({
         data_reuniao, celula
       })
 
       if (reuniaoCelulaExist) {
         return reply
           .code(409)
-          .send(reuniaoCelulaExist.id);
+          .send(reuniaoCelulaExist);
       }
 
       // Se não existir, crie a reunião
