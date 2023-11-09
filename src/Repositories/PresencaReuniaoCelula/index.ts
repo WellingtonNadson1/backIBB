@@ -31,6 +31,31 @@ class PresencaReuniaoCelulaRepositorie {
     });
   }
 
+  async findPresenceRegistered(
+    id: string) {
+    return await prisma.presencaReuniaoCelula.findFirst({
+      where: {
+        which_reuniao_celula: { id: id},
+      },
+      select: {
+        id: true,
+        status: true,
+        membro: {
+          select: {
+            id: true,
+            first_name: true,
+            celula: {
+              select: {
+                nome: true,
+              }
+            }
+          }
+        },
+        which_reuniao_celula: true,
+      },
+    });
+  }
+
   async findFirst({
     which_reuniao_celula,
     membro,

@@ -49,7 +49,7 @@ class ReuniaoSemanalCelulaController {
       if (reuniaoCelulaExist) {
         return reply
           .code(409)
-          .send({ message: "Presença de Culto já registrada para hoje!" });
+          .send(reuniaoCelulaExist.id);
       }
 
       // Se não existir, crie a reunião

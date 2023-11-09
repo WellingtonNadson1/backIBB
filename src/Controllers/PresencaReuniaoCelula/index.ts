@@ -27,6 +27,17 @@ class PresencaReuniaoCelulaController {
     return reply.send(presencasReuniaoCelula);
   }
 
+  async isregister(request: FastifyRequest,
+  reply: FastifyReply) {
+    const id = request.body as string;
+    const presencasReuniaoCelula =
+      await PresencaReuniaoCelulaRepositorie.findPresenceRegistered(id);
+    if (!presencasReuniaoCelula) {
+      return reply.code(404).send({ message: "Presença not found!" });
+    }
+    return reply.code(200).send(presencasReuniaoCelula);
+  }
+
   async show(
     request: FastifyRequest<{
       Params: PresencaReuniaoCelulaParams;

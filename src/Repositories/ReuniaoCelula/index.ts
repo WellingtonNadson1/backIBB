@@ -7,7 +7,18 @@ import dayjs from "dayjs";
 dayjs.extend(utc);
 dayjs.extend(timezone);
 
-const prisma = new PrismaClient();
+const prisma = new PrismaClient().$extends({
+  query: {
+    reuniaoCelula: {
+      async findFirst({ model, operation, args, query }) {
+        // take incoming `where` and set `data_reuniao`
+        args.where = { ...args.where, data_reuniao: { equals: args.where?.data_reuniao?.toString().substring(0, 10) } }
+
+        return query(args)
+      },
+    },
+  },
+})
 
 type UpdateReuniaCelulaInput = Prisma.ReuniaoCelulaUpdateInput & {
   presencas_membros_reuniao_celula?: { connect: { id: string } }[];
@@ -55,12 +66,14 @@ class ReuniaoCelulaRepositorie {
     data_reuniao: Date,
     celula: string,
   } ) {
+    const dataReuniaoModify = dayjs(data_reuniao).toString().substring(0,10)
     return await prisma.reuniaoCelula.findFirst({
       where: {
-        data_reuniao: data_reuniao,
+        data_reuniao: dataReuniaoModify,
         celula: {id: celula },
       },
       select: {
+        id: true,
         data_reuniao: true,
         status: true,
         presencas_membros_reuniao_celula: {
