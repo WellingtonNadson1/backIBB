@@ -3,11 +3,20 @@ import { ReuniaoCelulaData } from "../../Controllers/ReuniaoCelula";
 import utc from "dayjs/plugin/utc"
 import timezone from "dayjs/plugin/timezone"
 import dayjs from "dayjs";
+import { createPrismaInstance, disconnectPrisma } from "../../services/prisma";
+
+interface ReuniaoCelulaResult {
+  data_reuniao: string;
+  celula: string;
+  status: string;
+  presencas_membros_reuniao_celula: null | any; // Substitua 'any' pelo tipo apropriado se possível
+}
+
+const prisma = createPrismaInstance()
 
 dayjs.extend(utc);
 dayjs.extend(timezone);
 
-const prisma = new PrismaClient()
 
 type UpdateReuniaCelulaInput = Prisma.ReuniaoCelulaUpdateInput & {
   presencas_membros_reuniao_celula?: { connect: { id: string } }[];
@@ -26,16 +35,23 @@ class ReuniaoCelulaRepositorie {
   }: {
     data_reuniao: Date,
     celula: string,
-  }) {
+  }): Promise<ReuniaoCelulaResult[]> {
 
     console.log('Data Reunia: ', data_reuniao)
-    const query = prisma.$queryRaw`SELECT * FROM reuniao_celula WHERE DATE(data_reuniao) = DATE(${data_reuniao}) AND "celulaId" = ${celula}`;
-    console.log('QUERY Retorno: ', query)
-    return query
+    if (prisma) {
+      const query = await prisma.$queryRaw<ReuniaoCelulaResult[]>`SELECT * FROM reuniao_celula WHERE DATE(data_reuniao) = DATE(${data_reuniao}) AND "celulaId" = ${celula}`;
+      console.log('QUERY Retorno: ', query);
+      await disconnectPrisma()
+      return query;
+    } else {
+      // Trate o caso em que prisma é undefined, se necessário
+      await disconnectPrisma()
+      return [];
+    }
   }
 
   async findAll() {
-    return await prisma.reuniaoCelula.findMany({
+    const result = await prisma?.reuniaoCelula.findMany({
       select: {
         id: true,
         data_reuniao: true,
@@ -60,6 +76,8 @@ class ReuniaoCelulaRepositorie {
         },
       },
     });
+    await disconnectPrisma()
+    return result
   }
 
   async findFirst({
@@ -70,7 +88,7 @@ class ReuniaoCelulaRepositorie {
     celula: string,
   } ) {
     const dataReuniaoModify = dayjs(data_reuniao).toISOString().substring(0,10)
-    return await prisma.reuniaoCelula.findFirst({
+    const result = await prisma?.reuniaoCelula.findFirst({
       where: {
         data_reuniao: dataReuniaoModify,
         celula: {id: celula },
@@ -99,10 +117,12 @@ class ReuniaoCelulaRepositorie {
         },
       },
     });
+    await disconnectPrisma()
+    return result
   }
 
   async findById(id: string) {
-    return await prisma.reuniaoCelula.findUnique({
+    const result = await prisma?.reuniaoCelula.findUnique({
       where: {
         id: id,
       },
@@ -129,10 +149,12 @@ class ReuniaoCelulaRepositorie {
         },
       },
     });
+    await disconnectPrisma()
+    return result
   }
 
   async findByDate(id: string, data_reuniao: Date) {
-    return await prisma.reuniaoCelula.findUnique({
+    const result = await prisma?.reuniaoCelula.findUnique({
       where: {
         id: id,
         data_reuniao: data_reuniao,
@@ -160,6 +182,8 @@ class ReuniaoCelulaRepositorie {
         },
       },
     });
+    await disconnectPrisma()
+    return result
   }
 
   async createReuniaoCelula(reuniaoCelulaDataForm: ReuniaoCelulaData) {
@@ -168,7 +192,7 @@ class ReuniaoCelulaRepositorie {
     const date_create = dataBrasil.format('YYYY-MM-DDTHH:mm:ss.SSS[Z]')
     const date_createBrasilDate = new Date(date_create);
     const date_update = date_createBrasilDate;
-    const reuniaoCelula = await prisma.reuniaoCelula.create({
+    const reuniaoCelula = await prisma?.reuniaoCelula.create({
       data: {
         celula: {
           connect: {
@@ -181,13 +205,14 @@ class ReuniaoCelulaRepositorie {
     }});
     // Conecte os relacionamentos opcionais, se fornecidos
     if (presencas_membros_reuniao_celula) {
-      await prisma.reuniaoCelula.update({
-        where: { id: reuniaoCelula.id },
+      await prisma?.reuniaoCelula.update({
+        where: { id: reuniaoCelula?.id },
         data: {
           presencas_membros_reuniao_celula: { connect: presencas_membros_reuniao_celula.map((reuniaoCelulaId) => ({ id: reuniaoCelulaId })) },
         },
       });
     }
+    await disconnectPrisma()
     return reuniaoCelula
   }
 
@@ -213,21 +238,28 @@ class ReuniaoCelulaRepositorie {
         },
       })) as ReuniaCelulaConnect[];
     }
-    return await prisma.reuniaoCelula.update({
+    const result = await prisma?.reuniaoCelula.update({
       where: {
         id: id,
       },
       data: updateReuniaoCelulaInput,
     });
+    await disconnectPrisma()
+    return result
+
   }
 
   async deleteReuniaoCelula(id: string) {
-    return await prisma.reuniaoCelula.delete({
+    const result = await prisma?.reuniaoCelula.delete({
       where: {
         id: id,
       },
     });
+    await disconnectPrisma()
+    return result
   }
+
+  
 }
 
 export default new ReuniaoCelulaRepositorie();

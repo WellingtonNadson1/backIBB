@@ -16,7 +16,15 @@ import routerSituacaoNoReino from "./Routers/SituacaoNoReino";
 import routerSupervisao from "./Routers/SupervisaoRouters";
 import routerUser from "./Routers/UserRouters";
 import routerLicoesCelula from "./Routers/upLoads/LicoesCelula";
+import { createPrismaInstance, disconnectPrisma } from "./services/prisma";
+import { PrismaClient } from "@prisma/client";
 // import routerLicoesCelula from "./Routers/upLoads/LicoesCelula";
+
+declare module 'fastify' {
+  export interface FastifyRequest {
+    prisma: PrismaClient;
+  }
+}
 
 const PORT = process.env.PORT ? Number(process.env.PORT) : 3333;
 
@@ -27,9 +35,22 @@ app.register(cors, {
   methods: ["GET", "POST", "PUT", "PATCH", "DELETE"],
 });
 
+app.addHook('onRequest', async (request, reply) => {
+  request.prisma = createPrismaInstance();
+});
+
+app.addHook('onResponse', async (request, reply) => {
+  if (request.prisma) {
+    await disconnectPrisma();
+  }
+});
+
 app.register(multer.contentParser);
 
+
+
 app.addHook("onRequest", requireAuth);
+
 
 const start = async () => {
   try {

@@ -1,7 +1,9 @@
 import { Prisma, PrismaClient } from "@prisma/client";
 import { CultoGeralData } from "../../Controllers/Culto/CultoGeral";
+import { createPrismaInstance, disconnectPrisma } from "../../services/prisma";
 
-const prisma = new PrismaClient();
+const prisma = createPrismaInstance()
+
 
 type UpdateCultoGeralInput = Prisma.CultoGeralUpdateInput & {
   lista_cultos_semanais?: { connect: { id: string } }[];
@@ -26,6 +28,7 @@ class CultoGeralRepositorie {
         },
       },
     });
+    await disconnectPrisma()
   }
 
   async findById(id: string) {
@@ -44,6 +47,7 @@ class CultoGeralRepositorie {
         },
       },
     });
+    await disconnectPrisma()
   }
 
   async createCultoGeral(cultoGeralDataForm: CultoGeralData) {
@@ -61,6 +65,7 @@ class CultoGeralRepositorie {
         },
       });
     }
+    await disconnectPrisma()
 
     return cultoGeral
   }

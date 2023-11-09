@@ -39,24 +39,19 @@ class ReuniaoSemanalCelulaController {
   async store(request: FastifyRequest, reply: FastifyReply) {
     try {
       const reuniaoCelulaDataForm = request.body as ReuniaoCelulaData;
-
       const { data_reuniao, celula } = reuniaoCelulaDataForm
-
       const reuniaoCelulaExist = await ReuniaoCelulaRepositorie.reuniaoCelulaExist({
         data_reuniao, celula
       })
-
-      if (reuniaoCelulaExist) {
+      if (reuniaoCelulaExist.length > 0) {
         return reply
           .code(409)
           .send(reuniaoCelulaExist);
       }
-
       // Se não existir, crie a reunião
       const presencaCulto = await ReuniaoCelulaRepositorie.createReuniaoCelula({
         ...reuniaoCelulaDataForm,
       });
-
       return reply.code(201).send(presencaCulto);
     } catch (error) {
       return reply.code(400).send(error);

@@ -5,8 +5,17 @@ declare global {
   var prisma: PrismaClient | undefined;
 }
 
-if (!global.prisma) {
-  global.prisma = new PrismaClient();
-}
+const createPrismaInstance = () => {
+  if (!global.prisma) {
+    global.prisma = new PrismaClient();
+  }
+  return global.prisma;
+};
 
-export default global.prisma;
+const disconnectPrisma = async () => {
+  if (global.prisma) {
+    await global.prisma.$disconnect();
+  }
+};
+
+export { createPrismaInstance, disconnectPrisma };
