@@ -27,9 +27,12 @@ class PresencaReuniaoCelulaController {
     return reply.send(presencasReuniaoCelula);
   }
 
-  async isregister(request: FastifyRequest,
+  async isregister(
+    request: FastifyRequest<{
+    Params: PresencaReuniaoCelulaParams;
+  }>,
   reply: FastifyReply) {
-    const id = request.body as string;
+    const id = request.params.id;
     const presencasReuniaoCelula =
       await PresencaReuniaoCelulaRepositorie.findPresenceRegistered(id);
     if (!presencasReuniaoCelula) {
