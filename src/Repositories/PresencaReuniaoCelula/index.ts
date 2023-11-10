@@ -37,7 +37,7 @@ class PresencaReuniaoCelulaRepositorie {
     id: string) {
     const result = await prisma?.presencaReuniaoCelula.findFirst({
       where: {
-        which_reuniao_celula: { id: id},
+        which_reuniao_celula: {id: id},
       },
       select: {
         id: true,

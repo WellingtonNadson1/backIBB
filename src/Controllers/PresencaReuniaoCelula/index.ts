@@ -32,7 +32,8 @@ class PresencaReuniaoCelulaController {
     Params: PresencaReuniaoCelulaParams;
   }>,
   reply: FastifyReply) {
-    const id = request.params.id;
+    const { id } = request.params;
+    console.log('Id mandado do front', id)
     const presencasReuniaoCelula =
       await PresencaReuniaoCelulaRepositorie.findPresenceRegistered(id);
     if (!presencasReuniaoCelula) {

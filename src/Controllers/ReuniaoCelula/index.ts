@@ -36,6 +36,15 @@ class ReuniaoSemanalCelulaController {
     return reply.code(200).send(reuniaoCelula);
   }
 
+  async getReunionForDate(request: FastifyRequest, reply: FastifyReply) {
+    try {
+      const { data_reuniao, celula } = request.body as ReuniaoCelulaData
+    }
+    catch (error) {
+      return reply.code(400).send(error);
+    }
+  }
+
   async store(request: FastifyRequest, reply: FastifyReply) {
     try {
       const reuniaoCelulaDataForm = request.body as ReuniaoCelulaData;
