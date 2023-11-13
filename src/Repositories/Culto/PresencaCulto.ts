@@ -101,11 +101,10 @@ class PresencaCultoRepositorie {
     return result;
   }
 
-  async findByIdCulto(culto: string, lider: string) {
+  async findByIdCulto(culto: string) {
     const result = await prisma.presencaCulto.findFirst({
       where: {
         cultoIndividualId: culto,
-        membro: {id: lider}
       },
       select: {
         id: true,

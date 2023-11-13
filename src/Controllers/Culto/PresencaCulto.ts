@@ -49,12 +49,11 @@ class PresencaCultoController {
     request: FastifyRequest,
     reply: FastifyReply
   ) {
-    const {culto, lider} = request.params as PresencaCultoParams;
+    const {culto, } = request.params as PresencaCultoParams;
     console.log('culto: ', culto)
-    console.log('lider: ', lider)
 
     const presencaCultoIsRegister =
-      await PresencaCultoRepositorie.findByIdCulto(culto, lider);
+      await PresencaCultoRepositorie.findByIdCulto(culto);
     if (!presencaCultoIsRegister) {
       return reply.code(404).send({ message: "Presença not Register!" });
     }
