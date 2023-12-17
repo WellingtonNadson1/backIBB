@@ -30,8 +30,11 @@ class CultoIndividualController {
   async forDate(request: FastifyRequest<{
     Params: CultoIndividualForDate;
   }>, reply: FastifyReply) {
-  
+
     const { startDate, endDate, superVisionId } = request.body as CultoIndividualForDate
+
+    console.log('Received request with parameters:', { startDate, endDate, superVisionId });
+
     const cultosIndividuaisForDate = await CultoIndividualRepositorie.findAllIntervall(startDate, endDate, superVisionId);
     if (!cultosIndividuaisForDate) {
       return reply.code(500).send({ error: "Internal Server Error" });

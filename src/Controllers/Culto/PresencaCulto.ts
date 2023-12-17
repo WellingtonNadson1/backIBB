@@ -1,6 +1,7 @@
 import { FastifyReply, FastifyRequest } from "fastify";
 import { Input, boolean, object, string } from "valibot";
 import { PresencaCultoRepositorie } from "../../Repositories/Culto";
+import dayjs from "dayjs";
 
 const PresencaCultoDataSchema = object({
   status: boolean(), //Pode ter um status (presente, ausente, justificado, etc.)
@@ -14,6 +15,12 @@ interface PresencaCultoParams {
   id: string;
   lider: string;
   culto: string;
+}
+
+interface RelatorioCultosParams {
+  supervisaoId: string;
+  startOfInterval: string;
+  endOfInterval: string;
 }
 
 class PresencaCultoController {
@@ -44,6 +51,58 @@ class PresencaCultoController {
     }
     return reply.code(200).send(presencaCulto);
   }
+
+  // Relatorio de presenca nos cultos
+  async cultosRelatorios(
+    request: FastifyRequest,
+    reply: FastifyReply
+  ) {
+    const params = {
+      startOfInterval: dayjs('2023-10-01').toISOString(),
+      endOfInterval: dayjs('2023-10-28').toISOString(),
+      supervisaoId: '5e392d1b-f425-4865-a730-5191bc0821cd'
+    };
+
+    const resultRelatorioCultos = await PresencaCultoRepositorie.cultosRelatorios(params);
+
+    if (!resultRelatorioCultos) {
+      return reply.code(404).send({ message: "Relatorio Cultos Error!" });
+    }
+
+    // Adicione uma assinatura de tipo explícita para cultosAgrupados
+    // const cultosAgrupados: { [supervisao: string]: { [celula: string]: any[] } } = {};
+
+    // resultRelatorioCultos.forEach((culto) => {
+    //   const supervisao = culto.presencas_culto[0]?.membro?.supervisao_pertence?.nome || 'Sem Supervisão';
+    //   const celula = culto.presencas_culto[0]?.membro?.celula?.nome || 'Sem Célula';
+
+    //   if (!cultosAgrupados[supervisao]) {
+    //     cultosAgrupados[supervisao] = {};
+    //   }
+
+    //   if (!cultosAgrupados[supervisao][celula]) {
+    //     cultosAgrupados[supervisao][celula] = [];
+    //   }
+
+    //   cultosAgrupados[supervisao][celula].push(culto);
+    // });
+    const groupedForSupervision = resultRelatorioCultos
+    .flatMap(culto =>
+      culto.presencas_culto
+        .filter(presenca => presenca.membro?.supervisao_pertence?.id === params.supervisaoId)
+        .map(presenca => ({
+          culto,
+          membro: presenca.membro
+        }))
+    );
+
+  console.log(resultRelatorioCultos);
+
+  return reply.code(200).send(resultRelatorioCultos);
+
+  }
+
+
 
   async searchByIdCulto(
     request: FastifyRequest,
@@ -83,8 +142,9 @@ class PresencaCultoController {
       });
 
       return reply.code(201).send(presencaCulto);
-    } catch (error) {
-      return reply.code(400).send(error);
+    } catch (error: any) {
+      console.error(error); // Log o erro no console para depuração
+      return reply.code(400).send(error.message || 'Erro interno do servidor');
     }
   }
 

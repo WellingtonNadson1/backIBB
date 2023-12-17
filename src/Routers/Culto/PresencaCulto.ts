@@ -4,6 +4,7 @@ import { PresencaCultoController } from '../../Controllers/Culto';
 const routerPresencaCulto = async (fastify: FastifyInstance) => {
   fastify.get("/presencacultos/log", PresencaCultoController.findLog);
   fastify.get("/presencacultos", PresencaCultoController.index);
+  fastify.get('/presencacultos/relatorios', PresencaCultoController.cultosRelatorios);
   fastify.get('/presencacultos/:id', PresencaCultoController.show);
   fastify.get(`/presencacultosbycelula/:culto/:lider`, PresencaCultoController.searchByIdCulto);
   fastify.post("/presencacultos", PresencaCultoController.store);

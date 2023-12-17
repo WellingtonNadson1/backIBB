@@ -7,7 +7,6 @@ import { createPrismaInstance, disconnectPrisma } from "../../services/prisma";
 dayjs.extend(utc);
 dayjs.extend(timezone);
 
-const prisma = createPrismaInstance()
 
 class PresencaCultoRepositorie {
   findLog() {
@@ -16,7 +15,64 @@ class PresencaCultoRepositorie {
     const dataBrasilDate = new Date(date_create);
     console.log('Data Brasil (Date):', dataBrasilDate);
   }
+
+  async cultosRelatorios(
+    params: {
+      supervisaoId: string;
+      startOfInterval: string;
+      endOfInterval: string;
+    }
+  ) {
+const prisma = createPrismaInstance()
+
+    console.log(params);
+    try {
+      const result = await prisma.cultoIndividual.findMany({
+
+        where: {
+          data_inicio_culto: { gte: params.startOfInterval },
+          data_termino_culto: { lte: params.endOfInterval },
+        },
+        include: {
+          presencas_culto: {
+            include: {
+              membro: {
+                select: {
+                  id: true,
+                  first_name: true,
+                  celula: {
+                    select: {
+                      id: true,
+                      nome: true,
+                    }
+                  },
+                  supervisao_pertence: {
+                    select: {
+                      id: true,
+                      nome: true,
+                    }
+                  }
+                }
+              },
+            },
+          },
+        },
+      });
+
+      console.log(result);
+      return result;
+    }
+
+  finally {
+    await disconnectPrisma()
+  }
+  }
+
+
   async findAll() {
+  const prisma = createPrismaInstance()
+
+  try {
     const result = await prisma.presencaCulto.findMany({
       select: {
         id: true,
@@ -38,8 +94,12 @@ class PresencaCultoRepositorie {
         date_update: true,
       },
     });
-    await disconnectPrisma()
+
     return result;
+  }
+finally {
+  await disconnectPrisma()
+}
   }
 
   async findFirst({
@@ -49,6 +109,8 @@ class PresencaCultoRepositorie {
     presenca_culto: string;
     membro: string;
   }) {
+    const prisma = createPrismaInstance()
+
     const result = await prisma.presencaCulto.findFirst({
       where: {
         presenca_culto: { id: presenca_culto },
@@ -76,6 +138,8 @@ class PresencaCultoRepositorie {
   }
 
   async findById(id: string) {
+    const prisma = createPrismaInstance()
+
     const result = await prisma.presencaCulto.findUnique({
       where: {
         id: id,
@@ -102,6 +166,8 @@ class PresencaCultoRepositorie {
   }
 
   async findByIdCulto(culto: string, lider: string) {
+    const prisma = createPrismaInstance()
+
     const result = await prisma.presencaCulto.findFirst({
       where: {
         cultoIndividualId: culto,
@@ -118,6 +184,8 @@ class PresencaCultoRepositorie {
   }
 
   async createPresencaCulto(presencaCultoDataForm: PresencaCultoData) {
+    const prisma = createPrismaInstance()
+
     const { membro, presenca_culto, status } = presencaCultoDataForm;
     const dataBrasil = dayjs().tz('America/Sao_Paulo');
     const date_create = dataBrasil.format('YYYY-MM-DDTHH:mm:ss.SSS[Z]')
@@ -146,6 +214,8 @@ class PresencaCultoRepositorie {
   }
 
   async updatePresencaCulto(id: string, presencaCultoDataForm: PresencaCultoData) {
+    const prisma = createPrismaInstance()
+
     const { membro, ...presencaCultoData } = presencaCultoDataForm;
     const result = await prisma.presencaCulto.update({
       where: {
@@ -170,13 +240,19 @@ class PresencaCultoRepositorie {
   }
 
   async deletePresencaCulto(id: string) {
-    const result = await prisma.presencaCulto.delete({
-      where: {
-        id: id,
-      },
-    });
+    const prisma = createPrismaInstance()
+
+    try {
+      const result = await prisma.presencaCulto.delete({
+        where: {
+          id: id,
+        },
+      });
+      return result;
+    }
+  finally {
     await disconnectPrisma()
-    return result;
+  }
   }
 }
 
