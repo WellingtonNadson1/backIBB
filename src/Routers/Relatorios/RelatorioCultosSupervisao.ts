@@ -1,20 +1,24 @@
 import { FastifyInstance, FastifyReply, FastifyRequest } from "fastify";
 import { createPrismaInstance, disconnectPrisma } from "../../services/prisma";
 import dayjs from "dayjs";
+import { CultoIndividualForDate } from "../../Controllers/Culto/CultoIndividual";
 
 
 const routerRelatorioPresencaCulto = async (fastify: FastifyInstance) => {
-  fastify.get("/relatorio/presencacultos", async (request: FastifyRequest, reply: FastifyReply) => {
-    const prisma = createPrismaInstance();
+  fastify.post("/relatorio/presencacultos", async (request: FastifyRequest, reply: FastifyReply) => {
 
     try {
-      const dataInicio = dayjs('2023-10-01').toISOString();
-      const dataFim = dayjs('2023-10-31').toISOString();
+      const prisma = createPrismaInstance();
+
+      const { startDate, endDate, superVisionId } = request.body as CultoIndividualForDate
+
+      const dataInicio = dayjs(startDate).toISOString();
+      const dataFim = dayjs(endDate).toISOString();
 
       // Consulta para buscar membros da supervisão que compareceram aos cultos no intervalo de tempo
       const membrosCompareceramCultos = await prisma?.user.findMany({
         where: {
-          supervisaoId: '5e392d1b-f425-4865-a730-5191bc0821cd',
+          supervisaoId: superVisionId,
           presencas_cultos: {
             some: {
               AND: [
@@ -76,7 +80,9 @@ const routerRelatorioPresencaCulto = async (fastify: FastifyInstance) => {
       console.error('Erro:', error);
       reply.status(500).send('Erro interno do servidor');
     }
+    finally {
       await disconnectPrisma();
+    }
   });
 };
 
