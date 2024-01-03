@@ -38,7 +38,7 @@ const UserDataSchema = z.object({
   batizado: z.boolean(),
   date_batizado: z.string().datetime().optional(),
   is_discipulado: z.boolean(),
-  discipulador: z.string().optional(),
+  discipuladorId: z.string().optional(),
   estado_civil: z.string(),
   nome_conjuge: z.string().optional(),
   date_casamento: z.string().datetime().optional(),

@@ -250,6 +250,7 @@ class UserRepositorie {
       date_batizado,
       date_casamento,
       userIdRefresh,
+      discipuladorId,
       ...userData
     } = userDataForm;
 
@@ -340,6 +341,7 @@ class UserRepositorie {
       date_batizado,
       date_casamento,
       cargo_de_lideranca,
+      discipuladorId,
       ...userData
     } = userDataForm;
 

@@ -19,7 +19,7 @@ model Session {
 }
 
 model User {
-  id                       String                  @id @default("e59c09db-93ca-443c-aa74-dc50dcd51ad2")
+  id                       String                  @id @default(uuid())
   image_url                String?
   email                    String                  @unique
   first_name               String
