@@ -32,7 +32,7 @@ const s3Client = new S3Client(s3Config);
 
 class S3GetStorageLesson {
   async getFile(): Promise<string[]> {
-    const folderPath = "licoes-celula-novembro-23";
+    const folderPath = "licoes-celula-jan-24";
 
     const params = {
       Bucket: bucketName,
