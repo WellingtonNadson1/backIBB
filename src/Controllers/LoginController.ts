@@ -1,10 +1,10 @@
 import { PrismaClient } from "@prisma/client";
 import bcrypt from "bcrypt";
 import { FastifyReply, FastifyRequest } from "fastify";
-import UserRepositorie from "../Repositories/UserRepositorie";
 import { GenerateRfreshToken } from "../provider/GenerateRefreshToken";
 import { GenerateToken } from "../provider/GenerateToken";
-import { UserData } from "./UserController";
+import { UserData } from "./User/schema";
+import UserRepositorie from "../Repositories/User/UserRepositorie";
 
 type TokenPayload = {
   role: string;

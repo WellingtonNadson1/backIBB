@@ -4,6 +4,7 @@ import { AulaEscolaRepositorie } from "../../Repositories/Escola";
 
 const AulaEscolaDataSchema = object ({
   data_aula: date(),
+  date_update: date(),
   status: string(), // status (realizada, cancelada, etc.)
   presencas: array(string()),
   turma: string(),

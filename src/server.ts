@@ -2,7 +2,7 @@ import cors from "@fastify/cors";
 import Fastify, { FastifyInstance } from "fastify";
 import multer from "fastify-multer";
 import { requireAuth } from "./Middlewares/authMiddleware";
-import routerAccount from "./Routers/AccountRouters";
+// import routerAccount from "./Routers/AccountRouters";
 import routerCargoslideranca from "./Routers/Cargoslideranca";
 import routerCelula from "./Routers/CelulaRouters";
 import registerCultoRoutes from "./Routers/Culto";
@@ -63,7 +63,7 @@ const start = async () => {
     app.register(routerPresencaReuniaCelula);
     app.register(routerLicoesCelula);
     app.register(routerEncontro);
-    app.register(routerAccount);
+    // app.register(routerAccount);
     app.register(routerSupervisao);
     app.register(routerSituacaoNoReino);
     app.register(routerCargoslideranca);

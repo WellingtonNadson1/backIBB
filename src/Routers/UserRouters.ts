@@ -1,5 +1,5 @@
 import { FastifyInstance } from 'fastify';
-import UserController from "../Controllers/UserController";
+import UserController from '../Controllers/User/UserController';
 
 const routerUser = async (fastify: FastifyInstance) => {
   // USERS
