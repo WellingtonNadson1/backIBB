@@ -59,4 +59,4 @@ const UserDataSchema = z.object({
   TurmaEscola: z.string().optional(),
 });
 
-export type UserData = z.infer<typeof UserDataSchema>;
+export type UserData = z.infer<typeof UserDataSchema>

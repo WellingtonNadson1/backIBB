@@ -1,0 +1,37 @@
+{
+  "first_name": "test073",
+  "last_name": "teste",
+  "cpf": "035.143.553-04",
+  "date_nascimento": "2024-01-11T02:27",
+  "sexo": "M",
+  "email": "wellingtonnadson564665@gmail.com43",
+  "telefone": "98988567070",
+  "escolaridade": "Fundamental Completo",
+  "profissao": "teste",
+  "batizado": true,
+  "date_batizado": "2024-01-11T02:29",
+  "is_discipulado": true,
+  "discipuladorId": "e59c09db-93ca-443c-aa74-dc50dcd51ad2",
+  "supervisao_pertence": "5e392d1b-f425-4865-a730-5191bc0821cd",
+  "celula": "731df868-cf9e-4d36-93af-3ab07cf464c9",
+  "escolas": [
+    "0b903e64-1bf2-4547-be88-35c61818290e"
+  ],
+  "encontros": [
+    "f54fa0a4-0d1e-4638-8dc0-9c42b2000a49"
+  ],
+  "situacao_no_reino": "f4c1c9ee-5f5a-4681-af13-99c422c240e0",
+  "cargo_de_lideranca": "079e35a7-8e9c-40ef-9d5b-cb8f9c7c11a8",
+  "estado_civil": "Solteiro",
+  "nome_conjuge": "",
+  "date_casamento": null,
+  "has_filho": true,
+  "quantidade_de_filho": 0,
+  "cep": "65064-423",
+  "cidade": "São Luís",
+  "estado": "MA",
+  "bairro": "Cohama",
+  "endereco": "Rua Dezesseis",
+  "numero_casa": "74",
+  "password": "JesusCristoReina"
+}

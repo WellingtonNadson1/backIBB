@@ -2,13 +2,16 @@ import { Prisma } from "@prisma/client";
 import { createPrismaInstance, disconnectPrisma } from "../../services/prisma";
 import { UserData } from "../../Controllers/User/schema";
 
-const prisma = createPrismaInstance()
 
 type UpdateUserInput = Prisma.UserUpdateInput & {
+  connect?: {
+    user?: {
+      id: string;
+    };
+  };
   supervisao_pertence?: { connect: { id: string } };
   role?: string;
   celula?: { connect: { id: string } };
-  discipuladorId?: { set: string };
   celula_lidera?: { connect: { id: string } }[];
   escola_lidera?: { connect: { id: string } }[];
   supervisoes_lidera?: { connect: { id: string } }[];
@@ -23,7 +26,10 @@ type UpdateUserInput = Prisma.UserUpdateInput & {
 };
 
 class UserRepositorie {
+
   async getCombinedData() {
+  const prisma = createPrismaInstance()
+
     if (!prisma) {
       throw new Error('Prisma instance is null');
     }
@@ -50,6 +56,8 @@ class UserRepositorie {
   }
 
   async findAll() {
+  const prisma = createPrismaInstance()
+
     if (!prisma) {
       throw new Error('Prisma instance is null');
     }
@@ -139,6 +147,8 @@ class UserRepositorie {
   }
 
   async findById(id: string) {
+    const prisma = createPrismaInstance()
+
     if (!prisma) {
       throw new Error('Prisma instance is null');
     }
@@ -231,6 +241,8 @@ class UserRepositorie {
   }
 
   async findByEmail(email: string) {
+    const prisma = createPrismaInstance()
+
     const result = await prisma?.user.findFirst({
       where: {
         email: email,
@@ -241,6 +253,8 @@ class UserRepositorie {
   }
 
   async createUser(userDataForm: UserData) {
+    const prisma = createPrismaInstance()
+
     const {
       password,
       supervisao_pertence,
@@ -317,7 +331,6 @@ class UserRepositorie {
           connect: encontros?.map((encontId) => ({ id: encontId })),
         },
         userIdRefresh,
-        discipuladorId: discipuladorId || undefined,
         situacao_no_reino: situacao_no_reino
           ? { connect: { id: situacao_no_reino } }
           : undefined,
@@ -325,13 +338,19 @@ class UserRepositorie {
         cargo_de_lideranca: cargo_de_lideranca
           ? { connect: { id: cargo_de_lideranca } }
           : undefined,
+
+          // discipuladorId: discipuladorId || undefined,
+
       },
     });
+
     await disconnectPrisma()
     return user;
   }
 
   async updateUser(id: string, userDataForm: UserData) {
+    const prisma = createPrismaInstance()
+
     if (!prisma) {
       throw new Error('Prisma instance is null');
     }
@@ -497,13 +516,6 @@ class UserRepositorie {
       }));
     }
 
-    if (discipuladorId !== undefined) {
-      updateUserInput.discipuladorId = {
-        set: discipuladorId
-      };
-    }
-
-
     if (situacao_no_reino !== undefined) {
       updateUserInput.situacao_no_reino = {
         connect: {
@@ -531,6 +543,8 @@ class UserRepositorie {
   }
 
   async deleteUser(id: string) {
+    const prisma = createPrismaInstance()
+
     if (!prisma) {
       throw new Error('Prisma instance is null');
     }
