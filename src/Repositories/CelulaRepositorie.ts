@@ -84,6 +84,7 @@ class CelulaRepositorie {
         supervisao: {
           select: {
             id: true,
+            nome: true,
           }
         },
         date_que_ocorre: true,
@@ -182,16 +183,16 @@ class CelulaRepositorie {
         reunioes_celula: true,
       },
     });
-  
+
     if (!existingCelula) {
       throw new Error(`Célula com ID ${id} não encontrada.`);
     }
-  
+
     // Crie um objeto de dados de atualização que inclui a nova data
     const updateData: Prisma.CelulaUpdateInput = {
       date_que_ocorre: newDate,
     };
-  
+
     // Mantenha as relações existentes sem modificação
   if (existingCelula.lider) {
     updateData.lider = {

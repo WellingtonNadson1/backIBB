@@ -38,10 +38,23 @@ class UserRepositorie {
         select: {
           id: true,
           nome: true,
+          cor: true,
+          supervisor: {
+            select: {
+              id: true,
+              first_name: true,
+            }
+          },
           celulas: {
             select: {
               id: true,
               nome: true,
+              lider: {
+                select: {
+                  id: true,
+                  first_name: true,
+                }
+              }
             },
           },
         },
@@ -338,9 +351,6 @@ class UserRepositorie {
         cargo_de_lideranca: cargo_de_lideranca
           ? { connect: { id: cargo_de_lideranca } }
           : undefined,
-
-          // discipuladorId: discipuladorId || undefined,
-
       },
     });
 
