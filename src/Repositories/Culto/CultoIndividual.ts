@@ -14,14 +14,18 @@ interface CultoIndividualConnect {
 
 class CultoIndividualRepositorie {
   async findAllIntervall(startDate: Date, endDate: Date, superVisionId: string) {
+    console.log('startDate', startDate)
+    console.log('endDate', endDate)
+
+
     const prisma = createPrismaInstance()
 
     try {
       const result = await prisma?.cultoIndividual.findMany({
           where: {
               data_inicio_culto: {
-                  gte: startDate,
-                  lte: endDate,
+                  gte: new Date(startDate),
+                  lte: new Date(endDate),
               },
               presencas_culto: {
                   some: {
@@ -79,8 +83,12 @@ class CultoIndividualRepositorie {
               },
           },
         });
-        console.log('Query result:', result);
-        return result;
+        const totalCultosPeriodo = result.length
+        // return result
+        return {
+          ...result,
+          totalCultosPeriodo: totalCultosPeriodo
+      };
     }
     finally {
       await disconnectPrisma()

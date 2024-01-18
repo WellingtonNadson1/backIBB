@@ -2,6 +2,7 @@ import { FastifyInstance, FastifyReply, FastifyRequest } from "fastify";
 import { createPrismaInstance, disconnectPrisma } from "../../services/prisma";
 import dayjs from "dayjs";
 import { CultoIndividualForDate } from "../../Controllers/Culto/CultoIndividual";
+import { CultoIndividualRepositorie } from "../../Repositories/Culto";
 
 
 const routerRelatorioPresencaCulto = async (fastify: FastifyInstance) => {
@@ -51,10 +52,24 @@ const routerRelatorioPresencaCulto = async (fastify: FastifyInstance) => {
             select: {
               id: true, // Id da célula
               nome: true, // Nome da célula
+              lider: {
+                select: {
+                  id: true,
+                  first_name: true,
+                }
+              }
             },
           },
         },
       });
+
+      const cultosIndividuaisForDate = await CultoIndividualRepositorie.findAllIntervall(startDate, endDate, superVisionId);
+
+if (cultosIndividuaisForDate) {
+  console.log('cultosIndividuaisForDate', cultosIndividuaisForDate)
+
+}
+      const totalCultosPeriodo = cultosIndividuaisForDate.totalCultosPeriodo
 
       // Filtrar as presenças dentro do intervalo de datas
       const membrosCompareceramCultosFiltrados = membrosCompareceramCultos.map((membro) => {
@@ -66,14 +81,26 @@ const routerRelatorioPresencaCulto = async (fastify: FastifyInstance) => {
           );
         });
 
+        const quantidadeCultosPresentes = presencasFiltradas.reduce((total, presente) => {
+          return total + (presente.status === true ? 1 : 0);
+        }, 0);
+
+
+
+        const porcentagemPresenca = (quantidadeCultosPresentes / totalCultosPeriodo) * 100;
+
+        console.log('quantidadePresentes', quantidadeCultosPresentes)
+        console.log('totalCultosPeriodo', totalCultosPeriodo)
+        console.log('porcentagemPresenca', porcentagemPresenca)
+
         return {
           ...membro,
           presencas_cultos: presencasFiltradas,
+          quantidadeCultos: totalCultosPeriodo,
+          quantidadePresente: quantidadeCultosPresentes,
+          porcentagemPresenca: porcentagemPresenca.toFixed(2)
         };
       });
-
-      console.log('Presenca Culto', membrosCompareceramCultosFiltrados);
-      console.log('Presenca Qnt', membrosCompareceramCultos.length);
 
       reply.send(membrosCompareceramCultosFiltrados);
     } catch (error) {
