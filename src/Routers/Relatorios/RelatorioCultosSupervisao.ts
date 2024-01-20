@@ -44,6 +44,11 @@ const routerRelatorioPresencaCulto = async (fastify: FastifyInstance) => {
               presenca_culto: {
                 select: {
                   data_inicio_culto: true,
+                  culto_semana: {
+                    select: {
+                      id: true
+                    }
+                  }
                 }
               }
             },
@@ -64,12 +69,15 @@ const routerRelatorioPresencaCulto = async (fastify: FastifyInstance) => {
       });
 
       const cultosIndividuaisForDate = await CultoIndividualRepositorie.findAllIntervall(startDate, endDate, superVisionId);
+// console.log('membrosCompareceramCultos', membrosCompareceramCultos)
 
-if (cultosIndividuaisForDate) {
-  console.log('cultosIndividuaisForDate', cultosIndividuaisForDate)
-
-}
       const totalCultosPeriodo = cultosIndividuaisForDate.totalCultosPeriodo
+      const cultoQuarta = cultosIndividuaisForDate.cultoQuarta
+      const cultoPrimicia = cultosIndividuaisForDate.cultoPrimicia
+      const cultoDomingoSacrificio = cultosIndividuaisForDate.cultoDomingoSacrificio
+      const cultoSabado = cultosIndividuaisForDate.cultoSabado
+      const totalCultosDomingoManha = cultosIndividuaisForDate.cultoDomingoManha
+      const totalCultosDomingoTarde = cultosIndividuaisForDate.cultoDomingoTarde
 
       // Filtrar as presenças dentro do intervalo de datas
       const membrosCompareceramCultosFiltrados = membrosCompareceramCultos.map((membro) => {
@@ -81,26 +89,87 @@ if (cultosIndividuaisForDate) {
           );
         });
 
+        // console.log('presencasFiltradas', presencasFiltradas)
+
         const quantidadeCultosPresentes = presencasFiltradas.reduce((total, presente) => {
           return total + (presente.status === true ? 1 : 0);
         }, 0);
 
+        const quantidadeCultosPresentePrimicia = presencasFiltradas.reduce((total, presente) => {
+          return total + ((presente.status === true &&  presente.presenca_culto?.culto_semana?.id === 'bffb62af-8d03-473a-ba20-ab5a9d7dafbe') ? 1 : 0);
+        }, 0);
+
+        const quantidadeCultosPresenteDomingoSacrificio = presencasFiltradas.reduce((total, presente) => {
+          return total + ((presente.status === true &&  presente.presenca_culto?.culto_semana?.id === 'e7bc72d1-8faa-4bbe-9c24-475b64f956cf') ? 1 : 0);
+        }, 0);
+
+        const quantidadeCultosPresenteQuarta = presencasFiltradas.reduce((total, presente) => {
+          return total + ((presente.status === true &&  presente.presenca_culto?.culto_semana?.id === '4064be1d-bf55-4851-9f76-99c4554a6265') ? 1 : 0);
+        }, 0);
+
+        const quantidadeCultosPresenteSabado = presencasFiltradas.reduce((total, presente) => {
+          return total + ((presente.status === true &&  presente.presenca_culto?.culto_semana?.id === '84acfbe4-c7e0-4841-813c-04731ffa9c67') ? 1 : 0);
+        }, 0);
+
+        const quantidadeCultosPresenteDomingoManha = presencasFiltradas.reduce((total, presente) => {
+          return total + ((presente.status === true &&  presente.presenca_culto?.culto_semana?.id === 'cab02f30-cade-46ca-b118-930461013d53') ? 1 : 0);
+        }, 0);
+
+        const quantidadeCultosPresenteDomingoTarde = presencasFiltradas.reduce((total, presente) => {
+          return total + ((presente.status === true &&  presente.presenca_culto?.culto_semana?.id === 'ea08ec9b-3d1b-42f3-818a-ec53ef99b78f') ? 1 : 0);
+        }, 0);
 
 
-        const porcentagemPresenca = (quantidadeCultosPresentes / totalCultosPeriodo) * 100;
 
-        console.log('quantidadePresentes', quantidadeCultosPresentes)
-        console.log('totalCultosPeriodo', totalCultosPeriodo)
-        console.log('porcentagemPresenca', porcentagemPresenca)
+        const porcentagemPresencaTotal = ((quantidadeCultosPresentes / totalCultosPeriodo) * 100).toFixed(2).slice(0, 5);
 
+        const porcentagemPresencaQuarta = ((quantidadeCultosPresenteQuarta / cultoQuarta) * 100).toFixed(2).slice(0, 5);
+
+        let porcentagemPresencaPrimicia = undefined
+
+        if (quantidadeCultosPresentePrimicia !== 0) {
+         porcentagemPresencaPrimicia = ((quantidadeCultosPresentePrimicia / cultoPrimicia) * 100).toFixed(2).slice(0, 5);
+        } else {
+          porcentagemPresencaPrimicia = 0.00.toFixed(2)
+        }
+
+        let porcentagemPresencaDomingoSacrificio = undefined
+
+        if (quantidadeCultosPresenteDomingoSacrificio !== 0) {
+          porcentagemPresencaDomingoSacrificio = ((quantidadeCultosPresenteDomingoSacrificio / cultoDomingoSacrificio) * 100).toFixed(2).slice(0, 5);
+        } else {
+          porcentagemPresencaDomingoSacrificio = 0.00.toFixed(2)
+        }
+
+
+        const porcentagemPresencaSabado = ((quantidadeCultosPresenteSabado / cultoSabado) * 100).toFixed(2).slice(0, 5);
+
+        const porcentagemPresencaTotalDomingoManha = ((quantidadeCultosPresenteDomingoManha / totalCultosDomingoManha) * 100).toFixed(2).slice(0, 5);
+
+        const porcentagemPresencaTotalDomingoTarde = ((quantidadeCultosPresenteDomingoTarde / totalCultosDomingoTarde) * 100).toFixed(2).slice(0, 5);
+
+        const cultos = {
+          porcentagemPresencaTotal,
+          porcentagemPresencaQuarta,
+          porcentagemPresencaPrimicia,
+          porcentagemPresencaDomingoSacrificio,
+          porcentagemPresencaSabado,
+          porcentagemPresencaTotalDomingoManha,
+          porcentagemPresencaTotalDomingoTarde,
+        }
+
+        // console.log('membro', membro.presencas_cultos[0])
+        // console.log('cultos', cultos)
+
+        // membrosCompareceramCultos,
         return {
           ...membro,
-          presencas_cultos: presencasFiltradas,
-          quantidadeCultos: totalCultosPeriodo,
-          quantidadePresente: quantidadeCultosPresentes,
-          porcentagemPresenca: porcentagemPresenca.toFixed(2)
+          presencasFiltradas,
+          cultos: cultos
+
         };
       });
+      console.log('membrosCompareceramCultosFiltrados', membrosCompareceramCultosFiltrados)
 
       reply.send(membrosCompareceramCultosFiltrados);
     } catch (error) {

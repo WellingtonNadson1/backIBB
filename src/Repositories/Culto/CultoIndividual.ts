@@ -78,16 +78,56 @@ class CultoIndividualRepositorie {
               },
               culto_semana: {
                   select: {
-                      nome: true
+                      id: true,
+                      nome: true,
                   },
               },
           },
         });
         const totalCultosPeriodo = result.length
+        const cultoPrimicia = result.reduce((total, primicia) => {
+          return total + (primicia.culto_semana?.id === 'bffb62af-8d03-473a-ba20-ab5a9d7dafbe' ? 1 : 0);
+        }, 0);
+
+        const cultoDomingoSacrificio = result.reduce((total, sacrificio) => {
+          return total + (sacrificio.culto_semana?.id === 'e7bc72d1-8faa-4bbe-9c24-475b64f956cf' ? 1 : 0);
+        }, 0);
+
+        const cultoQuarta = result.reduce((total, quarta) => {
+          return total + (quarta.culto_semana?.id === '4064be1d-bf55-4851-9f76-99c4554a6265' ? 1 : 0);
+        }, 0);
+
+        const cultoSabado = result.reduce((total, sabado) => {
+          return total + (sabado.culto_semana?.id === '84acfbe4-c7e0-4841-813c-04731ffa9c67' ? 1 : 0);
+        }, 0);
+
+        const cultoDomingoManha = result.reduce((total, domingoManha) => {
+          return total + (domingoManha.culto_semana?.id === 'cab02f30-cade-46ca-b118-930461013d53' ? 1 : 0);
+        }, 0);
+
+        const cultoDomingoTarde = result.reduce((total, domingoTarde) => {
+          return total + (domingoTarde.culto_semana?.id === 'ea08ec9b-3d1b-42f3-818a-ec53ef99b78f' ? 1 : 0);
+        }, 0);
+
+        console.log('totalCultosPeriodo', totalCultosPeriodo)
+        console.log('cultoQuarta', cultoQuarta)
+        console.log('cultoPrimicia', cultoPrimicia)
+        console.log('cultoDomingoSacrificio', cultoDomingoSacrificio)
+        console.log('cultoSabado', cultoSabado)
+        console.log('cultoDomingoManha', cultoDomingoManha)
+        console.log('cultoDomingoTarde', cultoDomingoTarde)
+
+
         // return result
         return {
           ...result,
-          totalCultosPeriodo: totalCultosPeriodo
+          cultoQuarta: cultoQuarta,
+          cultoPrimicia: cultoPrimicia,
+          cultoDomingoSacrificio: cultoDomingoSacrificio,
+          cultoSabado: cultoSabado,
+          cultoDomingoManha: cultoDomingoManha,
+          cultoDomingoTarde: cultoDomingoTarde,
+          totalCultosPeriodo: totalCultosPeriodo,
       };
     }
     finally {
