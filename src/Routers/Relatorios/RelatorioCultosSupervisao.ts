@@ -69,7 +69,6 @@ const routerRelatorioPresencaCulto = async (fastify: FastifyInstance) => {
       });
 
       const cultosIndividuaisForDate = await CultoIndividualRepositorie.findAllIntervall(startDate, endDate, superVisionId);
-// console.log('membrosCompareceramCultos', membrosCompareceramCultos)
 
       const totalCultosPeriodo = cultosIndividuaisForDate.totalCultosPeriodo
       const cultoQuarta = cultosIndividuaisForDate.cultoQuarta
@@ -88,8 +87,6 @@ const routerRelatorioPresencaCulto = async (fastify: FastifyInstance) => {
             dataPresenca.isBefore(dayjs(dataFim).utcOffset(0))
           );
         });
-
-        // console.log('presencasFiltradas', presencasFiltradas)
 
         const quantidadeCultosPresentes = presencasFiltradas.reduce((total, presente) => {
           return total + (presente.status === true ? 1 : 0);
@@ -119,8 +116,6 @@ const routerRelatorioPresencaCulto = async (fastify: FastifyInstance) => {
           return total + ((presente.status === true &&  presente.presenca_culto?.culto_semana?.id === 'ea08ec9b-3d1b-42f3-818a-ec53ef99b78f') ? 1 : 0);
         }, 0);
 
-
-
         const porcentagemPresencaTotal = ((quantidadeCultosPresentes / totalCultosPeriodo) * 100).toFixed(2).slice(0, 5);
 
         const porcentagemPresencaQuarta = ((quantidadeCultosPresenteQuarta / cultoQuarta) * 100).toFixed(2).slice(0, 5);
@@ -141,7 +136,6 @@ const routerRelatorioPresencaCulto = async (fastify: FastifyInstance) => {
           porcentagemPresencaDomingoSacrificio = 0.00.toFixed(2)
         }
 
-
         const porcentagemPresencaSabado = ((quantidadeCultosPresenteSabado / cultoSabado) * 100).toFixed(2).slice(0, 5);
 
         const porcentagemPresencaTotalDomingoManha = ((quantidadeCultosPresenteDomingoManha / totalCultosDomingoManha) * 100).toFixed(2).slice(0, 5);
@@ -158,10 +152,6 @@ const routerRelatorioPresencaCulto = async (fastify: FastifyInstance) => {
           porcentagemPresencaTotalDomingoTarde,
         }
 
-        // console.log('membro', membro.presencas_cultos[0])
-        // console.log('cultos', cultos)
-
-        // membrosCompareceramCultos,
         return {
           ...membro,
           presencasFiltradas,
@@ -169,7 +159,6 @@ const routerRelatorioPresencaCulto = async (fastify: FastifyInstance) => {
 
         };
       });
-      console.log('membrosCompareceramCultosFiltrados', membrosCompareceramCultosFiltrados)
 
       reply.send(membrosCompareceramCultosFiltrados);
     } catch (error) {

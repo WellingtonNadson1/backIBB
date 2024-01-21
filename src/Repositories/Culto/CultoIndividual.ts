@@ -2,8 +2,6 @@ import { Prisma } from "@prisma/client";
 import { CultoIndividualData } from "../../Controllers/Culto/CultoIndividual";
 import { createPrismaInstance, disconnectPrisma } from "../../services/prisma";
 
-
-
 type UpdateCultoIndividualInput = Prisma.CultoIndividualUpdateInput & {
   presencas_culto?: { connect: { id: string } }[];
 };
@@ -109,16 +107,6 @@ class CultoIndividualRepositorie {
           return total + (domingoTarde.culto_semana?.id === 'ea08ec9b-3d1b-42f3-818a-ec53ef99b78f' ? 1 : 0);
         }, 0);
 
-        console.log('totalCultosPeriodo', totalCultosPeriodo)
-        console.log('cultoQuarta', cultoQuarta)
-        console.log('cultoPrimicia', cultoPrimicia)
-        console.log('cultoDomingoSacrificio', cultoDomingoSacrificio)
-        console.log('cultoSabado', cultoSabado)
-        console.log('cultoDomingoManha', cultoDomingoManha)
-        console.log('cultoDomingoTarde', cultoDomingoTarde)
-
-
-        // return result
         return {
           ...result,
           cultoQuarta: cultoQuarta,
@@ -134,7 +122,6 @@ class CultoIndividualRepositorie {
       await disconnectPrisma()
     }
 }
-
 
   async findAll() {
     const prisma = createPrismaInstance()
