@@ -552,6 +552,29 @@ class UserRepositorie {
     return result
   }
 
+  async updateDiscipuladorId(userId: string, newDiscipuladorId: string) {
+    const prisma = createPrismaInstance()
+
+    if (!prisma) {
+      throw new Error('Prisma instance is null');
+    }
+
+    try {
+      const result = await prisma.user.update({
+        where: { id: userId },
+        data: { discipuladorId: newDiscipuladorId },
+      });
+      const success = `DiscipuladorId updated successfully`;
+      await disconnectPrisma()
+      return success
+    } catch (error) {
+      console.error(`Error updating discipuladorId: ${error}`);
+      await disconnectPrisma()
+      throw error; // Re-throw the error for proper handling
+    }
+  }
+
+
   async deleteUser(id: string) {
     const prisma = createPrismaInstance()
 

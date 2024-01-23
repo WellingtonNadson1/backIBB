@@ -128,6 +128,19 @@ class UserController {
     return reply.code(202).send(newUser);
   }
 
+  async updateDisicipulo(
+    request: FastifyRequest<{
+      Params: UserParams
+    }>,
+    reply: FastifyReply) {
+      const { id, discipuladorId } = request.body as UserData
+      if (discipuladorId) {
+        const result = await UserRepositorie.updateDiscipuladorId(id, discipuladorId)
+        return result
+      }
+      return null;
+  }
+
   async delete(
     request: FastifyRequest<{
       Params: UserParams;

@@ -13,6 +13,7 @@ const roleEnumValidator = (val: string): val is Role =>
   Object.values(Role).includes(val as Role);
 
 const UserDataSchema = z.object({
+  id: z.string(),
   supervisao_pertence: z.string().optional(),
   role: z
     .string()
