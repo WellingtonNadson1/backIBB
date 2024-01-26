@@ -3,6 +3,13 @@ import { Input, boolean, object, string } from "valibot";
 import { PresencaCultoRepositorie } from "../../Repositories/Culto";
 import dayjs from "dayjs";
 
+type CultoIndividual = {
+  startDate: Date;
+  endDate: Date;
+  superVisionId: string;
+  cargoLideranca: string[];
+}
+
 const PresencaCultoDataSchema = object({
   status: boolean(), //Pode ter um status (presente, ausente, justificado, etc.)
   membro: string(),
@@ -50,6 +57,26 @@ class PresencaCultoController {
       return reply.code(404).send({ message: "Presença not found!" });
     }
     return reply.code(200).send(presencaCulto);
+  }
+
+  // Relatorio de presenca nos cultos
+  async supervisores(
+    request: FastifyRequest,
+    reply: FastifyReply
+  ) {
+    const { startDate, endDate, superVisionId, cargoLideranca } = request.body as CultoIndividual
+
+
+    const resultRelatorioCultos = await PresencaCultoRepositorie.cultosRelatoriosSupervisor(
+      startDate, endDate, superVisionId, cargoLideranca
+    );
+
+    if (!resultRelatorioCultos) {
+      return reply.code(404).send({ message: "Relatorio Cultos Error!" });
+    }
+
+  return reply.code(200).send(resultRelatorioCultos);
+
   }
 
   // Relatorio de presenca nos cultos
