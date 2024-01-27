@@ -128,10 +128,14 @@ class PresencaCultoRepositorie {
 
         const porcentagemPresencaTotal = ((quantidadeCultosPresentes / totalCultosPeriodo) * 100).toFixed(2).slice(0, 5);
 
-        const porcentagemPresencaQuarta = ((quantidadeCultosPresenteQuarta / cultoQuarta) * 100).toFixed(2).slice(0, 5);
+        let porcentagemPresencaQuarta = undefined
+        if (quantidadeCultosPresenteQuarta !== 0) {
+          porcentagemPresencaQuarta = ((quantidadeCultosPresenteQuarta / cultoQuarta) * 100).toFixed(2).slice(0, 5);
+        } else {
+          porcentagemPresencaQuarta = 0.00.toFixed(2)
+        }
 
         let porcentagemPresencaPrimicia = undefined
-
         if (quantidadeCultosPresentePrimicia !== 0) {
          porcentagemPresencaPrimicia = ((quantidadeCultosPresentePrimicia / cultoPrimicia) * 100).toFixed(2).slice(0, 5);
         } else {
@@ -139,18 +143,32 @@ class PresencaCultoRepositorie {
         }
 
         let porcentagemPresencaDomingoSacrificio = undefined
-
         if (quantidadeCultosPresenteDomingoSacrificio !== 0) {
           porcentagemPresencaDomingoSacrificio = ((quantidadeCultosPresenteDomingoSacrificio / cultoDomingoSacrificio) * 100).toFixed(2).slice(0, 5);
         } else {
           porcentagemPresencaDomingoSacrificio = 0.00.toFixed(2)
         }
 
-        const porcentagemPresencaSabado = ((quantidadeCultosPresenteSabado / cultoSabado) * 100).toFixed(2).slice(0, 5);
+        let porcentagemPresencaSabado = undefined
+        if (quantidadeCultosPresenteSabado !== 0) {
+          porcentagemPresencaSabado = ((quantidadeCultosPresenteSabado / cultoSabado) * 100).toFixed(2).slice(0, 5);
+        } else {
+          porcentagemPresencaSabado = 0.00.toFixed(2)
+        }
 
-        const porcentagemPresencaTotalDomingoManha = ((quantidadeCultosPresenteDomingoManha / totalCultosDomingoManha) * 100).toFixed(2).slice(0, 5);
+        let porcentagemPresencaTotalDomingoManha = undefined
+        if (quantidadeCultosPresenteDomingoManha !== 0) {
+          porcentagemPresencaTotalDomingoManha = ((quantidadeCultosPresenteDomingoManha / totalCultosDomingoManha) * 100).toFixed(2).slice(0, 5);
+        } else {
+          porcentagemPresencaTotalDomingoManha = 0.00.toFixed(2)
+        }
 
-        const porcentagemPresencaTotalDomingoTarde = ((quantidadeCultosPresenteDomingoTarde / totalCultosDomingoTarde) * 100).toFixed(2).slice(0, 5);
+        let porcentagemPresencaTotalDomingoTarde = undefined
+        if (quantidadeCultosPresenteDomingoTarde !== 0) {
+          porcentagemPresencaTotalDomingoTarde = ((quantidadeCultosPresenteDomingoTarde / totalCultosDomingoTarde) * 100).toFixed(2).slice(0, 5);
+        } else {
+          porcentagemPresencaTotalDomingoTarde = 0.00.toFixed(2)
+        }
 
         const cultos = {
           porcentagemPresencaTotal,
