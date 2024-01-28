@@ -73,6 +73,12 @@ class CelulaRepositorie {
                 id: true,
                 nome: true
               }
+            },
+            user: {
+              select: {
+                id: true,
+                first_name: true,
+              }
             }
           }
         },
@@ -106,6 +112,7 @@ class CelulaRepositorie {
         }
       }
     })
+
     await disconnectPrisma()
     return result
   }
