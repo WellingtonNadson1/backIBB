@@ -186,6 +186,12 @@ class UserRepositorie {
         date_batizado: true,
         is_discipulado: true,
         discipuladorId: true,
+        user: {
+          select: {
+            id: true,
+            first_name: true,
+          }
+        },
         estado_civil: true,
         nome_conjuge: true,
         date_casamento: true,
