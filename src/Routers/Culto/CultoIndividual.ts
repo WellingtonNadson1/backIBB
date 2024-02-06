@@ -5,6 +5,7 @@ const routerCultoIndividual = async (fastify: FastifyInstance) => {
   // TURMA ESCOLA
   fastify.post("/cultosindividuais/fordate", CultoIndividualController.forDate);
   fastify.get("/cultosindividuais", CultoIndividualController.index);
+  fastify.get("/cultosindividuais/perperiodo", CultoIndividualController.perperiod);
   fastify.get('/cultosindividuais/:id', CultoIndividualController.show);
   fastify.post("/cultosindividuais", CultoIndividualController.store);
   fastify.delete("/cultosindividuais/:id", CultoIndividualController.delete);

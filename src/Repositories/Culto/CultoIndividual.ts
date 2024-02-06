@@ -160,6 +160,38 @@ class CultoIndividualRepositorie {
     }
   }
 
+  async findPerPeriod(firstDayOfMonth: Date, lastDayOfMonth: Date) {
+    const prisma = createPrismaInstance()
+    try {
+      const result = await prisma?.cultoIndividual.findMany({
+        where: {
+          data_inicio_culto: {
+              gte: firstDayOfMonth,
+              lte: lastDayOfMonth,
+          },
+      },
+      orderBy: {
+        data_inicio_culto: 'asc' // Ordena em ordem crescente
+    },
+        select: {
+          id: true,
+          data_inicio_culto: true,
+          data_termino_culto: true,
+          culto_semana: {
+            select: {
+              id: true,
+              nome: true
+            },
+          },
+        },
+      });
+      return result;
+    }
+    finally {
+      await disconnectPrisma()
+    }
+  }
+
   async findById(id: string) {
     const prisma = createPrismaInstance()
 

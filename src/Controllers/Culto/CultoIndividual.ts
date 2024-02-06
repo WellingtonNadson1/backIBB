@@ -25,6 +25,13 @@ interface CultoIndividualParams {
   id: string;
 }
 
+const CultoIndividualDatePeriodSchema = object ({
+  firstDayOfMonth: date(),
+  lastDayOfMonth: date(),
+})
+
+export type CultoIndividualParamsPerPeriod = Input<typeof CultoIndividualDatePeriodSchema>
+
 class CultoIndividualController {
   // Fazendo uso do Fastify
   async forDate(request: FastifyRequest<{
@@ -48,6 +55,24 @@ class CultoIndividualController {
       return reply.code(500).send({ error: "Internal Server Error" });
     }
     return reply.send(cultosIndividuais);
+  }
+
+  async perperiod(
+    request: FastifyRequest<{
+      Params: CultoIndividualParamsPerPeriod;
+    }>,
+    reply: FastifyReply
+  ) {
+    console.log('request', request)
+    console.log('request.params', request.params)
+    const { firstDayOfMonth, lastDayOfMonth } = request.params
+    console.log('firstDayOfMonth AQUI: ', firstDayOfMonth)
+    const cultosIndividuaisPerPeriod = await CultoIndividualRepositorie.findPerPeriod(firstDayOfMonth, lastDayOfMonth);
+    if (!cultosIndividuaisPerPeriod) {
+      return reply.code(500).send({ error: "Internal Server Error" });
+    }
+    // console.log('cultosIndividuaisPerPeriod', cultosIndividuaisPerPeriod)
+    return reply.send(cultosIndividuaisPerPeriod);
   }
 
   async show(
