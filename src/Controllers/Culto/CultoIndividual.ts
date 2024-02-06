@@ -63,15 +63,11 @@ class CultoIndividualController {
     }>,
     reply: FastifyReply
   ) {
-    console.log('request', request)
-    console.log('request.params', request.params)
-    const { firstDayOfMonth, lastDayOfMonth } = request.params
-    console.log('firstDayOfMonth AQUI: ', firstDayOfMonth)
+    const { firstDayOfMonth, lastDayOfMonth } = request.body as CultoIndividualParamsPerPeriod
     const cultosIndividuaisPerPeriod = await CultoIndividualRepositorie.findPerPeriod(firstDayOfMonth, lastDayOfMonth);
     if (!cultosIndividuaisPerPeriod) {
       return reply.code(500).send({ error: "Internal Server Error" });
     }
-    // console.log('cultosIndividuaisPerPeriod', cultosIndividuaisPerPeriod)
     return reply.send(cultosIndividuaisPerPeriod);
   }
 

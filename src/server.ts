@@ -26,7 +26,7 @@ declare module 'fastify' {
   }
 }
 
-const PORT = process.env.PORT ? Number(process.env.PORT) : 3333;
+const PORT = process.env.PORT ? Number(process.env.PORT) : 8080;
 
 const app: FastifyInstance = Fastify({ logger: true });
 
@@ -47,10 +47,7 @@ app.addHook('onResponse', async (request, reply) => {
 
 app.register(multer.contentParser);
 
-
-
 app.addHook("onRequest", requireAuth);
-
 
 const start = async () => {
   try {
