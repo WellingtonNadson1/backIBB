@@ -78,6 +78,15 @@ class UserRepositorie {
       select: {
         id: true,
         role: true,
+        user_roles: {
+          select: {
+            rolenew: {
+              select: {
+                name: true
+              }
+            }
+          }
+        },
         image_url: true,
         email: true,
         first_name: true,
@@ -172,6 +181,15 @@ class UserRepositorie {
       select: {
         id: true,
         role: true,
+        user_roles: {
+          select: {
+            rolenew: {
+              select: {
+                name: true
+              }
+            }
+          }
+        },
         image_url: true,
         email: true,
         first_name: true,
