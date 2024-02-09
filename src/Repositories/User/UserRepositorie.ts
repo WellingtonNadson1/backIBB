@@ -284,6 +284,100 @@ class UserRepositorie {
       where: {
         email: email,
       },
+      select: {
+        id: true,
+        role: true,
+        user_roles: {
+          select: {
+            rolenew: {
+              select: {
+                name: true
+              }
+            }
+          }
+        },
+        image_url: true,
+        email: true,
+        first_name: true,
+        last_name: true,
+        cpf: true,
+        date_nascimento: true,
+        sexo: true,
+        telefone: true,
+        escolaridade: true,
+        profissao: true,
+        batizado: true,
+        date_batizado: true,
+        is_discipulado: true,
+        discipuladorId: true,
+        user: {
+          select: {
+            id: true,
+            first_name: true,
+          }
+        },
+        estado_civil: true,
+        nome_conjuge: true,
+        date_casamento: true,
+        has_filho: true,
+        quantidade_de_filho: true,
+        date_decisao: true,
+        celulaId: true,
+        cep: true,
+        cidade: true,
+        estado: true,
+        bairro: true,
+        endereco: true,
+        numero_casa: true,
+        supervisaoId: true,
+        situacaoNoReinoId: true,
+        cargoDeLiderancaId: true,
+        supervisao_pertence: {
+          select: {
+            id: true,
+            nome: true,
+          },
+        },
+        celula: {
+          select: {
+            id: true,
+            nome: true,
+          },
+        },
+        celula_lidera: {
+          select: {
+            id: true,
+            nome: true,
+          },
+        },
+        situacao_no_reino: {
+          select: {
+            id: true,
+            nome: true,
+          },
+        },
+        cargo_de_lideranca: {
+          select: {
+            id: true,
+            nome: true,
+          },
+        },
+        escolas: {
+          select: {
+            id: true,
+            nome: true,
+          },
+        },
+        encontros: {
+          select: {
+            id: true,
+            nome: true,
+          },
+        },
+        presencas_aulas_escolas: false,
+        presencas_cultos: false,
+        password: true,
+      },
     });
     await disconnectPrisma()
     return result
