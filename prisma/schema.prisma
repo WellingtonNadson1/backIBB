@@ -19,62 +19,64 @@ model Session {
 }
 
 model User {
-  id                       String                  @id @default(uuid())
-  image_url                String?
-  email                    String                  @unique
-  first_name               String
-  last_name                String?
-  cpf                      String?
-  date_nascimento          DateTime?
-  sexo                     String?
-  telefone                 String?
-  escolaridade             String?
-  profissao                String?
-  estado_civil             String?
-  nome_conjuge             String?
-  has_filho                Boolean
-  batizado                 Boolean
-  is_discipulado           Boolean
-  discipuladorId           String?
-  date_casamento           DateTime?
-  date_batizado            DateTime?
-  date_decisao             DateTime?
-  date_create              DateTime                @default(now())
-  date_update              DateTime                @updatedAt
-  password                 String?
-  turmaEscolaId            String?
-  cep                      String?
-  cidade                   String?
-  endereco                 String?
-  estado                   String?
-  numero_casa              String?
-  bairro                   String?
-  cargoDeLiderancaId       String?
-  celulaId                 String?
-  situacaoNoReinoId        String?
-  supervisaoId             String?
-  quantidade_de_filho      Int?
-  role                     Role                    @default(MEMBER)
-  userIdRefresh            String?
-  role_id                  String?
-  presencas_cultos         PresencaCulto[]
-  presencas_aulas_escolas  PresencaEscola[]
-  presencas_reuniao_celula PresencaReuniaoCelula[]
-  celula_lidera            Celula[]                @relation("LiderCelula")
-  escola_lidera            Escola[]                @relation("LiderEscola")
-  refreshTokens            RefreshToken?
-  sessions                 Session[]
-  supervisoes_lidera       Supervisao[]            @relation("Supervisor")
-  cargo_de_lideranca       CargoDeLideranca?       @relation(fields: [cargoDeLiderancaId], references: [id])
-  celula                   Celula?                 @relation(fields: [celulaId], references: [id])
-  user                     User?                   @relation("userTouser", fields: [discipuladorId], references: [id], map: "user_discipuladorid_fkey")
-  other_user               User[]                  @relation("userTouser")
-  situacao_no_reino        SituacaoNoReino?        @relation(fields: [situacaoNoReinoId], references: [id])
-  supervisao_pertence      Supervisao?             @relation(fields: [supervisaoId], references: [id])
-  TurmaEscola              TurmaEscola?            @relation(fields: [turmaEscolaId], references: [id])
-  user_roles               user_roles[]
-  encontros                Encontros[]             @relation("EncontrosToUser")
-  escolas                  Escola[]                @relation("EscolaToUser")
+  id                                                              String                  @id @default(uuid())
+  image_url                                                       String?
+  email                                                           String                  @unique
+  first_name                                                      String
+  last_name                                                       String?
+  cpf                                                             String?
+  date_nascimento                                                 DateTime?
+  sexo                                                            String?
+  telefone                                                        String?
+  escolaridade                                                    String?
+  profissao                                                       String?
+  estado_civil                                                    String?
+  nome_conjuge                                                    String?
+  has_filho                                                       Boolean
+  batizado                                                        Boolean
+  is_discipulado                                                  Boolean
+  discipuladorId                                                  String?
+  date_casamento                                                  DateTime?
+  date_batizado                                                   DateTime?
+  date_decisao                                                    DateTime?
+  date_create                                                     DateTime                @default(now())
+  date_update                                                     DateTime                @updatedAt
+  password                                                        String?
+  turmaEscolaId                                                   String?
+  cep                                                             String?
+  cidade                                                          String?
+  endereco                                                        String?
+  estado                                                          String?
+  numero_casa                                                     String?
+  bairro                                                          String?
+  cargoDeLiderancaId                                              String?
+  celulaId                                                        String?
+  situacaoNoReinoId                                               String?
+  supervisaoId                                                    String?
+  quantidade_de_filho                                             Int?
+  role                                                            Role                    @default(MEMBER)
+  userIdRefresh                                                   String?
+  role_id                                                         String?
+  presencas_cultos                                                PresencaCulto[]
+  presencas_aulas_escolas                                         PresencaEscola[]
+  presencas_reuniao_celula                                        PresencaReuniaoCelula[]
+  celula_lidera                                                   Celula[]                @relation("LiderCelula")
+  discipulador_usuario_discipulador_usuario_discipulador_idTouser discipulador_usuario[]  @relation("discipulador_usuario_discipulador_idTouser")
+  discipulador_usuario_discipulador_usuario_usuario_idTouser      discipulador_usuario[]  @relation("discipulador_usuario_usuario_idTouser")
+  escola_lidera                                                   Escola[]                @relation("LiderEscola")
+  refreshTokens                                                   RefreshToken?
+  sessions                                                        Session[]
+  supervisoes_lidera                                              Supervisao[]            @relation("Supervisor")
+  cargo_de_lideranca                                              CargoDeLideranca?       @relation(fields: [cargoDeLiderancaId], references: [id])
+  celula                                                          Celula?                 @relation(fields: [celulaId], references: [id])
+  user                                                            User?                   @relation("userTouser", fields: [discipuladorId], references: [id], map: "user_discipuladorid_fkey")
+  other_user                                                      User[]                  @relation("userTouser")
+  situacao_no_reino                                               SituacaoNoReino?        @relation(fields: [situacaoNoReinoId], references: [id])
+  supervisao_pertence                                             Supervisao?             @relation(fields: [supervisaoId], references: [id])
+  TurmaEscola                                                     TurmaEscola?            @relation(fields: [turmaEscolaId], references: [id])
+  user_roles                                                      user_roles[]
+  encontros                                                       Encontros[]             @relation("EncontrosToUser")
+  escolas                                                         Escola[]                @relation("EscolaToUser")
 
   @@map("user")
 }
@@ -314,6 +316,15 @@ model user_roles {
   user    User    @relation(fields: [user_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
 
   @@id([user_id, role_id])
+}
+
+model discipulador_usuario {
+  usuario_id                                      String
+  discipulador_id                                 String
+  user_discipulador_usuario_discipulador_idTouser User   @relation("discipulador_usuario_discipulador_idTouser", fields: [discipulador_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  user_discipulador_usuario_usuario_idTouser      User   @relation("discipulador_usuario_usuario_idTouser", fields: [usuario_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+
+  @@id([usuario_id, discipulador_id])
 }
 
 enum Role {

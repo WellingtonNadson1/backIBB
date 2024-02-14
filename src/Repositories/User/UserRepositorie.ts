@@ -78,6 +78,26 @@ class UserRepositorie {
       select: {
         id: true,
         role: true,
+        discipulador_usuario_discipulador_usuario_usuario_idTouser: {
+          select: {
+            user_discipulador_usuario_discipulador_idTouser: {
+              select: {
+                id: true,
+                first_name: true
+              }
+            }
+          },
+        },
+        discipulador_usuario_discipulador_usuario_discipulador_idTouser: {
+          select: {
+            user_discipulador_usuario_usuario_idTouser: {
+              select: {
+                id: true,
+                first_name: true
+              }
+            }
+          },
+        },
         user_roles: {
           select: {
             rolenew: {
@@ -181,6 +201,26 @@ class UserRepositorie {
       select: {
         id: true,
         role: true,
+        discipulador_usuario_discipulador_usuario_usuario_idTouser: {
+          select: {
+            user_discipulador_usuario_discipulador_idTouser: {
+              select: {
+                id: true,
+                first_name: true
+              }
+            }
+          },
+        },
+        discipulador_usuario_discipulador_usuario_discipulador_idTouser: {
+          select: {
+            user_discipulador_usuario_usuario_idTouser: {
+              select: {
+                id: true,
+                first_name: true
+              }
+            }
+          },
+        },
         user_roles: {
           select: {
             rolenew: {
@@ -287,6 +327,26 @@ class UserRepositorie {
       select: {
         id: true,
         role: true,
+        discipulador_usuario_discipulador_usuario_usuario_idTouser: {
+          select: {
+            user_discipulador_usuario_discipulador_idTouser: {
+              select: {
+                id: true,
+                first_name: true
+              }
+            }
+          },
+        },
+        discipulador_usuario_discipulador_usuario_discipulador_idTouser: {
+          select: {
+            user_discipulador_usuario_usuario_idTouser: {
+              select: {
+                id: true,
+                first_name: true
+              }
+            }
+          },
+        },
         user_roles: {
           select: {
             rolenew: {

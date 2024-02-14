@@ -28,7 +28,7 @@ class UserController {
     if (!users) {
       return reply.code(500).send({ error: "Internal Server Error" });
     }
-    return reply.send(users);
+    return reply.code(200).send(users);
   }
 
   async show(
