@@ -62,6 +62,26 @@ class CelulaRepositorie {
           select: {
             id: true,
             first_name: true,
+            discipulador_usuario_discipulador_usuario_usuario_idTouser: {
+              select: {
+                user_discipulador_usuario_discipulador_idTouser: {
+                  select: {
+                    id: true,
+                    first_name: true
+                  }
+                }
+              },
+            },
+            discipulador_usuario_discipulador_usuario_discipulador_idTouser: {
+              select: {
+                user_discipulador_usuario_usuario_idTouser: {
+                  select: {
+                    id: true,
+                    first_name: true
+                  }
+                }
+              },
+            },
             cargo_de_lideranca: {
               select : {
                 id: true,
