@@ -2,11 +2,13 @@ import { CelulaData } from "../Controllers/CelulaController";
 import { Prisma } from "@prisma/client";
 import { createPrismaInstance, disconnectPrisma } from "../services/prisma";
 
-const prisma = createPrismaInstance()
-
-
 class CelulaRepositorie {
   async findAll() {
+    const prisma = createPrismaInstance()
+
+    if (!prisma) {
+      throw new Error('Prisma instance is null');
+    }
     const result = await prisma?.celula.findMany({
       select: {
         id: true,
@@ -50,7 +52,12 @@ class CelulaRepositorie {
     return result
   }
 
-  async findById(id: string){
+  async findById(id: string) {
+    const prisma = createPrismaInstance()
+
+    if (!prisma) {
+      throw new Error('Prisma instance is null');
+    }
     const result = await prisma?.celula.findUnique({
       where: {
         id: id,
@@ -83,13 +90,13 @@ class CelulaRepositorie {
               },
             },
             cargo_de_lideranca: {
-              select : {
+              select: {
                 id: true,
                 nome: true
               }
             },
             situacao_no_reino: {
-              select : {
+              select: {
                 id: true,
                 nome: true
               }
@@ -138,6 +145,11 @@ class CelulaRepositorie {
   }
 
   async createCelula(celulaDataForm: CelulaData) {
+    const prisma = createPrismaInstance()
+
+    if (!prisma) {
+      throw new Error('Prisma instance is null');
+    }
     const { membros, reunioes_celula, ...CelulaData } = celulaDataForm
 
     const result = await prisma?.celula.create({
@@ -154,7 +166,7 @@ class CelulaRepositorie {
           }
         },
         membros: {
-          connect: membros ? membros.map((membroId) => ({id: membroId})) : []
+          connect: membros ? membros.map((membroId) => ({ id: membroId })) : []
         },
         reunioes_celula: {
           connect: reunioes_celula?.map((reuniaoCelulaId) => ({ id: reuniaoCelulaId })),
@@ -166,6 +178,11 @@ class CelulaRepositorie {
   }
 
   async updateCelula(id: string, celulaDataForm: CelulaData) {
+    const prisma = createPrismaInstance()
+
+    if (!prisma) {
+      throw new Error('Prisma instance is null');
+    }
     const { nome, lider, reunioes_celula, supervisao, membros, ...CelulaData } = celulaDataForm
     const result = await prisma?.celula.update({
       where: {
@@ -185,7 +202,7 @@ class CelulaRepositorie {
           }
         },
         membros: {
-          connect: membros?.map((membroId) => ({id: membroId}))
+          connect: membros?.map((membroId) => ({ id: membroId }))
         },
         reunioes_celula: {
           connect: reunioes_celula?.map((reuniaoCelulaId) => ({ id: reuniaoCelulaId })),
@@ -197,6 +214,11 @@ class CelulaRepositorie {
   }
 
   async updateDateCelula(id: string, newDate: string) {
+    const prisma = createPrismaInstance()
+
+    if (!prisma) {
+      throw new Error('Prisma instance is null');
+    }
     // Consulte a célula existente para obter os dados atuais
     const existingCelula = await prisma?.celula.findUnique({
       where: {
@@ -221,57 +243,62 @@ class CelulaRepositorie {
     };
 
     // Mantenha as relações existentes sem modificação
-  if (existingCelula.lider) {
-    updateData.lider = {
-      connect: {
-        id: existingCelula.lider.id,
+    if (existingCelula.lider) {
+      updateData.lider = {
+        connect: {
+          id: existingCelula.lider.id,
+        },
+      };
+    }
+
+    if (existingCelula.supervisao) {
+      updateData.supervisao = {
+        connect: {
+          id: existingCelula.supervisao.id,
+        },
+      };
+    }
+
+    if (existingCelula.membros) {
+      updateData.membros = {
+        connect: existingCelula.membros.map((membro) => ({
+          id: membro.id,
+        })),
+      };
+    }
+
+    if (existingCelula.reunioes_celula) {
+      updateData.reunioes_celula = {
+        connect: existingCelula.reunioes_celula.map((reuniao) => ({
+          id: reuniao.id,
+        })),
+      };
+    }
+
+    // Atualize a célula com os novos dados de data
+    const updatedCelula = await prisma?.celula.update({
+      where: {
+        id: id,
       },
-    };
-  }
-
-  if (existingCelula.supervisao) {
-    updateData.supervisao = {
-      connect: {
-        id: existingCelula.supervisao.id,
-      },
-    };
-  }
-
-  if (existingCelula.membros) {
-    updateData.membros = {
-      connect: existingCelula.membros.map((membro) => ({
-        id: membro.id,
-      })),
-    };
-  }
-
-  if (existingCelula.reunioes_celula) {
-    updateData.reunioes_celula = {
-      connect: existingCelula.reunioes_celula.map((reuniao) => ({
-        id: reuniao.id,
-      })),
-    };
-  }
-
-  // Atualize a célula com os novos dados de data
-  const updatedCelula = await prisma?.celula.update({
-    where: {
-      id: id,
-    },
-    data: updateData,
-  });
-  await disconnectPrisma()
-  return updatedCelula;
+      data: updateData,
+    });
+    await disconnectPrisma()
+    return updatedCelula;
   }
 
   async deleteCelula(id: string) {
+    const prisma = createPrismaInstance()
+
+    if (!prisma) {
+      throw new Error('Prisma instance is null');
+    }
     const result = await prisma?.celula.delete({
       where: {
         id: id,
       },
     })
-  await disconnectPrisma()
-  return result
+    await disconnectPrisma()
+    return result
   }
 }
 

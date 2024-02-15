@@ -7,7 +7,9 @@ declare global {
 
 const createPrismaInstance = () => {
   if (!global.prisma) {
-    global.prisma = new PrismaClient();
+    global.prisma = new PrismaClient({
+      log: ['info'],
+    });
   }
   return global.prisma;
 };
