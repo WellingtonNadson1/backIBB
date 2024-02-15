@@ -18,6 +18,7 @@ import routerUser from "./Routers/UserRouters";
 import routerLicoesCelula from "./Routers/upLoads/LicoesCelula";
 import { createPrismaInstance, disconnectPrisma } from "./services/prisma";
 import { PrismaClient } from "@prisma/client";
+import routerRegisterDiscipulado from "./Routers/Discipulado";
 // import routerLicoesCelula from "./Routers/upLoads/LicoesCelula";
 
 declare module 'fastify' {
@@ -57,6 +58,7 @@ const start = async () => {
     await registerCultoRoutes(app);
     app.register(routerRelatorioPresencaCulto);
     app.register(routerReuniaoSemanalCelula);
+    app.register(routerRegisterDiscipulado);
     app.register(routerPresencaReuniaCelula);
     app.register(routerLicoesCelula);
     app.register(routerEncontro);

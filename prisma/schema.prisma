@@ -321,10 +321,19 @@ model user_roles {
 model discipulador_usuario {
   usuario_id                                      String
   discipulador_id                                 String
-  user_discipulador_usuario_discipulador_idTouser User   @relation("discipulador_usuario_discipulador_idTouser", fields: [discipulador_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
-  user_discipulador_usuario_usuario_idTouser      User   @relation("discipulador_usuario_usuario_idTouser", fields: [usuario_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  discipulado                                     discipulado[]
+  user_discipulador_usuario_discipulador_idTouser User          @relation("discipulador_usuario_discipulador_idTouser", fields: [discipulador_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  user_discipulador_usuario_usuario_idTouser      User          @relation("discipulador_usuario_usuario_idTouser", fields: [usuario_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
 
   @@id([usuario_id, discipulador_id])
+}
+
+model discipulado {
+  discipulado_id       String               @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  usuario_id           String
+  discipulador_id      String
+  data_ocorreu         DateTime             @db.Date
+  discipulador_usuario discipulador_usuario @relation(fields: [usuario_id, discipulador_id], references: [usuario_id, discipulador_id], onDelete: Cascade, onUpdate: NoAction)
 }
 
 enum Role {
