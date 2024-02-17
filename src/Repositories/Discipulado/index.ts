@@ -366,6 +366,82 @@ class RegisterDiscipuladoRepositorie {
     return result;
   }
 
+  async findAllMembersCellForPeriod({
+    cell_id, firstDayOfMonth, lastDayOfMonth
+  }: {
+    // usuario_id: string,
+    // discipulador_id: string,
+    cell_id: string,
+    firstDayOfMonth: Date
+    lastDayOfMonth: Date
+  }) {
+    const prisma = createPrismaInstance()
+
+    try {
+      const result = await prisma.celula.findMany({
+        where: {
+          id: cell_id,
+          membros: {
+            every: {
+              discipulador_usuario_discipulador_usuario_usuario_idTouser: {
+                every: {
+                  discipulado: {
+                    every: {
+                      data_ocorreu: {
+                        gte: firstDayOfMonth,
+                        lt: lastDayOfMonth
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        select: {
+          membros: {
+            select: {
+              id: true,
+              first_name: true,
+              cargo_de_lideranca: {
+                select: {
+                  id: true,
+                  nome: true,
+                }
+              },
+              discipulador_usuario_discipulador_usuario_usuario_idTouser: {
+                select: {
+
+                  user_discipulador_usuario_discipulador_idTouser: {
+                    select: {
+                      id: true,
+                      first_name: true
+                    }
+                  },
+                  _count: true,
+                  discipulado: {
+                    select: {
+                      data_ocorreu: true
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+      });
+
+      // const quantidadeDiscipuladoRealizado = result.length
+      // const discipuladosRealizados = result
+
+      // return { quantidadeDiscipuladoRealizado, discipuladosRealizados };
+      return result;
+    }
+    finally {
+      await disconnectPrisma()
+    }
+  }
+
   async findAllForPeriod({
     usuario_id, discipulador_id, firstDayOfMonth, lastDayOfMonth
   }: {

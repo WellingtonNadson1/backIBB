@@ -7,6 +7,13 @@ export type CultoIndividual = {
   cargoLideranca: string[];
 }
 
+export type dataSchemaCreateDiscipuladoCell = {
+  usuario_id: string,
+  discipulador_id: string
+  cell_id: string
+  data_ocorreu: Date
+}
+
 export type dataSchemaCreateDiscipulado = {
   usuario_id: string,
   discipulador_id: string
