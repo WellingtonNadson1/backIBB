@@ -23,12 +23,34 @@ class UserController {
     }
   }
 
+  async indexcell(request: FastifyRequest, reply: FastifyReply) {
+    const users = await UserRepositorie.findAllCell();
+    if (!users) {
+      return reply.code(500).send({ error: "Internal Server Error" });
+    }
+    return reply.code(200).send(users);
+  }
+
   async index(request: FastifyRequest, reply: FastifyReply) {
     const users = await UserRepositorie.findAll();
     if (!users) {
       return reply.code(500).send({ error: "Internal Server Error" });
     }
     return reply.code(200).send(users);
+  }
+
+  async showcell(
+    request: FastifyRequest<{
+      Params: UserParams;
+    }>,
+    reply: FastifyReply
+  ) {
+    const id = request.params.id;
+    const user = await UserRepositorie.findByIdCell(id);
+    if (!user) {
+      return reply.code(404).send({ message: "User not found!" });
+    }
+    return reply.code(200).send(user);
   }
 
   async show(
@@ -133,12 +155,12 @@ class UserController {
       Params: UserParams
     }>,
     reply: FastifyReply) {
-      const { id, discipuladorId } = request.body as UserData
-      if (discipuladorId) {
-        const result = await UserRepositorie.updateDiscipuladorId(id, discipuladorId)
-        return result
-      }
-      return null;
+    const { id, discipuladorId } = request.body as UserData
+    if (discipuladorId) {
+      const result = await UserRepositorie.updateDiscipuladorId(id, discipuladorId)
+      return result
+    }
+    return null;
   }
 
   async delete(
