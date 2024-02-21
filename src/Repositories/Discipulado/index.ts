@@ -369,14 +369,15 @@ class RegisterDiscipuladoRepositorie {
   async findAllMembersCellForPeriod({
     cell_id, firstDayOfMonth, lastDayOfMonth
   }: {
-    // usuario_id: string,
-    // discipulador_id: string,
+
     cell_id: string,
     firstDayOfMonth: Date
     lastDayOfMonth: Date
   }) {
     const prisma = createPrismaInstance()
-
+    // console.log('cell_id', cell_id)
+    // console.log('firstDayOfMonth', firstDayOfMonth)
+    // console.log('lastDayOfMonth', lastDayOfMonth)
     try {
       const result = await prisma.celula.findMany({
         where: {
@@ -389,7 +390,7 @@ class RegisterDiscipuladoRepositorie {
                     every: {
                       data_ocorreu: {
                         gte: firstDayOfMonth,
-                        lt: lastDayOfMonth
+                        lte: lastDayOfMonth
                       }
                     }
                   }
@@ -435,6 +436,7 @@ class RegisterDiscipuladoRepositorie {
       // const discipuladosRealizados = result
 
       // return { quantidadeDiscipuladoRealizado, discipuladosRealizados };
+      // console.log('result', result)
       return result;
     }
     finally {

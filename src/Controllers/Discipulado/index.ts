@@ -101,6 +101,7 @@ class RegisterDiscipuladoController {
   }
 
   async isMembersCellRegister(request: FastifyRequest, reply: FastifyReply) {
+    // console.log('request', request.body)
     try {
       const registerDiscipuladoDataCellForm = request.body as dataSchemaCreateDiscipuladoCell;
 
@@ -113,6 +114,7 @@ class RegisterDiscipuladoController {
       const existingTwoRegister = await RegisterDiscipuladoRepositorie.findAllMembersCellForPeriod({
         cell_id, firstDayOfMonth, lastDayOfMonth
       });
+      // console.log('existingTwoRegister', existingTwoRegister)
 
       return reply.code(200).send(existingTwoRegister);
     } catch (error: any) {
