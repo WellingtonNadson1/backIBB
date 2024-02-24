@@ -1,7 +1,7 @@
 import { FastifyReply, FastifyRequest } from "fastify";
 import RegisterDiscipuladoRepositorie from "../../Repositories/Discipulado";
 import dayjs from "dayjs";
-import { CultoIndividual, PresencaCultoData, PresencaCultoParams, dataSchemaCreateDiscipulado, dataSchemaCreateDiscipuladoCell } from "./schema";
+import { CultoIndividual, PresencaCultoData, PresencaCultoParams, dataSchemaCreateDiscipulado, dataSchemaCreateDiscipuladoCell, dataSchemaCreateDiscipuladoSupervisor } from "./schema";
 
 class RegisterDiscipuladoController {
   // Fazendo uso do Fastify
@@ -98,6 +98,29 @@ class RegisterDiscipuladoController {
       return reply.code(404).send({ message: "Presença not Register!" });
     }
     return reply.code(200).send(presencaCultoIsRegister);
+  }
+
+  async isMembersDiscipuladoSupervisorRegister(request: FastifyRequest, reply: FastifyReply) {
+    // console.log('request', request.body)
+    try {
+      const registerDiscipuladoDataSupervisorForm = request.body as dataSchemaCreateDiscipuladoSupervisor;
+
+      const { supervisor_id, data_ocorreu } = registerDiscipuladoDataSupervisorForm;
+      const dataOcorreu = new Date(data_ocorreu)
+      const firstDayOfMonth = new Date(dataOcorreu.getFullYear(), dataOcorreu.getMonth(), 1);
+      const lastDayOfMonth = new Date(dataOcorreu.getFullYear(), dataOcorreu.getMonth() + 1, 0);
+
+      // Verifique se já existe discipulados registrados para o membro
+      const existingTwoRegister = await RegisterDiscipuladoRepositorie.findAllMembersSupervisorForPeriod({
+        supervisor_id, firstDayOfMonth, lastDayOfMonth
+      });
+      // console.log('existingTwoRegister', existingTwoRegister)
+
+      return reply.code(200).send(existingTwoRegister);
+    } catch (error: any) {
+      console.error(error); // Log o erro no console para depuração
+      return reply.code(400).send(error.message || 'Erro interno do servidor');
+    }
   }
 
   async isMembersCellRegister(request: FastifyRequest, reply: FastifyReply) {

@@ -366,6 +366,94 @@ class RegisterDiscipuladoRepositorie {
     return result;
   }
 
+  async findAllMembersSupervisorForPeriod({
+    supervisor_id, firstDayOfMonth, lastDayOfMonth
+  }: {
+
+    supervisor_id: string,
+    firstDayOfMonth: Date
+    lastDayOfMonth: Date
+  }) {
+    const prisma = createPrismaInstance()
+    // console.log('supervisor_id', supervisor_id)
+    // console.log('firstDayOfMonth', firstDayOfMonth)
+    // console.log('lastDayOfMonth', lastDayOfMonth)
+    try {
+      const result = await prisma.user.findMany({
+        where: {
+          id: supervisor_id,
+          discipulador_usuario_discipulador_usuario_usuario_idTouser: {
+            every: {
+              discipulado: {
+                every: {
+                  data_ocorreu: {
+                    gte: firstDayOfMonth,
+                    lte: lastDayOfMonth
+                  }
+                }
+              }
+            }
+          }
+        },
+        select: {
+          id: true,
+          first_name: true,
+          cargo_de_lideranca: {
+            select: {
+              id: true,
+              nome: true,
+            }
+          },
+          // DISCIPULADOR
+          discipulador_usuario_discipulador_usuario_usuario_idTouser: {
+            select: {
+              user_discipulador_usuario_discipulador_idTouser: {
+                select: {
+                  id: true,
+                  first_name: true
+                }
+              },
+              _count: true,
+              discipulado: {
+                select: {
+                  data_ocorreu: true
+                }
+              }
+            }
+          },
+          // DISCIPULOS
+          discipulador_usuario_discipulador_usuario_discipulador_idTouser: {
+            select: {
+
+              user_discipulador_usuario_usuario_idTouser: {
+                select: {
+                  id: true,
+                  first_name: true
+                }
+              },
+              _count: true,
+              discipulado: {
+                select: {
+                  data_ocorreu: true
+                }
+              }
+            }
+          }
+        },
+      });
+
+      // const quantidadeDiscipuladoRealizado = result.length
+      // const discipuladosRealizados = result
+
+      // return { quantidadeDiscipuladoRealizado, discipuladosRealizados };
+      console.log('result', result)
+      return result;
+    }
+    finally {
+      await disconnectPrisma()
+    }
+  }
+
   async findAllMembersCellForPeriod({
     cell_id, firstDayOfMonth, lastDayOfMonth
   }: {
