@@ -137,7 +137,7 @@ class RegisterDiscipuladoController {
       const existingTwoRegister = await RegisterDiscipuladoRepositorie.findAllMembersCellForPeriod({
         cell_id, firstDayOfMonth, lastDayOfMonth
       });
-      // console.log('existingTwoRegister', existingTwoRegister)
+      console.log('existingTwoRegister', existingTwoRegister)
 
       return reply.code(200).send(existingTwoRegister);
     } catch (error: any) {

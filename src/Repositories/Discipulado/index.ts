@@ -470,22 +470,22 @@ class RegisterDiscipuladoRepositorie {
       const result = await prisma.celula.findMany({
         where: {
           id: cell_id,
-          membros: {
-            some: {
-              discipulador_usuario_discipulador_usuario_usuario_idTouser: {
-                every: {
-                  discipulado: {
-                    every: {
-                      data_ocorreu: {
-                        gte: firstDayOfMonth,
-                        lte: lastDayOfMonth
-                      }
-                    }
-                  }
-                }
-              }
-            }
-          }
+          // membros: {
+          //   some: {
+          //     discipulador_usuario_discipulador_usuario_usuario_idTouser: {
+          //       some: {
+          //         discipulado: {
+          //           some: {
+          //             AND: [
+          //               { data_ocorreu: { gte: firstDayOfMonth } },
+          //               { data_ocorreu: { lte: lastDayOfMonth } }
+          //             ]
+          //           }
+          //         }
+          //       }
+          //     }
+          //   }
+          // }
         },
         select: {
           membros: {
@@ -512,7 +512,14 @@ class RegisterDiscipuladoRepositorie {
                     select: {
                       data_ocorreu: true
                     }
-                  }
+                    // where: {
+                    //   data_ocorreu: {
+                    //     gte: firstDayOfMonth,
+                    //     lt: lastDayOfMonth
+                    //   }
+                    // }
+
+                  },
                 }
               }
             }
