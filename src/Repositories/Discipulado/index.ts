@@ -471,7 +471,7 @@ class RegisterDiscipuladoRepositorie {
         where: {
           id: cell_id,
           membros: {
-            every: {
+            some: {
               discipulador_usuario_discipulador_usuario_usuario_idTouser: {
                 every: {
                   discipulado: {
