@@ -369,7 +369,6 @@ class RegisterDiscipuladoRepositorie {
   async findAllMembersSupervisorForPeriod({
     supervisor_id, firstDayOfMonth, lastDayOfMonth
   }: {
-
     supervisor_id: string,
     firstDayOfMonth: Date
     lastDayOfMonth: Date
@@ -382,18 +381,18 @@ class RegisterDiscipuladoRepositorie {
       const result = await prisma.user.findMany({
         where: {
           id: supervisor_id,
-          discipulador_usuario_discipulador_usuario_usuario_idTouser: {
-            every: {
-              discipulado: {
-                every: {
-                  data_ocorreu: {
-                    gte: firstDayOfMonth,
-                    lte: lastDayOfMonth
-                  }
-                }
-              }
-            }
-          }
+          // discipulador_usuario_discipulador_usuario_usuario_idTouser: {
+          //   some: {
+          //     discipulado: {
+          //       some: {
+          //         data_ocorreu: {
+          //           gte: firstDayOfMonth,
+          //           lte: lastDayOfMonth
+          //         }
+          //       }
+          //     }
+          //   }
+          // }
         },
         select: {
           id: true,
