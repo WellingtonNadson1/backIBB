@@ -412,11 +412,28 @@ class RegisterDiscipuladoRepositorie {
                   first_name: true
                 }
               },
-              _count: true,
-              discipulado: {
+              _count: {
                 select: {
-                  data_ocorreu: true
+                  discipulado: {
+                    where: {
+                      data_ocorreu: {
+                        gte: firstDayOfMonth,
+                        lt: lastDayOfMonth
+                      }
+                    }
+                  }
                 }
+              },
+              discipulado: {
+                where: {
+                  data_ocorreu: {
+                    gte: firstDayOfMonth,
+                    lt: lastDayOfMonth
+                  }
+                }
+                // select: {
+                //   data_ocorreu: true
+                // }
               }
             }
           },
@@ -430,11 +447,28 @@ class RegisterDiscipuladoRepositorie {
                   first_name: true
                 }
               },
-              _count: true,
-              discipulado: {
+              _count: {
                 select: {
-                  data_ocorreu: true
+                  discipulado: {
+                    where: {
+                      data_ocorreu: {
+                        gte: firstDayOfMonth,
+                        lt: lastDayOfMonth
+                      }
+                    }
+                  }
                 }
+              },
+              discipulado: {
+                where: {
+                  data_ocorreu: {
+                    gte: firstDayOfMonth,
+                    lt: lastDayOfMonth
+                  }
+                }
+                // select: {
+                //   data_ocorreu: true
+                // }
               }
             }
           }
@@ -506,17 +540,28 @@ class RegisterDiscipuladoRepositorie {
                       first_name: true
                     }
                   },
-                  _count: true,
-                  discipulado: {
+                  _count: {
                     select: {
-                      data_ocorreu: true
+                      discipulado: {
+                        where: {
+                          data_ocorreu: {
+                            gte: firstDayOfMonth,
+                            lt: lastDayOfMonth
+                          }
+                        }
+                      }
                     }
-                    // where: {
-                    //   data_ocorreu: {
-                    //     gte: firstDayOfMonth,
-                    //     lt: lastDayOfMonth
-                    //   }
+                  },
+                  discipulado: {
+                    // select: {
+                    //   data_ocorreu: true
                     // }
+                    where: {
+                      data_ocorreu: {
+                        gte: firstDayOfMonth,
+                        lt: lastDayOfMonth
+                      }
+                    }
 
                   },
                 }
