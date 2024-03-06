@@ -39,6 +39,14 @@ class UserController {
     return reply.code(200).send(users);
   }
 
+  async indexDiscipulados(request: FastifyRequest, reply: FastifyReply) {
+    const users = await UserRepositorie.findAllDiscipulados();
+    if (!users) {
+      return reply.code(500).send({ error: "Internal Server Error" });
+    }
+    return reply.code(200).send(users);
+  }
+
   async showcell(
     request: FastifyRequest<{
       Params: UserParams;
