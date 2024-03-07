@@ -37,14 +37,6 @@ class PresencaCultoRepositorie {
           cargoDeLiderancaId: {
             in: cargoLideranca,
           },
-          presencas_cultos: {
-            some: {
-              AND: [
-                { presenca_culto: { data_inicio_culto: { gte: dataInicio } } },
-                { presenca_culto: { data_termino_culto: { lte: dataFim } } }
-              ]
-            },
-          },
         },
         // Use a opção 'select' para selecionar apenas os campos desejados
         select: {
@@ -53,6 +45,14 @@ class PresencaCultoRepositorie {
           last_name: true,
           // Adicione outros campos necessários
           presencas_cultos: {
+            where: {
+              presenca_culto: {
+                AND: [
+                  { data_inicio_culto: { gte: dataInicio } },
+                  { data_termino_culto: { lte: dataFim } }
+                ]
+              }
+            },
             select: {
               // Selecione apenas os campos relevantes em 'presencas_cultos'
               status: true,
@@ -103,27 +103,27 @@ class PresencaCultoRepositorie {
         }, 0);
 
         const quantidadeCultosPresentePrimicia = presencasFiltradas.reduce((total, presente) => {
-          return total + ((presente.status === true &&  presente.presenca_culto?.culto_semana?.id === 'bffb62af-8d03-473a-ba20-ab5a9d7dafbe') ? 1 : 0);
+          return total + ((presente.status === true && presente.presenca_culto?.culto_semana?.id === 'bffb62af-8d03-473a-ba20-ab5a9d7dafbe') ? 1 : 0);
         }, 0);
 
         const quantidadeCultosPresenteDomingoSacrificio = presencasFiltradas.reduce((total, presente) => {
-          return total + ((presente.status === true &&  presente.presenca_culto?.culto_semana?.id === 'e7bc72d1-8faa-4bbe-9c24-475b64f956cf') ? 1 : 0);
+          return total + ((presente.status === true && presente.presenca_culto?.culto_semana?.id === 'e7bc72d1-8faa-4bbe-9c24-475b64f956cf') ? 1 : 0);
         }, 0);
 
         const quantidadeCultosPresenteQuarta = presencasFiltradas.reduce((total, presente) => {
-          return total + ((presente.status === true &&  presente.presenca_culto?.culto_semana?.id === '4064be1d-bf55-4851-9f76-99c4554a6265') ? 1 : 0);
+          return total + ((presente.status === true && presente.presenca_culto?.culto_semana?.id === '4064be1d-bf55-4851-9f76-99c4554a6265') ? 1 : 0);
         }, 0);
 
         const quantidadeCultosPresenteSabado = presencasFiltradas.reduce((total, presente) => {
-          return total + ((presente.status === true &&  presente.presenca_culto?.culto_semana?.id === '84acfbe4-c7e0-4841-813c-04731ffa9c67') ? 1 : 0);
+          return total + ((presente.status === true && presente.presenca_culto?.culto_semana?.id === '84acfbe4-c7e0-4841-813c-04731ffa9c67') ? 1 : 0);
         }, 0);
 
         const quantidadeCultosPresenteDomingoManha = presencasFiltradas.reduce((total, presente) => {
-          return total + ((presente.status === true &&  presente.presenca_culto?.culto_semana?.id === 'cab02f30-cade-46ca-b118-930461013d53') ? 1 : 0);
+          return total + ((presente.status === true && presente.presenca_culto?.culto_semana?.id === 'cab02f30-cade-46ca-b118-930461013d53') ? 1 : 0);
         }, 0);
 
         const quantidadeCultosPresenteDomingoTarde = presencasFiltradas.reduce((total, presente) => {
-          return total + ((presente.status === true &&  presente.presenca_culto?.culto_semana?.id === 'ea08ec9b-3d1b-42f3-818a-ec53ef99b78f') ? 1 : 0);
+          return total + ((presente.status === true && presente.presenca_culto?.culto_semana?.id === 'ea08ec9b-3d1b-42f3-818a-ec53ef99b78f') ? 1 : 0);
         }, 0);
 
         const porcentagemPresencaTotal = ((quantidadeCultosPresentes / totalCultosPeriodo) * 100).toFixed(2).slice(0, 5);
@@ -137,7 +137,7 @@ class PresencaCultoRepositorie {
 
         let porcentagemPresencaPrimicia = undefined
         if (quantidadeCultosPresentePrimicia !== 0) {
-         porcentagemPresencaPrimicia = ((quantidadeCultosPresentePrimicia / cultoPrimicia) * 100).toFixed(2).slice(0, 5);
+          porcentagemPresencaPrimicia = ((quantidadeCultosPresentePrimicia / cultoPrimicia) * 100).toFixed(2).slice(0, 5);
         } else {
           porcentagemPresencaPrimicia = 0.00.toFixed(2)
         }
@@ -206,7 +206,7 @@ class PresencaCultoRepositorie {
       endOfInterval: string;
     }
   ) {
-const prisma = createPrismaInstance()
+    const prisma = createPrismaInstance()
 
     console.log(params);
     try {
@@ -246,43 +246,43 @@ const prisma = createPrismaInstance()
       return result;
     }
 
-  finally {
-    await disconnectPrisma()
-  }
+    finally {
+      await disconnectPrisma()
+    }
   }
 
 
   async findAll() {
-  const prisma = createPrismaInstance()
+    const prisma = createPrismaInstance()
 
-  try {
-    const result = await prisma.presencaCulto.findMany({
-      select: {
-        id: true,
-        status: true,
-        userId: true,
-        cultoIndividualId: true,
-        membro: {
-          select: {
-            id: true,
-            first_name: true,
-            celula: {
-              select: {
-                nome: true,
+    try {
+      const result = await prisma.presencaCulto.findMany({
+        select: {
+          id: true,
+          status: true,
+          userId: true,
+          cultoIndividualId: true,
+          membro: {
+            select: {
+              id: true,
+              first_name: true,
+              celula: {
+                select: {
+                  nome: true,
+                }
               }
             }
-          }
+          },
+          date_create: true,
+          date_update: true,
         },
-        date_create: true,
-        date_update: true,
-      },
-    });
+      });
 
-    return result;
-  }
-finally {
-  await disconnectPrisma()
-}
+      return result;
+    }
+    finally {
+      await disconnectPrisma()
+    }
   }
 
   async findFirst({
@@ -433,9 +433,9 @@ finally {
       });
       return result;
     }
-  finally {
-    await disconnectPrisma()
-  }
+    finally {
+      await disconnectPrisma()
+    }
   }
 }
 
