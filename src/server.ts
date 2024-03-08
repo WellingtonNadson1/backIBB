@@ -1,3 +1,5 @@
+import "../registro.js"
+
 import cors from "@fastify/cors";
 import Fastify, { FastifyInstance } from "fastify";
 import multer from "fastify-multer";
@@ -27,7 +29,7 @@ declare module 'fastify' {
   }
 }
 
-const PORT = process.env.PORT ? Number(process.env.PORT) : 8080;
+const PORT = process.env.PORT ? Number(process.env.PORT) : 6060;
 
 const app: FastifyInstance = Fastify({ logger: true });
 

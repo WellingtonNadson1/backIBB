@@ -40,6 +40,12 @@ export interface PresencaCultoParams {
   culto: string;
 }
 
+export interface PresencaDiscipuladoParams {
+  startOfInterval: string;
+  endOfInterval: string;
+  supervisaoId: string;
+}
+
 export interface RelatorioCultosParams {
   supervisaoId: string;
   startOfInterval: string;

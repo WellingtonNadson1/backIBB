@@ -4,6 +4,7 @@ import RegisterDiscipuladoController from "../../Controllers/Discipulado"
 const routerRegisterDiscipulado = async (fastify: FastifyInstance) => {
   fastify.get("/discipulados", RegisterDiscipuladoController.index);
   fastify.get('/discipulados/relatorios', RegisterDiscipuladoController.cultosRelatorios);
+  fastify.get('/discipulados/relatorios/supervisao', RegisterDiscipuladoController.discipuladosRelatorioSupervisao);
   fastify.post('/discipulados/relatorios/supervisores', RegisterDiscipuladoController.supervisores);
   fastify.get('/discipulados/:id', RegisterDiscipuladoController.show);
   fastify.get(`/discipuladosbycelula/:culto/:lider`, RegisterDiscipuladoController.searchByIdCulto);

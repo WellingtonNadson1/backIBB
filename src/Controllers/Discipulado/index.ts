@@ -1,7 +1,7 @@
 import { FastifyReply, FastifyRequest } from "fastify";
 import RegisterDiscipuladoRepositorie from "../../Repositories/Discipulado";
 import dayjs from "dayjs";
-import { CultoIndividual, PresencaCultoData, PresencaCultoParams, dataSchemaCreateDiscipulado, dataSchemaCreateDiscipuladoCell, dataSchemaCreateDiscipuladoSupervisor } from "./schema";
+import { CultoIndividual, PresencaCultoData, PresencaCultoParams, PresencaDiscipuladoParams, dataSchemaCreateDiscipulado, dataSchemaCreateDiscipuladoCell, dataSchemaCreateDiscipuladoSupervisor } from "./schema";
 
 class RegisterDiscipuladoController {
   // Fazendo uso do Fastify
@@ -78,6 +78,32 @@ class RegisterDiscipuladoController {
             membro: presenca.membro
           }))
       );
+
+    console.log(resultRelatorioCultos);
+
+    return reply.code(200).send(resultRelatorioCultos);
+
+
+  }
+  // Relatorio de presenca nos discipulados
+  async discipuladosRelatorioSupervisao(
+    request: FastifyRequest<{
+      Params: PresencaDiscipuladoParams;
+    }>,
+    reply: FastifyReply
+  ) {
+    console.log('request', request)
+    console.log('request.params', request)
+    const { startOfInterval, endOfInterval, supervisaoId } = request.params
+    const params = {
+      startOfInterval, endOfInterval, supervisaoId
+    };
+
+    const resultRelatorioCultos = await RegisterDiscipuladoRepositorie.discipuladosRelatorioSupervisao(params);
+
+    if (!resultRelatorioCultos) {
+      return reply.code(404).send({ message: "Relatorio Cultos Error!" });
+    }
 
     console.log(resultRelatorioCultos);
 

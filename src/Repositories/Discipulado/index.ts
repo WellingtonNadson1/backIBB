@@ -200,6 +200,83 @@ class RegisterDiscipuladoRepositorie {
   }
 
 
+  async discipuladosRelatorioSupervisao(
+    params: {
+      supervisaoId: string;
+      startOfInterval: string;
+      endOfInterval: string;
+    }
+  ) {
+    const prisma = createPrismaInstance()
+
+    console.log(params);
+    try {
+      const result = await prisma.supervisao.findMany({
+        where: {
+          id: params.supervisaoId,
+        },
+        select: {
+          membros: {
+            where: {
+              discipulador_usuario_discipulador_usuario_discipulador_idTouser: {
+                some: {
+                  discipulado: {
+                    some: {
+                      data_ocorreu: {
+                        gte: params.startOfInterval,
+                        lte: params.endOfInterval
+                      }
+                    }
+                  }
+                }
+              }
+            },
+            select: {
+              id: true,
+              first_name: true,
+              celula: {
+                select: {
+                  id: true,
+                  nome: true,
+                }
+              },
+              supervisao_pertence: {
+                select: {
+                  id: true,
+                  nome: true,
+                }
+              },
+              discipulador_usuario_discipulador_usuario_usuario_idTouser: {
+                select: {
+                  discipulado: {
+                    select: {
+                      discipulador_usuario: {
+                        select: {
+                          user_discipulador_usuario_discipulador_idTouser: {
+                            select: {
+                              first_name: true
+                            }
+                          }
+                        }
+                      },
+                      data_ocorreu: true
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+      });
+      console.log(result);
+      return result;
+    }
+
+    finally {
+      await disconnectPrisma()
+    }
+  }
+
   async cultosRelatorios(
     params: {
       supervisaoId: string;
