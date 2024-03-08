@@ -1,4 +1,4 @@
-import "../registro.js"
+// import "../registro.js"
 
 import cors from "@fastify/cors";
 import Fastify, { FastifyInstance } from "fastify";
