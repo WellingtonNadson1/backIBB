@@ -563,6 +563,7 @@ class UserRepositorie {
 
   async findById(id: string) {
     const prisma = createPrismaInstance()
+    console.log('idRepo:', id)
 
     if (!prisma) {
       throw new Error('Prisma instance is null');
@@ -690,6 +691,8 @@ class UserRepositorie {
         password: false,
       },
     });
+    console.log('Result Repo:', result)
+
     await disconnectPrisma()
     return result
   }

@@ -20,7 +20,7 @@ import routerUser from "./Routers/UserRouters";
 import routerLicoesCelula from "./Routers/upLoads/LicoesCelula";
 import { createPrismaInstance, disconnectPrisma } from "./services/prisma";
 import { PrismaClient } from "@prisma/client";
-import routerRegisterDiscipulado from "./Routers/Discipulado";
+import routerRegisterDiscipulado from "./Routers/DiscipuladosIBB";
 // import routerLicoesCelula from "./Routers/upLoads/LicoesCelula";
 
 declare module 'fastify' {
@@ -29,7 +29,8 @@ declare module 'fastify' {
   }
 }
 
-const PORT = process.env.PORT ? Number(process.env.PORT) : 6060;
+
+const PORT = process.env.PORT ? Number(process.env.PORT) : 8888;
 
 const app: FastifyInstance = Fastify({ logger: true });
 
@@ -37,6 +38,8 @@ app.register(cors, {
   origin: "*",
   methods: ["GET", "POST", "PUT", "PATCH", "DELETE"],
 });
+
+app.addHook("onRequest", requireAuth);
 
 app.addHook('onRequest', async (request, reply) => {
   request.prisma = createPrismaInstance();
@@ -48,31 +51,31 @@ app.addHook('onResponse', async (request, reply) => {
   }
 });
 
-app.register(multer.contentParser);
-
-app.addHook("onRequest", requireAuth);
 
 const start = async () => {
+
   try {
-    app.register(routerLogin);
-    // app.register(routerEvento)
+    await app.register(multer.contentParser);
+    await app.register(routerLogin);
+    // await app.register(routerEvento)
     await registerEscolaRoutes(app);
     await registerCultoRoutes(app);
-    app.register(routerRelatorioPresencaCulto);
-    app.register(routerReuniaoSemanalCelula);
-    app.register(routerRegisterDiscipulado);
-    app.register(routerPresencaReuniaCelula);
-    app.register(routerLicoesCelula);
-    app.register(routerEncontro);
-    // app.register(routerAccount);
-    app.register(routerSupervisao);
-    app.register(routerSituacaoNoReino);
-    app.register(routerCargoslideranca);
-    app.register(routerCelula);
-    app.register(routerUser); // tipo um middleware do express
+    await app.register(routerRelatorioPresencaCulto);
+    await app.register(routerReuniaoSemanalCelula);
+    await app.register(routerPresencaReuniaCelula);
+    await app.register(routerLicoesCelula);
+    await app.register(routerEncontro);
+    // await app.register(routerAccount);
+    await app.register(routerSupervisao);
+    await app.register(routerSituacaoNoReino);
+    await app.register(routerCargoslideranca);
+    await app.register(routerCelula);
+    await app.register(routerUser); // tipo um middleware do express
+    await app.register(routerRegisterDiscipulado);
+    // console.log('server', app.register(routerRegisterDiscipulado))
+
     await app.listen({
-      host: "0.0.0.0",
-      port: PORT,
+      port: PORT
     });
   } catch (err) {
     app.log.error(err);

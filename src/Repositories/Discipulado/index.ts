@@ -202,35 +202,19 @@ class RegisterDiscipuladoRepositorie {
 
   async discipuladosRelatorioSupervisao(
     params: {
-      supervisaoId: string;
-      startOfInterval: string;
-      endOfInterval: string;
+      superVisionId: string;
+      startDate: Date;
+      endDate: Date;
     }
   ) {
     const prisma = createPrismaInstance()
-
-    console.log(params);
     try {
       const result = await prisma.supervisao.findMany({
         where: {
-          id: params.supervisaoId,
+          id: params.superVisionId,
         },
         select: {
           membros: {
-            where: {
-              discipulador_usuario_discipulador_usuario_discipulador_idTouser: {
-                some: {
-                  discipulado: {
-                    some: {
-                      data_ocorreu: {
-                        gte: params.startOfInterval,
-                        lte: params.endOfInterval
-                      }
-                    }
-                  }
-                }
-              }
-            },
             select: {
               id: true,
               first_name: true,
@@ -238,6 +222,11 @@ class RegisterDiscipuladoRepositorie {
                 select: {
                   id: true,
                   nome: true,
+                  lider: {
+                    select: {
+                      first_name: true
+                    }
+                  }
                 }
               },
               supervisao_pertence: {
@@ -248,7 +237,18 @@ class RegisterDiscipuladoRepositorie {
               },
               discipulador_usuario_discipulador_usuario_usuario_idTouser: {
                 select: {
+                  user_discipulador_usuario_discipulador_idTouser: {
+                    select: {
+                      first_name: true
+                    }
+                  },
                   discipulado: {
+                    where: {
+                      data_ocorreu: {
+                        gte: new Date(params.startDate),
+                        lte: new Date(params.endDate)
+                      }
+                    },
                     select: {
                       discipulador_usuario: {
                         select: {
@@ -268,7 +268,6 @@ class RegisterDiscipuladoRepositorie {
           }
         },
       });
-      console.log(result);
       return result;
     }
 

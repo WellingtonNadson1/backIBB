@@ -2,6 +2,7 @@ import bcrypt from "bcrypt";
 import { FastifyReply, FastifyRequest } from "fastify";
 import { UserData } from "./schema";
 import UserRepositorie from "../../Repositories/User/UserRepositorie";
+import { PresencaDiscipuladoParams } from "../Discipulado/schema";
 
 export interface UserParams {
   id: string;
@@ -68,6 +69,7 @@ class UserController {
     reply: FastifyReply
   ) {
     const id = request.params.id;
+    console.log('id', id)
     const user = await UserRepositorie.findById(id);
     if (!user) {
       return reply.code(404).send({ message: "User not found!" });

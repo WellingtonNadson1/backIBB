@@ -41,9 +41,9 @@ export interface PresencaCultoParams {
 }
 
 export interface PresencaDiscipuladoParams {
-  startOfInterval: string;
-  endOfInterval: string;
-  supervisaoId: string;
+  startDate: Date;
+  endDate: Date;
+  superVisionId: string;
 }
 
 export interface RelatorioCultosParams {
