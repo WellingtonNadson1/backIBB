@@ -75,7 +75,8 @@ const start = async () => {
     // console.log('server', app.register(routerRegisterDiscipulado))
 
     await app.listen({
-      port: PORT
+      port: PORT,
+      host: "0.0.0.0",
     });
   } catch (err) {
     app.log.error(err);
