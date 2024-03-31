@@ -454,6 +454,7 @@ class RegisterDiscipuladoRepositorie {
     // console.log('firstDayOfMonth', firstDayOfMonth)
     // console.log('lastDayOfMonth', lastDayOfMonth)
     try {
+      const lastDayOfMonthPlusOneDay = dayjs(lastDayOfMonth).add(1, 'day');
       const result = await prisma.user.findMany({
         where: {
           id: supervisor_id,
@@ -494,7 +495,7 @@ class RegisterDiscipuladoRepositorie {
                     where: {
                       data_ocorreu: {
                         gte: firstDayOfMonth,
-                        lt: lastDayOfMonth
+                        lte: lastDayOfMonthPlusOneDay.toISOString()
                       }
                     }
                   }
@@ -504,7 +505,7 @@ class RegisterDiscipuladoRepositorie {
                 where: {
                   data_ocorreu: {
                     gte: firstDayOfMonth,
-                    lt: lastDayOfMonth
+                    lte: lastDayOfMonthPlusOneDay.toISOString()
                   }
                 }
                 // select: {
@@ -529,7 +530,7 @@ class RegisterDiscipuladoRepositorie {
                     where: {
                       data_ocorreu: {
                         gte: firstDayOfMonth,
-                        lt: lastDayOfMonth
+                        lte: lastDayOfMonthPlusOneDay.toISOString()
                       }
                     }
                   }
@@ -539,7 +540,7 @@ class RegisterDiscipuladoRepositorie {
                 where: {
                   data_ocorreu: {
                     gte: firstDayOfMonth,
-                    lt: lastDayOfMonth
+                    lte: lastDayOfMonthPlusOneDay.toISOString()
                   }
                 }
                 // select: {
@@ -576,6 +577,7 @@ class RegisterDiscipuladoRepositorie {
     // console.log('firstDayOfMonth', firstDayOfMonth)
     // console.log('lastDayOfMonth', lastDayOfMonth)
     try {
+      const lastDayOfMonthPlusOneDay = dayjs(lastDayOfMonth).add(1, 'day');
       const result = await prisma.celula.findMany({
         where: {
           id: cell_id,
@@ -622,7 +624,7 @@ class RegisterDiscipuladoRepositorie {
                         where: {
                           data_ocorreu: {
                             gte: firstDayOfMonth,
-                            lt: lastDayOfMonth
+                            lte: lastDayOfMonthPlusOneDay.toISOString()
                           }
                         }
                       }
@@ -635,7 +637,7 @@ class RegisterDiscipuladoRepositorie {
                     where: {
                       data_ocorreu: {
                         gte: firstDayOfMonth,
-                        lt: lastDayOfMonth
+                        lte: lastDayOfMonthPlusOneDay.toISOString()
                       }
                     }
 
@@ -670,12 +672,13 @@ class RegisterDiscipuladoRepositorie {
     const prisma = createPrismaInstance()
 
     try {
+      const lastDayOfMonthPlusOneDay = dayjs(lastDayOfMonth).add(1, 'day');
       const result = await prisma.discipulado.findMany({
         where: {
           usuario_id: usuario_id,
           data_ocorreu: {
             gte: firstDayOfMonth,
-            lt: lastDayOfMonth
+            lte: lastDayOfMonthPlusOneDay.toISOString()
           },
         },
         select: {
