@@ -4,7 +4,7 @@ export type CultoIndividual = {
   startDate: Date;
   endDate: Date;
   superVisionId: string;
-  cargoLideranca: string[];
+  cargoLiderancaId: string[];
 }
 
 export type dataSchemaCreateDiscipuladoSupervisor = {

@@ -203,7 +203,7 @@ class RegisterDiscipuladoRepositorie {
     startDate: Date,
     endDate: Date,
     superVisionId: string,
-    cargoLideranca: string[],
+    cargoLiderancaId: string[],
   ) {
 
     try {
@@ -216,7 +216,7 @@ class RegisterDiscipuladoRepositorie {
           membros: {
             where: {
               cargoDeLiderancaId: {
-                in: cargoLideranca
+                in: cargoLiderancaId
               }
             },
             select: {

@@ -37,11 +37,11 @@ class RegisterDiscipuladoController {
     request: FastifyRequest,
     reply: FastifyReply
   ) {
-    const { startDate, endDate, superVisionId, cargoLideranca } = request.body as CultoIndividual
+    const { startDate, endDate, superVisionId, cargoLiderancaId } = request.body as CultoIndividual
 
 
     const resultRelatorioCultos = await RegisterDiscipuladoRepositorie.cultosRelatoriosSupervisor(
-      startDate, endDate, superVisionId, cargoLideranca
+      startDate, endDate, superVisionId, cargoLiderancaId
     );
 
     if (!resultRelatorioCultos) {
