@@ -33,7 +33,7 @@ class RegisterDiscipuladoController {
   }
 
   // Relatorio de presenca nos cultos
-  async supervisores(
+  async discipuladosRelatorioSupervisor(
     request: FastifyRequest,
     reply: FastifyReply
   ) {
@@ -102,7 +102,7 @@ class RegisterDiscipuladoController {
       const resultRelatorioCultos = await RegisterDiscipuladoRepositorie.discipuladosRelatorioSupervisao(params);
 
       if (!resultRelatorioCultos) {
-        return reply.code(404).send({ message: "Relatorio Cultos Error!" });
+        return reply.code(404).send({ message: "Relatorio Discipulado Error!" });
       }
 
       return reply.code(200).send(resultRelatorioCultos);

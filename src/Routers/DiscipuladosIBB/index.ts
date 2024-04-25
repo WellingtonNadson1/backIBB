@@ -5,7 +5,7 @@ const routerRegisterDiscipulado = async (fastify: FastifyInstance) => {
   // fastify.get("/discipuladosibb", RegisterDiscipuladoController.index);
   // fastify.get('/discipuladosibb/relatorios', RegisterDiscipuladoController.cultosRelatorios);
   fastify.post('/discipuladosibb/supervisao/relatorio', RegisterDiscipuladoController.discipuladosRelatorioSupervisao);
-  // fastify.post('/discipuladosibb/relatorios/supervisores', RegisterDiscipuladoController.supervisores);
+  fastify.post('/discipuladosibb/supervisor/relatorio', RegisterDiscipuladoController.discipuladosRelatorioSupervisor);
   // fastify.get('/discipuladosibb/:id', RegisterDiscipuladoController.show);
   // fastify.get(`/discipuladosibbbycelula/:culto/:lider`, RegisterDiscipuladoController.searchByIdCulto);
   fastify.post("/discipuladosibb/existing-register", RegisterDiscipuladoController.isregister);
