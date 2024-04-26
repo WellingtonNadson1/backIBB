@@ -244,12 +244,22 @@ class RegisterDiscipuladoRepositorie {
                   nome: true,
                 }
               },
+
               discipulador_usuario_discipulador_usuario_discipulador_idTouser: {
                 select: {
                   user_discipulador_usuario_usuario_idTouser: {
                     select: {
-                      first_name: true
-                    }
+                      first_name: true,
+                      discipulador_usuario_discipulador_usuario_usuario_idTouser: {
+                        select: {
+                          user_discipulador_usuario_discipulador_idTouser: {
+                            select: {
+                              first_name: true,
+                            }
+                          }
+                        }
+                      }
+                    },
                   },
                   discipulado: {
                     where: {
