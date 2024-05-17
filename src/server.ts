@@ -21,6 +21,7 @@ import routerLicoesCelula from "./Routers/upLoads/LicoesCelula";
 import { createPrismaInstance, disconnectPrisma } from "./services/prisma";
 import { PrismaClient } from "@prisma/client";
 import routerRegisterDiscipulado from "./Routers/DiscipuladosIBB";
+import routerRelatorioPresencaCelula from "./Routers/Relatorios/RelatorioPresencaCelulaSupervisao";
 // import routerLicoesCelula from "./Routers/upLoads/LicoesCelula";
 
 declare module 'fastify' {
@@ -72,6 +73,7 @@ const start = async () => {
     await app.register(routerCelula);
     await app.register(routerUser); // tipo um middleware do express
     await app.register(routerRegisterDiscipulado);
+    await app.register(routerRelatorioPresencaCelula);
     // console.log('server', app.register(routerRegisterDiscipulado))
 
     await app.listen({
