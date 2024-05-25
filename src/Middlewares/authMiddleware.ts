@@ -12,7 +12,13 @@ export async function requireAuth(
   // Routes that don't require authentication
   if (
     ["POST"].includes(request.method) &&
-    (request.url === "/login" || request.url === "/users" || request.url === "/refresh-token")
+    (
+      request.url === "/login" ||
+      request.url === "/password/recorver" ||
+      request.url === "/password/reset" ||
+      request.url === "/users" ||
+      request.url === "/refresh-token"
+    )
   ) {
     return;
   }

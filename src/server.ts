@@ -22,6 +22,8 @@ import { createPrismaInstance, disconnectPrisma } from "./services/prisma";
 import { PrismaClient } from "@prisma/client";
 import routerRegisterDiscipulado from "./Routers/DiscipuladosIBB";
 import routerRelatorioPresencaCelula from "./Routers/Relatorios/RelatorioPresencaCelulaSupervisao";
+import { requestResetPassword } from "./auth/request-reset-password";
+import { ResetPassword } from "./auth/reset-password";
 // import routerLicoesCelula from "./Routers/upLoads/LicoesCelula";
 
 declare module 'fastify' {
@@ -29,7 +31,6 @@ declare module 'fastify' {
     prisma: PrismaClient;
   }
 }
-
 
 const PORT = process.env.PORT ? Number(process.env.PORT) : 8888;
 
@@ -74,6 +75,8 @@ const start = async () => {
     await app.register(routerUser); // tipo um middleware do express
     await app.register(routerRegisterDiscipulado);
     await app.register(routerRelatorioPresencaCelula);
+    await app.register(requestResetPassword);
+    await app.register(ResetPassword);
     // console.log('server', app.register(routerRegisterDiscipulado))
 
     await app.listen({
