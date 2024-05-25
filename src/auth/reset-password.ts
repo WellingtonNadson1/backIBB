@@ -11,7 +11,7 @@ type ResetPasswordData = {
 export async function ResetPassword(fastify: FastifyInstance) {
   fastify
     .withTypeProvider<ZodTypeProvider>()
-    .post(
+    .put(
       '/password/reset',
       async (request, reply) => {
         const { code, password } = request.body as ResetPasswordData
