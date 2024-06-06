@@ -430,7 +430,7 @@ class UserRepositorie {
           },
         },
         presencas_aulas_escolas: true,
-        presencas_cultos: true,
+        presencas_cultos: false,
         password: false,
       },
     });
@@ -697,7 +697,7 @@ class UserRepositorie {
           },
         },
         presencas_aulas_escolas: true,
-        presencas_cultos: true,
+        presencas_cultos: false,
         password: false,
       },
     });
