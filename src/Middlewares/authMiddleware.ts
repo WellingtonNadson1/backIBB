@@ -11,7 +11,7 @@ export async function requireAuth(
 
   // Routes that don't require authentication
   if (
-    ["POST"].includes(request.method) &&
+    ["POST", "PUT"].includes(request.method) &&
     (
       request.url === "/login" ||
       request.url === "/password/recorver" ||
