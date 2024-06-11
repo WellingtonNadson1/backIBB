@@ -6,6 +6,8 @@ export interface ReuniaoCelulaData {
   status: string,
   presencas_membros_reuniao_celula: string[],
   celula: string,
+  visitantes: number,
+  almas_ganhas: number,
 };
 
 interface ReuniaoCelulaParams {
@@ -73,7 +75,7 @@ class ReuniaoSemanalCelulaController {
     }>,
     reply: FastifyReply
   ) {
-    const id = request.params.id;
+    const { id } = request.params;
     const reuniaoCelulaDataForm = request.body as ReuniaoCelulaData;
     const reuniaoCelula = await ReuniaoCelulaRepositorie.updateReuniaoCelula(
       id,

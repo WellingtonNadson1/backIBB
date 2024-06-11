@@ -86,12 +86,12 @@ class ReuniaoCelulaRepositorie {
   }: {
     data_reuniao: Date,
     celula: string,
-  } ) {
-    const dataReuniaoModify = dayjs(data_reuniao).toISOString().substring(0,10)
+  }) {
+    const dataReuniaoModify = dayjs(data_reuniao).toISOString().substring(0, 10)
     const result = await prisma?.reuniaoCelula.findFirst({
       where: {
         data_reuniao: dataReuniaoModify,
-        celula: {id: celula },
+        celula: { id: celula },
       },
       select: {
         id: true,
@@ -202,7 +202,8 @@ class ReuniaoCelulaRepositorie {
         data_reuniao: date_createBrasilDate,
         date_update: date_update,
         status: status,
-    }});
+      }
+    });
     // Conecte os relacionamentos opcionais, se fornecidos
     if (presencas_membros_reuniao_celula) {
       await prisma?.reuniaoCelula.update({
@@ -217,9 +218,10 @@ class ReuniaoCelulaRepositorie {
   }
 
   async updateReuniaoCelula(id: string, reuniaoCelulaDataForm: ReuniaoCelulaData) {
-    const { presencas_membros_reuniao_celula, celula, ...ReuniaoCelulaData } = reuniaoCelulaDataForm;
+    const { presencas_membros_reuniao_celula, celula, visitantes, almas_ganhas, ...ReuniaoCelulaData } = reuniaoCelulaDataForm;
     const updateReuniaoCelulaInput: UpdateReuniaCelulaInput = {
       ...ReuniaoCelulaData,
+      date_update: new Date(),  // Atualizando a data de atualização
     };
 
     // Conecte os relacionamentos opcionais apenas se forem fornecidos
@@ -230,6 +232,19 @@ class ReuniaoCelulaRepositorie {
         },
       };
     }
+
+    if (visitantes !== undefined) {
+      updateReuniaoCelulaInput.visitantes = {
+        set: Number(visitantes)
+      };
+    }
+
+    if (almas_ganhas !== undefined) {
+      updateReuniaoCelulaInput.almas_ganhas = {
+        set: Number(almas_ganhas)
+      };
+    }
+
 
     if (presencas_membros_reuniao_celula !== undefined) {
       updateReuniaoCelulaInput.presencas_membros_reuniao_celula = presencas_membros_reuniao_celula.map((presencaReuniaCelulaId) => ({
@@ -259,7 +274,7 @@ class ReuniaoCelulaRepositorie {
     return result
   }
 
-  
+
 }
 
 export default new ReuniaoCelulaRepositorie();
