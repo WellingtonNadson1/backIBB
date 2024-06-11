@@ -120,6 +120,8 @@ model ReuniaoCelula {
   data_reuniao                     DateTime?
   status                           String
   celulaId                         String?
+  visitantes                       Int?
+  almas_ganhas                     Int?
   date_create                      DateTime                @default(now())
   date_update                      DateTime
   presencas_membros_reuniao_celula PresencaReuniaoCelula[]
