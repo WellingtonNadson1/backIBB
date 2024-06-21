@@ -1,5 +1,5 @@
 import { FastifyReply, FastifyRequest } from "fastify";
-import { Input, boolean, object, string } from "valibot";
+import { Input, boolean, object, string, array } from "valibot";
 import { PresencaCultoRepositorie } from "../../Repositories/Culto";
 import dayjs from "dayjs";
 
@@ -8,7 +8,19 @@ type CultoIndividual = {
   endDate: Date;
   superVisionId: string;
   cargoLideranca: string[];
-}
+};
+
+const PresencaCultoDataNewSchema = object({
+  presence_culto: string(),
+  membro: array(
+    object({
+      id: string(),
+      status: boolean(), //Pode ter um status (presente, ausente, justificado, etc.)
+    }),
+  ),
+});
+
+export type PresencaCultoDataNew = Input<typeof PresencaCultoDataNewSchema>;
 
 const PresencaCultoDataSchema = object({
   status: boolean(), //Pode ter um status (presente, ausente, justificado, etc.)
@@ -49,7 +61,7 @@ class PresencaCultoController {
     request: FastifyRequest<{
       Params: PresencaCultoParams;
     }>,
-    reply: FastifyReply
+    reply: FastifyReply,
   ) {
     const id = request.params.id;
     const presencaCulto = await PresencaCultoRepositorie.findById(id);
@@ -60,37 +72,35 @@ class PresencaCultoController {
   }
 
   // Relatorio de presenca nos cultos
-  async supervisores(
-    request: FastifyRequest,
-    reply: FastifyReply
-  ) {
-    const { startDate, endDate, superVisionId, cargoLideranca } = request.body as CultoIndividual
+  async supervisores(request: FastifyRequest, reply: FastifyReply) {
+    const { startDate, endDate, superVisionId, cargoLideranca } =
+      request.body as CultoIndividual;
 
-
-    const resultRelatorioCultos = await PresencaCultoRepositorie.cultosRelatoriosSupervisor(
-      startDate, endDate, superVisionId, cargoLideranca
-    );
+    const resultRelatorioCultos =
+      await PresencaCultoRepositorie.cultosRelatoriosSupervisor(
+        startDate,
+        endDate,
+        superVisionId,
+        cargoLideranca,
+      );
 
     if (!resultRelatorioCultos) {
       return reply.code(404).send({ message: "Relatorio Cultos Error!" });
     }
 
-  return reply.code(200).send(resultRelatorioCultos);
-
+    return reply.code(200).send(resultRelatorioCultos);
   }
 
   // Relatorio de presenca nos cultos
-  async cultosRelatorios(
-    request: FastifyRequest,
-    reply: FastifyReply
-  ) {
+  async cultosRelatorios(request: FastifyRequest, reply: FastifyReply) {
     const params = {
-      startOfInterval: dayjs('2023-10-01').toISOString(),
-      endOfInterval: dayjs('2023-10-28').toISOString(),
-      supervisaoId: '5e392d1b-f425-4865-a730-5191bc0821cd'
+      startOfInterval: dayjs("2023-10-01").toISOString(),
+      endOfInterval: dayjs("2023-10-28").toISOString(),
+      supervisaoId: "5e392d1b-f425-4865-a730-5191bc0821cd",
     };
 
-    const resultRelatorioCultos = await PresencaCultoRepositorie.cultosRelatorios(params);
+    const resultRelatorioCultos =
+      await PresencaCultoRepositorie.cultosRelatorios(params);
 
     if (!resultRelatorioCultos) {
       return reply.code(404).send({ message: "Relatorio Cultos Error!" });
@@ -113,30 +123,26 @@ class PresencaCultoController {
 
     //   cultosAgrupados[supervisao][celula].push(culto);
     // });
-    const groupedForSupervision = resultRelatorioCultos
-    .flatMap(culto =>
+    const groupedForSupervision = resultRelatorioCultos.flatMap((culto) =>
       culto.presencas_culto
-        .filter(presenca => presenca.membro?.supervisao_pertence?.id === params.supervisaoId)
-        .map(presenca => ({
+        .filter(
+          (presenca) =>
+            presenca.membro?.supervisao_pertence?.id === params.supervisaoId,
+        )
+        .map((presenca) => ({
           culto,
-          membro: presenca.membro
-        }))
+          membro: presenca.membro,
+        })),
     );
 
-  console.log(resultRelatorioCultos);
+    console.log(resultRelatorioCultos);
 
-  return reply.code(200).send(resultRelatorioCultos);
-
+    return reply.code(200).send(resultRelatorioCultos);
   }
 
-
-
-  async searchByIdCulto(
-    request: FastifyRequest,
-    reply: FastifyReply
-  ) {
-    const {culto, lider} = request.params as PresencaCultoParams;
-    console.log('culto: ', culto)
+  async searchByIdCulto(request: FastifyRequest, reply: FastifyReply) {
+    const { culto, lider } = request.params as PresencaCultoParams;
+    console.log("culto: ", culto);
 
     const presencaCultoIsRegister =
       await PresencaCultoRepositorie.findByIdCulto(culto, lider);
@@ -144,6 +150,42 @@ class PresencaCultoController {
       return reply.code(404).send({ message: "Presença not Register!" });
     }
     return reply.code(200).send(presencaCultoIsRegister);
+  }
+
+  async storeRefactored(request: FastifyRequest, reply: FastifyReply) {
+    try {
+      const presencaCultoDataForm = request.body as PresencaCultoDataNew;
+
+      const { presence_culto, membro } = presencaCultoDataForm;
+
+      // Verifique se já existe uma presença registrada para o membro no culto
+      const existingPresenca =
+        await PresencaCultoRepositorie.findFirstPresenceAllMembers({
+          presence_culto,
+          membro,
+        });
+
+      if (existingPresenca.result.length !== 0) {
+        console.log({ existingPresenca });
+        return reply
+          .code(409)
+          .send({ message: "Presença de Culto já Registrada para hoje!" });
+      }
+
+      // Se não existir, crie a presença
+      const presencaCulto =
+        await PresencaCultoRepositorie.createPresencaCultoNew({
+          ...presencaCultoDataForm,
+        });
+
+      return reply.code(201).send({
+        presencaCulto,
+        message: "Presença Registrada!",
+      });
+    } catch (error: any) {
+      console.error(error); // Log o erro no console para depuração
+      return reply.code(400).send(error.message || "Erro interno do servidor");
+    }
   }
 
   async store(request: FastifyRequest, reply: FastifyReply) {
@@ -171,7 +213,7 @@ class PresencaCultoController {
       return reply.code(201).send(presencaCulto);
     } catch (error: any) {
       console.error(error); // Log o erro no console para depuração
-      return reply.code(400).send(error.message || 'Erro interno do servidor');
+      return reply.code(400).send(error.message || "Erro interno do servidor");
     }
   }
 
@@ -179,7 +221,7 @@ class PresencaCultoController {
     request: FastifyRequest<{
       Params: PresencaCultoParams;
     }>,
-    reply: FastifyReply
+    reply: FastifyReply,
   ) {
     const id = request.params.id;
     const presencaCultoDataForm = request.body as PresencaCultoData;
@@ -187,7 +229,7 @@ class PresencaCultoController {
       id,
       {
         ...presencaCultoDataForm,
-      }
+      },
     );
     return reply.code(202).send(presencaCulto);
   }
@@ -196,7 +238,7 @@ class PresencaCultoController {
     request: FastifyRequest<{
       Params: PresencaCultoParams;
     }>,
-    reply: FastifyReply
+    reply: FastifyReply,
   ) {
     const id = request.params.id;
     await PresencaCultoRepositorie.deletePresencaCulto(id);

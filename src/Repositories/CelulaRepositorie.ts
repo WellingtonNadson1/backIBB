@@ -2,12 +2,24 @@ import { CelulaData } from "../Controllers/CelulaController";
 import { Prisma } from "@prisma/client";
 import { createPrismaInstance, disconnectPrisma } from "../services/prisma";
 
+function getStartOfDay(date: Date): Date {
+  const startOfDay = new Date(date);
+  startOfDay.setHours(0, 0, 0, 0);
+  return startOfDay;
+}
+
+function getEndOfDay(date: Date): Date {
+  const endOfDay = new Date(date);
+  endOfDay.setHours(23, 59, 59, 999);
+  return endOfDay;
+}
+
 class CelulaRepositorie {
   async findAll() {
-    const prisma = createPrismaInstance()
+    const prisma = createPrismaInstance();
 
     if (!prisma) {
-      throw new Error('Prisma instance is null');
+      throw new Error("Prisma instance is null");
     }
     const result = await prisma?.celula.findMany({
       select: {
@@ -17,19 +29,19 @@ class CelulaRepositorie {
           select: {
             id: true,
             first_name: true,
-          }
+          },
         },
         supervisao: {
           select: {
             id: true,
             nome: true,
-          }
+          },
         },
         membros: {
           select: {
             id: true,
             first_name: true,
-          }
+          },
         },
         date_que_ocorre: true,
         reunioes_celula: {
@@ -42,22 +54,28 @@ class CelulaRepositorie {
                 id: true,
                 membro: true,
                 status: true,
-              }
-            }
-          }
-        }
-      }
-    })
-    await disconnectPrisma()
-    return result
+              },
+            },
+          },
+        },
+      },
+    });
+    await disconnectPrisma();
+    return result;
   }
 
   async findById(id: string) {
-    const prisma = createPrismaInstance()
+    const prisma = createPrismaInstance();
 
     if (!prisma) {
-      throw new Error('Prisma instance is null');
+      throw new Error("Prisma instance is null");
     }
+
+    const todayDate = new Date();
+    const startOfDay = getStartOfDay(todayDate);
+    const endOfDay = getEndOfDay(todayDate);
+
+    console.log("todayDate", todayDate);
     const result = await prisma?.celula.findUnique({
       where: {
         id: id,
@@ -69,14 +87,22 @@ class CelulaRepositorie {
           select: {
             id: true,
             first_name: true,
+            presencas_cultos: {
+              where: {
+                date_create: {
+                  gte: startOfDay,
+                  lte: endOfDay,
+                },
+              },
+            },
             discipulador_usuario_discipulador_usuario_usuario_idTouser: {
               select: {
                 user_discipulador_usuario_discipulador_idTouser: {
                   select: {
                     id: true,
-                    first_name: true
-                  }
-                }
+                    first_name: true,
+                  },
+                },
               },
             },
             discipulador_usuario_discipulador_usuario_discipulador_idTouser: {
@@ -84,41 +110,41 @@ class CelulaRepositorie {
                 user_discipulador_usuario_usuario_idTouser: {
                   select: {
                     id: true,
-                    first_name: true
-                  }
-                }
+                    first_name: true,
+                  },
+                },
               },
             },
             cargo_de_lideranca: {
               select: {
                 id: true,
-                nome: true
-              }
+                nome: true,
+              },
             },
             situacao_no_reino: {
               select: {
                 id: true,
-                nome: true
-              }
+                nome: true,
+              },
             },
             user: {
               select: {
                 id: true,
                 first_name: true,
-              }
-            }
-          }
+              },
+            },
+          },
         },
         lider: {
           select: {
             id: true,
-          }
+          },
         },
         supervisao: {
           select: {
             id: true,
             nome: true,
-          }
+          },
         },
         date_que_ocorre: true,
         date_inicio: true,
@@ -133,24 +159,25 @@ class CelulaRepositorie {
                 id: true,
                 membro: true,
                 status: true,
-              }
-            }
-          }
-        }
-      }
-    })
+              },
+            },
+          },
+        },
+      },
+    });
 
-    await disconnectPrisma()
-    return result
+    await disconnectPrisma();
+    console.log(result?.membros[0].presencas_cultos);
+    return result;
   }
 
   async createCelula(celulaDataForm: CelulaData) {
-    const prisma = createPrismaInstance()
+    const prisma = createPrismaInstance();
 
     if (!prisma) {
-      throw new Error('Prisma instance is null');
+      throw new Error("Prisma instance is null");
     }
-    const { membros, reunioes_celula, ...CelulaData } = celulaDataForm
+    const { membros, reunioes_celula, ...CelulaData } = celulaDataForm;
 
     const result = await prisma?.celula.create({
       data: {
@@ -158,32 +185,35 @@ class CelulaRepositorie {
         lider: {
           connect: {
             id: CelulaData.lider,
-          }
+          },
         },
         supervisao: {
           connect: {
             id: CelulaData.supervisao,
-          }
+          },
         },
         membros: {
-          connect: membros ? membros.map((membroId) => ({ id: membroId })) : []
+          connect: membros ? membros.map((membroId) => ({ id: membroId })) : [],
         },
         reunioes_celula: {
-          connect: reunioes_celula?.map((reuniaoCelulaId) => ({ id: reuniaoCelulaId })),
+          connect: reunioes_celula?.map((reuniaoCelulaId) => ({
+            id: reuniaoCelulaId,
+          })),
         },
       },
-    })
-    await disconnectPrisma()
-    return result
+    });
+    await disconnectPrisma();
+    return result;
   }
 
   async updateCelula(id: string, celulaDataForm: CelulaData) {
-    const prisma = createPrismaInstance()
+    const prisma = createPrismaInstance();
 
     if (!prisma) {
-      throw new Error('Prisma instance is null');
+      throw new Error("Prisma instance is null");
     }
-    const { nome, lider, reunioes_celula, supervisao, membros, ...CelulaData } = celulaDataForm
+    const { nome, lider, reunioes_celula, supervisao, membros, ...CelulaData } =
+      celulaDataForm;
     const result = await prisma?.celula.update({
       where: {
         id: id,
@@ -193,31 +223,33 @@ class CelulaRepositorie {
         nome,
         lider: {
           connect: {
-            id: lider
-          }
+            id: lider,
+          },
         },
         supervisao: {
           connect: {
-            id: supervisao
-          }
+            id: supervisao,
+          },
         },
         membros: {
-          connect: membros?.map((membroId) => ({ id: membroId }))
+          connect: membros?.map((membroId) => ({ id: membroId })),
         },
         reunioes_celula: {
-          connect: reunioes_celula?.map((reuniaoCelulaId) => ({ id: reuniaoCelulaId })),
+          connect: reunioes_celula?.map((reuniaoCelulaId) => ({
+            id: reuniaoCelulaId,
+          })),
         },
       },
-    })
-    await disconnectPrisma()
-    return result
+    });
+    await disconnectPrisma();
+    return result;
   }
 
   async updateDateCelula(id: string, newDate: string) {
-    const prisma = createPrismaInstance()
+    const prisma = createPrismaInstance();
 
     if (!prisma) {
-      throw new Error('Prisma instance is null');
+      throw new Error("Prisma instance is null");
     }
     // Consulte a célula existente para obter os dados atuais
     const existingCelula = await prisma?.celula.findUnique({
@@ -282,23 +314,23 @@ class CelulaRepositorie {
       },
       data: updateData,
     });
-    await disconnectPrisma()
+    await disconnectPrisma();
     return updatedCelula;
   }
 
   async deleteCelula(id: string) {
-    const prisma = createPrismaInstance()
+    const prisma = createPrismaInstance();
 
     if (!prisma) {
-      throw new Error('Prisma instance is null');
+      throw new Error("Prisma instance is null");
     }
     const result = await prisma?.celula.delete({
       where: {
         id: id,
       },
-    })
-    await disconnectPrisma()
-    return result
+    });
+    await disconnectPrisma();
+    return result;
   }
 }
 
