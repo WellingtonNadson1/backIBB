@@ -29,7 +29,7 @@ class PresencaCultoRepositorie {
       const prisma = createPrismaInstance();
 
       const dataInicio = dayjs(startDate).toISOString();
-      const dataFim = dayjs(endDate).toISOString();
+      const dataFim = dayjs(endDate).endOf("day").toISOString();
 
       // Consulta para buscar membros da supervisão que compareceram aos cultos no intervalo de tempo
       const membrosCompareceramCultos = await prisma?.user.findMany({

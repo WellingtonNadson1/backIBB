@@ -12,32 +12,33 @@ interface CultoIndividualConnect {
 }
 
 class CultoIndividualRepositorie {
-  async findAllIntervall(startDate: Date, endDate: Date, superVisionId: string) {
-    console.log('startDate', startDate)
-    console.log('endDate', endDate)
-
-
-    const prisma = createPrismaInstance()
+  async findAllIntervall(
+    startDate: Date,
+    endDate: Date,
+    superVisionId: string,
+  ) {
+    const dataFim = dayjs(endDate).endOf("day").toISOString();
+    const prisma = createPrismaInstance();
 
     try {
       const result = await prisma?.cultoIndividual.findMany({
         where: {
           data_inicio_culto: {
             gte: new Date(startDate),
-            lte: new Date(endDate),
+            lte: new Date(dataFim),
           },
           presencas_culto: {
             some: {
               membro: {
                 supervisao_pertence: {
-                  id: { equals: superVisionId }
+                  id: { equals: superVisionId },
                 },
-              }
-            }
-          }
+              },
+            },
+          },
         },
         orderBy: {
-          data_inicio_culto: 'asc' // Ordena em ordem crescente
+          data_inicio_culto: "asc", // Ordena em ordem crescente
         },
         select: {
           id: true,
@@ -46,9 +47,9 @@ class CultoIndividualRepositorie {
             where: {
               membro: {
                 supervisao_pertence: {
-                  id: { equals: superVisionId }
+                  id: { equals: superVisionId },
                 },
-              }
+              },
             },
             select: {
               id: true,
@@ -63,17 +64,17 @@ class CultoIndividualRepositorie {
                     select: {
                       id: true,
                       nome: true,
-                    }
+                    },
                   },
                   celula: {
                     select: {
                       id: true,
                       nome: true,
-                    }
-                  }
-                }
-              }
-            }
+                    },
+                  },
+                },
+              },
+            },
           },
           culto_semana: {
             select: {
@@ -83,29 +84,62 @@ class CultoIndividualRepositorie {
           },
         },
       });
-      const totalCultosPeriodo = result.length
+      const totalCultosPeriodo = result.length;
       const cultoPrimicia = result.reduce((total, primicia) => {
-        return total + (primicia.culto_semana?.id === 'bffb62af-8d03-473a-ba20-ab5a9d7dafbe' ? 1 : 0);
+        return (
+          total +
+          (primicia.culto_semana?.id === "bffb62af-8d03-473a-ba20-ab5a9d7dafbe"
+            ? 1
+            : 0)
+        );
       }, 0);
 
       const cultoDomingoSacrificio = result.reduce((total, sacrificio) => {
-        return total + (sacrificio.culto_semana?.id === 'e7bc72d1-8faa-4bbe-9c24-475b64f956cf' ? 1 : 0);
+        return (
+          total +
+          (sacrificio.culto_semana?.id ===
+          "e7bc72d1-8faa-4bbe-9c24-475b64f956cf"
+            ? 1
+            : 0)
+        );
       }, 0);
 
       const cultoQuarta = result.reduce((total, quarta) => {
-        return total + (quarta.culto_semana?.id === '4064be1d-bf55-4851-9f76-99c4554a6265' ? 1 : 0);
+        return (
+          total +
+          (quarta.culto_semana?.id === "4064be1d-bf55-4851-9f76-99c4554a6265"
+            ? 1
+            : 0)
+        );
       }, 0);
 
       const cultoSabado = result.reduce((total, sabado) => {
-        return total + (sabado.culto_semana?.id === '84acfbe4-c7e0-4841-813c-04731ffa9c67' ? 1 : 0);
+        return (
+          total +
+          (sabado.culto_semana?.id === "84acfbe4-c7e0-4841-813c-04731ffa9c67"
+            ? 1
+            : 0)
+        );
       }, 0);
 
       const cultoDomingoManha = result.reduce((total, domingoManha) => {
-        return total + (domingoManha.culto_semana?.id === 'cab02f30-cade-46ca-b118-930461013d53' ? 1 : 0);
+        return (
+          total +
+          (domingoManha.culto_semana?.id ===
+          "cab02f30-cade-46ca-b118-930461013d53"
+            ? 1
+            : 0)
+        );
       }, 0);
 
       const cultoDomingoTarde = result.reduce((total, domingoTarde) => {
-        return total + (domingoTarde.culto_semana?.id === 'ea08ec9b-3d1b-42f3-818a-ec53ef99b78f' ? 1 : 0);
+        return (
+          total +
+          (domingoTarde.culto_semana?.id ===
+          "ea08ec9b-3d1b-42f3-818a-ec53ef99b78f"
+            ? 1
+            : 0)
+        );
       }, 0);
 
       return {
@@ -118,14 +152,13 @@ class CultoIndividualRepositorie {
         cultoDomingoTarde: cultoDomingoTarde,
         totalCultosPeriodo: totalCultosPeriodo,
       };
-    }
-    finally {
-      await disconnectPrisma()
+    } finally {
+      await disconnectPrisma();
     }
   }
 
   async findAll() {
-    const prisma = createPrismaInstance()
+    const prisma = createPrismaInstance();
 
     try {
       const result = await prisma?.cultoIndividual.findMany({
@@ -142,29 +175,28 @@ class CultoIndividualRepositorie {
                   id: true,
                   first_name: true,
                   supervisao_pertence: true,
-                }
+                },
               },
-            }
+            },
           },
           culto_semana: {
             select: {
               id: true,
-              nome: true
+              nome: true,
             },
           },
         },
       });
       return result;
-    }
-    finally {
-      await disconnectPrisma()
+    } finally {
+      await disconnectPrisma();
     }
   }
 
   async findPerPeriod(firstDayOfMonth: Date, lastDayOfMonth: Date) {
-    const prisma = createPrismaInstance()
+    const prisma = createPrismaInstance();
     try {
-      const lastDayOfMonthPlusOneDay = dayjs(lastDayOfMonth).add(1, 'day');
+      const lastDayOfMonthPlusOneDay = dayjs(lastDayOfMonth).add(1, "day");
       const result = await prisma?.cultoIndividual.findMany({
         where: {
           data_inicio_culto: {
@@ -173,7 +205,7 @@ class CultoIndividualRepositorie {
           },
         },
         orderBy: {
-          data_inicio_culto: 'asc' // Ordena em ordem crescente
+          data_inicio_culto: "asc", // Ordena em ordem crescente
         },
         select: {
           id: true,
@@ -182,20 +214,19 @@ class CultoIndividualRepositorie {
           culto_semana: {
             select: {
               id: true,
-              nome: true
+              nome: true,
             },
           },
         },
       });
       return result;
-    }
-    finally {
-      await disconnectPrisma()
+    } finally {
+      await disconnectPrisma();
     }
   }
 
   async findById(id: string) {
-    const prisma = createPrismaInstance()
+    const prisma = createPrismaInstance();
 
     try {
       const result = await prisma?.cultoIndividual.findUnique({
@@ -215,41 +246,40 @@ class CultoIndividualRepositorie {
                   id: true,
                   first_name: true,
                   supervisao_pertence: true,
-                }
+                },
               },
-            }
+            },
           },
           culto_semana: {
             select: {
               id: true,
-              nome: true
+              nome: true,
             },
           },
         },
       });
       return result;
-    }
-    finally {
-      await disconnectPrisma()
+    } finally {
+      await disconnectPrisma();
     }
   }
 
   async createCultoIndividual(cultoIndividualDataForm: CultoIndividualData) {
-    const prisma = createPrismaInstance()
+    const prisma = createPrismaInstance();
 
     try {
       const { data } = cultoIndividualDataForm;
 
-      console.log('Dados recebidos do frontend', cultoIndividualDataForm);
+      console.log("Dados recebidos do frontend", cultoIndividualDataForm);
 
-      console.log('Data Início (antes de criar)', data.data_inicio_culto);
-      console.log('Data Término (antes de criar)', data.data_termino_culto);
+      console.log("Data Início (antes de criar)", data.data_inicio_culto);
+      console.log("Data Término (antes de criar)", data.data_termino_culto);
       const cultoIndividual = await prisma?.cultoIndividual.create({
         data: {
           data_inicio_culto: data.data_inicio_culto,
           data_termino_culto: data.data_termino_culto,
           status: data.status,
-          date_update: new Date()
+          date_update: new Date(),
         },
       });
       // Conecte os relacionamentos opcionais, se fornecidos
@@ -266,20 +296,26 @@ class CultoIndividualRepositorie {
         await prisma?.cultoIndividual.update({
           where: { id: cultoIndividual?.id },
           data: {
-            presencas_culto: { connect: data.presencas_culto.map((cultoIndividualId) => ({ id: cultoIndividualId })) },
+            presencas_culto: {
+              connect: data.presencas_culto.map((cultoIndividualId) => ({
+                id: cultoIndividualId,
+              })),
+            },
           },
         });
       }
 
-      return cultoIndividual
-    }
-    finally {
-      await disconnectPrisma()
+      return cultoIndividual;
+    } finally {
+      await disconnectPrisma();
     }
   }
 
-  async updateCultoIndividual(id: string, cultoIndividualDataForm: CultoIndividualData) {
-    const prisma = createPrismaInstance()
+  async updateCultoIndividual(
+    id: string,
+    cultoIndividualDataForm: CultoIndividualData,
+  ) {
+    const prisma = createPrismaInstance();
     try {
       const { data } = cultoIndividualDataForm;
       const updateCultoIndividualInput: UpdateCultoIndividualInput = {
@@ -299,11 +335,13 @@ class CultoIndividualRepositorie {
       }
 
       if (data.presencas_culto !== undefined) {
-        updateCultoIndividualInput.presencas_culto = data.presencas_culto.map((presencaCultoId) => ({
-          connect: {
-            id: presencaCultoId,
-          },
-        })) as CultoIndividualConnect[];
+        updateCultoIndividualInput.presencas_culto = data.presencas_culto.map(
+          (presencaCultoId) => ({
+            connect: {
+              id: presencaCultoId,
+            },
+          }),
+        ) as CultoIndividualConnect[];
       }
       const result = await prisma?.cultoIndividual.update({
         where: {
@@ -313,14 +351,13 @@ class CultoIndividualRepositorie {
       });
 
       return result;
-    }
-    finally {
-      await disconnectPrisma()
+    } finally {
+      await disconnectPrisma();
     }
   }
 
   async deleteCultoIndividual(id: string) {
-    const prisma = createPrismaInstance()
+    const prisma = createPrismaInstance();
 
     try {
       const result = await prisma?.cultoIndividual.delete({
@@ -329,9 +366,8 @@ class CultoIndividualRepositorie {
         },
       });
       return result;
-    }
-    finally {
-      await disconnectPrisma()
+    } finally {
+      await disconnectPrisma();
     }
   }
 }

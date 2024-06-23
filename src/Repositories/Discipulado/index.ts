@@ -1,6 +1,6 @@
 import { PresencaCultoData } from "../../Controllers/Culto/PresencaCulto";
-import utc from "dayjs/plugin/utc"
-import timezone from "dayjs/plugin/timezone"
+import utc from "dayjs/plugin/utc";
+import timezone from "dayjs/plugin/timezone";
 import dayjs from "dayjs";
 import { createPrismaInstance, disconnectPrisma } from "../../services/prisma";
 import { CultoIndividualRepositorie } from "../Culto";
@@ -9,13 +9,12 @@ import { dataSchemaCreateDiscipulado } from "../../Controllers/Discipulado/schem
 dayjs.extend(utc);
 dayjs.extend(timezone);
 
-
 class RegisterDiscipuladoRepositorie {
   findLog() {
-    const dataBrasil = dayjs().tz('America/Sao_Paulo');
-    const date_create = dataBrasil.format('YYYY-MM-DDTHH:mm:ss.SSS[Z]')
+    const dataBrasil = dayjs().tz("America/Sao_Paulo");
+    const date_create = dataBrasil.format("YYYY-MM-DDTHH:mm:ss.SSS[Z]");
     const dataBrasilDate = new Date(date_create);
-    console.log('Data Brasil (Date):', dataBrasilDate);
+    console.log("Data Brasil (Date):", dataBrasilDate);
   }
 
   // async cultosRelatoriosSupervisor(
@@ -205,6 +204,7 @@ class RegisterDiscipuladoRepositorie {
     superVisionId: string,
     cargoLiderancaId: string[],
   ) {
+    const dataFim = dayjs(endDate).endOf("day").toISOString();
 
     try {
       const prisma = createPrismaInstance();
@@ -216,8 +216,8 @@ class RegisterDiscipuladoRepositorie {
           membros: {
             where: {
               cargoDeLiderancaId: {
-                in: cargoLiderancaId
-              }
+                in: cargoLiderancaId,
+              },
             },
             select: {
               id: true,
@@ -225,7 +225,7 @@ class RegisterDiscipuladoRepositorie {
               cargo_de_lideranca: {
                 select: {
                   nome: true,
-                }
+                },
               },
               celula: {
                 select: {
@@ -233,16 +233,16 @@ class RegisterDiscipuladoRepositorie {
                   nome: true,
                   lider: {
                     select: {
-                      first_name: true
-                    }
-                  }
-                }
+                      first_name: true,
+                    },
+                  },
+                },
               },
               supervisao_pertence: {
                 select: {
                   id: true,
                   nome: true,
-                }
+                },
               },
 
               discipulador_usuario_discipulador_usuario_discipulador_idTouser: {
@@ -250,23 +250,24 @@ class RegisterDiscipuladoRepositorie {
                   user_discipulador_usuario_usuario_idTouser: {
                     select: {
                       first_name: true,
-                      discipulador_usuario_discipulador_usuario_usuario_idTouser: {
-                        select: {
-                          user_discipulador_usuario_discipulador_idTouser: {
-                            select: {
-                              first_name: true,
-                            }
-                          }
-                        }
-                      }
+                      discipulador_usuario_discipulador_usuario_usuario_idTouser:
+                        {
+                          select: {
+                            user_discipulador_usuario_discipulador_idTouser: {
+                              select: {
+                                first_name: true,
+                              },
+                            },
+                          },
+                        },
                     },
                   },
                   discipulado: {
                     where: {
                       data_ocorreu: {
                         gte: new Date(startDate),
-                        lte: new Date(endDate)
-                      }
+                        lte: new Date(dataFim),
+                      },
                     },
                     select: {
                       // discipulador_usuario: {
@@ -278,32 +279,29 @@ class RegisterDiscipuladoRepositorie {
                       //     }
                       //   }
                       // },
-                      data_ocorreu: true
-                    }
-                  }
-                }
-              }
-            }
-          }
+                      data_ocorreu: true,
+                    },
+                  },
+                },
+              },
+            },
+          },
         },
       });
       return result;
-    }
-
-    finally {
-      await disconnectPrisma()
+    } finally {
+      await disconnectPrisma();
     }
   }
 
+  async discipuladosRelatorioSupervisao(params: {
+    superVisionId: string;
+    startDate: Date;
+    endDate: Date;
+  }) {
+    const dataFim = dayjs(params.endDate).endOf("day").toISOString();
 
-  async discipuladosRelatorioSupervisao(
-    params: {
-      superVisionId: string;
-      startDate: Date;
-      endDate: Date;
-    }
-  ) {
-    const prisma = createPrismaInstance()
+    const prisma = createPrismaInstance();
     try {
       const result = await prisma.supervisao.findMany({
         where: {
@@ -320,74 +318,70 @@ class RegisterDiscipuladoRepositorie {
                   nome: true,
                   lider: {
                     select: {
-                      first_name: true
-                    }
-                  }
-                }
+                      first_name: true,
+                    },
+                  },
+                },
               },
               supervisao_pertence: {
                 select: {
                   id: true,
                   nome: true,
-                }
+                },
               },
               discipulador_usuario_discipulador_usuario_usuario_idTouser: {
                 select: {
                   user_discipulador_usuario_discipulador_idTouser: {
                     select: {
-                      first_name: true
-                    }
+                      first_name: true,
+                    },
                   },
                   discipulado: {
                     where: {
                       data_ocorreu: {
                         gte: new Date(params.startDate),
-                        lte: new Date(params.endDate)
-                      }
+                        lte: new Date(dataFim),
+                      },
                     },
                     select: {
                       discipulador_usuario: {
                         select: {
                           user_discipulador_usuario_discipulador_idTouser: {
                             select: {
-                              first_name: true
-                            }
-                          }
-                        }
+                              first_name: true,
+                            },
+                          },
+                        },
                       },
-                      data_ocorreu: true
-                    }
-                  }
-                }
-              }
-            }
-          }
+                      data_ocorreu: true,
+                    },
+                  },
+                },
+              },
+            },
+          },
         },
       });
       return result;
-    }
-
-    finally {
-      await disconnectPrisma()
+    } finally {
+      await disconnectPrisma();
     }
   }
 
-  async cultosRelatorios(
-    params: {
-      supervisaoId: string;
-      startOfInterval: string;
-      endOfInterval: string;
-    }
-  ) {
-    const prisma = createPrismaInstance()
+  async cultosRelatorios(params: {
+    supervisaoId: string;
+    startOfInterval: string;
+    endOfInterval: string;
+  }) {
+    const prisma = createPrismaInstance();
+    const dataFim = dayjs(params.endOfInterval).endOf("day").toISOString();
 
     console.log(params);
     try {
       const result = await prisma.cultoIndividual.findMany({
-
         where: {
           data_inicio_culto: { gte: params.startOfInterval },
-          data_termino_culto: { lte: params.endOfInterval },
+          data_termino_culto: { lte: dataFim },
         },
         include: {
           presencas_culto: {
@@ -400,15 +394,15 @@ class RegisterDiscipuladoRepositorie {
                     select: {
                       id: true,
                       nome: true,
-                    }
+                    },
                   },
                   supervisao_pertence: {
                     select: {
                       id: true,
                       nome: true,
-                    }
-                  }
-                }
+                    },
+                  },
+                },
               },
             },
           },
@@ -417,15 +411,13 @@ class RegisterDiscipuladoRepositorie {
 
       console.log(result);
       return result;
-    }
-
-    finally {
-      await disconnectPrisma()
+    } finally {
+      await disconnectPrisma();
     }
   }
 
   async findAll() {
-    const prisma = createPrismaInstance()
+    const prisma = createPrismaInstance();
 
     try {
       const result = await prisma.presencaCulto.findMany({
@@ -441,9 +433,9 @@ class RegisterDiscipuladoRepositorie {
               celula: {
                 select: {
                   nome: true,
-                }
-              }
-            }
+                },
+              },
+            },
           },
           date_create: true,
           date_update: true,
@@ -451,9 +443,8 @@ class RegisterDiscipuladoRepositorie {
       });
 
       return result;
-    }
-    finally {
-      await disconnectPrisma()
+    } finally {
+      await disconnectPrisma();
     }
   }
 
@@ -464,7 +455,7 @@ class RegisterDiscipuladoRepositorie {
     presenca_culto: string;
     membro: string;
   }) {
-    const prisma = createPrismaInstance()
+    const prisma = createPrismaInstance();
 
     const result = await prisma.presencaCulto.findFirst({
       where: {
@@ -481,19 +472,19 @@ class RegisterDiscipuladoRepositorie {
             celula: {
               select: {
                 nome: true,
-              }
-            }
-          }
+              },
+            },
+          },
         },
         presenca_culto: true,
       },
     });
-    await disconnectPrisma()
+    await disconnectPrisma();
     return result;
   }
 
   async findById(id: string) {
-    const prisma = createPrismaInstance()
+    const prisma = createPrismaInstance();
 
     const result = await prisma.presencaCulto.findUnique({
       where: {
@@ -509,24 +500,24 @@ class RegisterDiscipuladoRepositorie {
             celula: {
               select: {
                 nome: true,
-              }
-            }
-          }
+              },
+            },
+          },
         },
         presenca_culto: true,
       },
     });
-    await disconnectPrisma()
+    await disconnectPrisma();
     return result;
   }
 
   async findByIdCulto(culto: string, lider: string) {
-    const prisma = createPrismaInstance()
+    const prisma = createPrismaInstance();
 
     const result = await prisma.presencaCulto.findFirst({
       where: {
         cultoIndividualId: culto,
-        userId: lider
+        userId: lider,
       },
       select: {
         id: true,
@@ -534,23 +525,25 @@ class RegisterDiscipuladoRepositorie {
         presenca_culto: true,
       },
     });
-    await disconnectPrisma()
+    await disconnectPrisma();
     return result;
   }
 
   async findAllMembersSupervisorForPeriod({
-    supervisor_id, firstDayOfMonth, lastDayOfMonth
+    supervisor_id,
+    firstDayOfMonth,
+    lastDayOfMonth,
   }: {
-    supervisor_id: string,
-    firstDayOfMonth: Date
-    lastDayOfMonth: Date
+    supervisor_id: string;
+    firstDayOfMonth: Date;
+    lastDayOfMonth: Date;
   }) {
-    const prisma = createPrismaInstance()
+    const prisma = createPrismaInstance();
     // console.log('supervisor_id', supervisor_id)
     // console.log('firstDayOfMonth', firstDayOfMonth)
     // console.log('lastDayOfMonth', lastDayOfMonth)
     try {
-      const lastDayOfMonthPlusOneDay = dayjs(lastDayOfMonth).add(1, 'day');
+      const lastDayOfMonthPlusOneDay = dayjs(lastDayOfMonth).add(1, "day");
       const result = await prisma.user.findMany({
         where: {
           id: supervisor_id,
@@ -574,7 +567,7 @@ class RegisterDiscipuladoRepositorie {
             select: {
               id: true,
               nome: true,
-            }
+            },
           },
           // DISCIPULADOR
           discipulador_usuario_discipulador_usuario_usuario_idTouser: {
@@ -582,8 +575,8 @@ class RegisterDiscipuladoRepositorie {
               user_discipulador_usuario_discipulador_idTouser: {
                 select: {
                   id: true,
-                  first_name: true
-                }
+                  first_name: true,
+                },
               },
               _count: {
                 select: {
@@ -591,34 +584,33 @@ class RegisterDiscipuladoRepositorie {
                     where: {
                       data_ocorreu: {
                         gte: firstDayOfMonth,
-                        lte: lastDayOfMonthPlusOneDay.toISOString()
-                      }
-                    }
-                  }
-                }
+                        lte: lastDayOfMonthPlusOneDay.toISOString(),
+                      },
+                    },
+                  },
+                },
               },
               discipulado: {
                 where: {
                   data_ocorreu: {
                     gte: firstDayOfMonth,
-                    lte: lastDayOfMonthPlusOneDay.toISOString()
-                  }
-                }
+                    lte: lastDayOfMonthPlusOneDay.toISOString(),
+                  },
+                },
                 // select: {
                 //   data_ocorreu: true
                 // }
-              }
-            }
+              },
+            },
           },
           // DISCIPULOS
           discipulador_usuario_discipulador_usuario_discipulador_idTouser: {
             select: {
-
               user_discipulador_usuario_usuario_idTouser: {
                 select: {
                   id: true,
-                  first_name: true
-                }
+                  first_name: true,
+                },
               },
               _count: {
                 select: {
@@ -626,25 +618,25 @@ class RegisterDiscipuladoRepositorie {
                     where: {
                       data_ocorreu: {
                         gte: firstDayOfMonth,
-                        lte: lastDayOfMonthPlusOneDay.toISOString()
-                      }
-                    }
-                  }
-                }
+                        lte: lastDayOfMonthPlusOneDay.toISOString(),
+                      },
+                    },
+                  },
+                },
               },
               discipulado: {
                 where: {
                   data_ocorreu: {
                     gte: firstDayOfMonth,
-                    lte: lastDayOfMonthPlusOneDay.toISOString()
-                  }
-                }
+                    lte: lastDayOfMonthPlusOneDay.toISOString(),
+                  },
+                },
                 // select: {
                 //   data_ocorreu: true
                 // }
-              }
-            }
-          }
+              },
+            },
+          },
         },
       });
 
@@ -652,28 +644,28 @@ class RegisterDiscipuladoRepositorie {
       // const discipuladosRealizados = result
 
       // return { quantidadeDiscipuladoRealizado, discipuladosRealizados };
-      console.log('result', result)
+      console.log("result", result);
       return result;
-    }
-    finally {
-      await disconnectPrisma()
+    } finally {
+      await disconnectPrisma();
     }
   }
 
   async findAllMembersCellForPeriod({
-    cell_id, firstDayOfMonth, lastDayOfMonth
+    cell_id,
+    firstDayOfMonth,
+    lastDayOfMonth,
   }: {
-
-    cell_id: string,
-    firstDayOfMonth: Date
-    lastDayOfMonth: Date
+    cell_id: string;
+    firstDayOfMonth: Date;
+    lastDayOfMonth: Date;
   }) {
-    const prisma = createPrismaInstance()
+    const prisma = createPrismaInstance();
     // console.log('cell_id', cell_id)
     // console.log('firstDayOfMonth', firstDayOfMonth)
     // console.log('lastDayOfMonth', lastDayOfMonth)
     try {
-      const lastDayOfMonthPlusOneDay = dayjs(lastDayOfMonth).add(1, 'day');
+      const lastDayOfMonthPlusOneDay = dayjs(lastDayOfMonth).add(1, "day");
       const result = await prisma.celula.findMany({
         where: {
           id: cell_id,
@@ -703,16 +695,15 @@ class RegisterDiscipuladoRepositorie {
                 select: {
                   id: true,
                   nome: true,
-                }
+                },
               },
               discipulador_usuario_discipulador_usuario_usuario_idTouser: {
                 select: {
-
                   user_discipulador_usuario_discipulador_idTouser: {
                     select: {
                       id: true,
-                      first_name: true
-                    }
+                      first_name: true,
+                    },
                   },
                   _count: {
                     select: {
@@ -720,11 +711,11 @@ class RegisterDiscipuladoRepositorie {
                         where: {
                           data_ocorreu: {
                             gte: firstDayOfMonth,
-                            lte: lastDayOfMonthPlusOneDay.toISOString()
-                          }
-                        }
-                      }
-                    }
+                            lte: lastDayOfMonthPlusOneDay.toISOString(),
+                          },
+                        },
+                      },
+                    },
                   },
                   discipulado: {
                     // select: {
@@ -733,15 +724,14 @@ class RegisterDiscipuladoRepositorie {
                     where: {
                       data_ocorreu: {
                         gte: firstDayOfMonth,
-                        lte: lastDayOfMonthPlusOneDay.toISOString()
-                      }
-                    }
-
+                        lte: lastDayOfMonthPlusOneDay.toISOString(),
+                      },
+                    },
                   },
-                }
-              }
-            }
-          }
+                },
+              },
+            },
+          },
         },
       });
 
@@ -751,55 +741,59 @@ class RegisterDiscipuladoRepositorie {
       // return { quantidadeDiscipuladoRealizado, discipuladosRealizados };
       // console.log('result', result)
       return result;
-    }
-    finally {
-      await disconnectPrisma()
+    } finally {
+      await disconnectPrisma();
     }
   }
 
   async findAllForPeriod({
-    usuario_id, discipulador_id, firstDayOfMonth, lastDayOfMonth
+    usuario_id,
+    discipulador_id,
+    firstDayOfMonth,
+    lastDayOfMonth,
   }: {
-    usuario_id: string,
-    discipulador_id: string,
-    firstDayOfMonth: Date
-    lastDayOfMonth: Date
+    usuario_id: string;
+    discipulador_id: string;
+    firstDayOfMonth: Date;
+    lastDayOfMonth: Date;
   }) {
-    const prisma = createPrismaInstance()
+    const prisma = createPrismaInstance();
 
     try {
-      const lastDayOfMonthPlusOneDay = dayjs(lastDayOfMonth).add(1, 'day');
+      const lastDayOfMonthPlusOneDay = dayjs(lastDayOfMonth).add(1, "day");
       const result = await prisma.discipulado.findMany({
         where: {
           usuario_id: usuario_id,
           data_ocorreu: {
             gte: firstDayOfMonth,
-            lte: lastDayOfMonthPlusOneDay.toISOString()
+            lte: lastDayOfMonthPlusOneDay.toISOString(),
           },
         },
         select: {
           discipulado_id: true,
-          data_ocorreu: true
+          data_ocorreu: true,
         },
       });
 
-      const quantidadeDiscipuladoRealizado = result.length
-      const discipuladosRealizados = result
+      const quantidadeDiscipuladoRealizado = result.length;
+      const discipuladosRealizados = result;
 
       return { quantidadeDiscipuladoRealizado, discipuladosRealizados };
-    }
-    finally {
-      await disconnectPrisma()
+    } finally {
+      await disconnectPrisma();
     }
   }
 
-  async createRegisterDiscipulado(RegisterDiscipuladoDataForm: dataSchemaCreateDiscipulado) {
-    const prisma = createPrismaInstance()
+  async createRegisterDiscipulado(
+    RegisterDiscipuladoDataForm: dataSchemaCreateDiscipulado,
+  ) {
+    const prisma = createPrismaInstance();
 
-    const { usuario_id, discipulador_id, data_ocorreu } = RegisterDiscipuladoDataForm;
+    const { usuario_id, discipulador_id, data_ocorreu } =
+      RegisterDiscipuladoDataForm;
 
     // const dataOcorreuIso = data_ocorreu.toDateString()
-    const dateFinally = new Date(data_ocorreu)
+    const dateFinally = new Date(data_ocorreu);
 
     const result = await prisma.discipulado.create({
       data: {
@@ -808,12 +802,15 @@ class RegisterDiscipuladoRepositorie {
         data_ocorreu: dateFinally,
       },
     });
-    await disconnectPrisma()
+    await disconnectPrisma();
     return result;
   }
 
-  async updatePresencaCulto(id: string, presencaCultoDataForm: PresencaCultoData) {
-    const prisma = createPrismaInstance()
+  async updatePresencaCulto(
+    id: string,
+    presencaCultoDataForm: PresencaCultoData,
+  ) {
+    const prisma = createPrismaInstance();
 
     const { membro, ...presencaCultoData } = presencaCultoDataForm;
     const result = await prisma.presencaCulto.update({
@@ -824,22 +821,22 @@ class RegisterDiscipuladoRepositorie {
         ...presencaCultoData,
         membro: {
           connect: {
-            id: membro
-          }
+            id: membro,
+          },
         },
         presenca_culto: {
           connect: {
-            id: presencaCultoData.presenca_culto
-          }
-        }
+            id: presencaCultoData.presenca_culto,
+          },
+        },
       },
     });
-    await disconnectPrisma()
+    await disconnectPrisma();
     return result;
   }
 
   async deletePresencaCulto(id: string) {
-    const prisma = createPrismaInstance()
+    const prisma = createPrismaInstance();
 
     try {
       const result = await prisma.presencaCulto.delete({
@@ -848,9 +845,8 @@ class RegisterDiscipuladoRepositorie {
         },
       });
       return result;
-    }
-    finally {
-      await disconnectPrisma()
+    } finally {
+      await disconnectPrisma();
     }
   }
 }
