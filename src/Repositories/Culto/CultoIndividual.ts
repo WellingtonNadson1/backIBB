@@ -157,28 +157,44 @@ class CultoIndividualRepositorie {
     }
   }
 
-  async findAll() {
+  async findAll({
+    startDate,
+    endDate,
+    limit,
+    offset,
+  }: {
+    startDate: Date;
+    endDate: Date;
+    limit: number;
+    offset: number;
+  }) {
     const prisma = createPrismaInstance();
 
     try {
-      const result = await prisma?.cultoIndividual.findMany({
+      const result = await prisma.cultoIndividual.findMany({
+        where: {
+          data_inicio_culto: {
+            gte: startDate,
+            lt: endDate,
+          },
+        },
         select: {
           id: true,
           data_inicio_culto: true,
           data_termino_culto: true,
           status: true,
-          presencas_culto: {
-            select: {
-              status: true,
-              membro: {
-                select: {
-                  id: true,
-                  first_name: true,
-                  supervisao_pertence: true,
-                },
-              },
-            },
-          },
+          // presencas_culto: {
+          //   select: {
+          //     status: true,
+          //     membro: {
+          //       select: {
+          //         id: true,
+          //         first_name: true,
+          //         supervisao_pertence: true,
+          //       },
+          //     },
+          //   },
+          // },
           culto_semana: {
             select: {
               id: true,
@@ -186,6 +202,8 @@ class CultoIndividualRepositorie {
             },
           },
         },
+        take: limit,
+        skip: offset,
       });
       return result;
     } finally {
