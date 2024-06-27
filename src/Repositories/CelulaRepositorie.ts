@@ -44,20 +44,20 @@ class CelulaRepositorie {
           },
         },
         date_que_ocorre: true,
-        reunioes_celula: {
-          select: {
-            id: true,
-            data_reuniao: true,
-            status: true,
-            presencas_membros_reuniao_celula: {
-              select: {
-                id: true,
-                membro: true,
-                status: true,
-              },
-            },
-          },
-        },
+        // reunioes_celula: {
+        //   select: {
+        //     id: true,
+        //     data_reuniao: true,
+        //     status: true,
+        //     presencas_membros_reuniao_celula: {
+        //       select: {
+        //         id: true,
+        //         membro: true,
+        //         status: true,
+        //       },
+        //     },
+        //   },
+        // },
       },
     });
     await disconnectPrisma();
