@@ -40,6 +40,8 @@ const routerRelatorioPresencaCelula = async (fastify: FastifyInstance) => {
                   select: {
                     id: true,
                     data_reuniao: true,
+                    visitantes: true,
+                    almas_ganhas: true,
                     presencas_membros_reuniao_celula: {
                       select: {
                         status: true,
