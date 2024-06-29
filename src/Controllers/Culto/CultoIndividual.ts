@@ -81,7 +81,7 @@ class CultoIndividualController {
     const currentMonth = month || date.getMonth() + 1;
 
     const startDate = new Date(currentYear, currentMonth - 1, 1);
-    const endDate = new Date(currentYear, currentMonth, 0);
+    const endDate = new Date(currentYear, currentMonth, 1);
 
     const offset = (page - 1) * limit;
 
