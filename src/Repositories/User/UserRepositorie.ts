@@ -2,7 +2,6 @@ import { Prisma } from "@prisma/client";
 import { createPrismaInstance, disconnectPrisma } from "../../services/prisma";
 import { UserData } from "../../Controllers/User/schema";
 
-
 type UpdateUserInput = Prisma.UserUpdateInput & {
   connect?: {
     user?: {
@@ -26,12 +25,22 @@ type UpdateUserInput = Prisma.UserUpdateInput & {
 };
 
 class UserRepositorie {
-
   async getCombinedData() {
-    const prisma = createPrismaInstance()
+    const prisma = createPrismaInstance();
+
+    const startOfMonth = new Date(
+      new Date().getFullYear(),
+      new Date().getMonth(),
+      1,
+    );
+    const endOfMonth = new Date(
+      new Date().getFullYear(),
+      new Date().getMonth() + 1,
+      0,
+    );
 
     if (!prisma) {
-      throw new Error('Prisma instance is null');
+      throw new Error("Prisma instance is null");
     }
     const combinedData = await prisma?.$transaction([
       prisma?.supervisao.findMany({
@@ -48,12 +57,12 @@ class UserRepositorie {
                   user_discipulador_usuario_usuario_idTouser: {
                     select: {
                       id: true,
-                      first_name: true
-                    }
-                  }
-                }
-              }
-            }
+                      first_name: true,
+                    },
+                  },
+                },
+              },
+            },
           },
           celulas: {
             select: {
@@ -63,8 +72,8 @@ class UserRepositorie {
                 select: {
                   id: true,
                   first_name: true,
-                }
-              }
+                },
+              },
             },
           },
         },
@@ -73,16 +82,39 @@ class UserRepositorie {
       prisma?.encontros.findMany(),
       prisma?.situacaoNoReino.findMany(),
       prisma?.cargoDeLideranca.findMany(),
+      prisma.reuniaoCelula.findMany({
+        where: {
+          data_reuniao: {
+            gte: startOfMonth,
+            lt: new Date(
+              endOfMonth.getFullYear(),
+              endOfMonth.getMonth(),
+              endOfMonth.getDate() + 1,
+            ),
+          },
+        },
+        select: {
+          almas_ganhas: true,
+        },
+      }),
     ]);
-    await disconnectPrisma()
-    return combinedData;
+    await disconnectPrisma();
+    // Calcula a quantidade de almas ganhas no presente mês
+    const almasGanhasNoMes = combinedData[5].reduce(
+      (total, reuniao) => total + (reuniao.almas_ganhas ?? 0),
+      0,
+    );
+    return {
+      combinedData,
+      almasGanhasNoMes,
+    };
   }
 
   async findAllCell() {
-    const prisma = createPrismaInstance()
+    const prisma = createPrismaInstance();
 
     if (!prisma) {
-      throw new Error('Prisma instance is null');
+      throw new Error("Prisma instance is null");
     }
     const result = await prisma?.user.findMany({
       select: {
@@ -93,9 +125,9 @@ class UserRepositorie {
             user_discipulador_usuario_discipulador_idTouser: {
               select: {
                 id: true,
-                first_name: true
-              }
-            }
+                first_name: true,
+              },
+            },
           },
         },
         discipulador_usuario_discipulador_usuario_discipulador_idTouser: {
@@ -103,19 +135,19 @@ class UserRepositorie {
             user_discipulador_usuario_usuario_idTouser: {
               select: {
                 id: true,
-                first_name: true
-              }
-            }
+                first_name: true,
+              },
+            },
           },
         },
         user_roles: {
           select: {
             rolenew: {
               select: {
-                name: true
-              }
-            }
-          }
+                name: true,
+              },
+            },
+          },
         },
         image_url: true,
         email: true,
@@ -194,15 +226,15 @@ class UserRepositorie {
         password: false,
       },
     });
-    await disconnectPrisma()
-    return result
+    await disconnectPrisma();
+    return result;
   }
 
   async findAllDiscipulados() {
-    const prisma = createPrismaInstance()
+    const prisma = createPrismaInstance();
 
     if (!prisma) {
-      throw new Error('Prisma instance is null');
+      throw new Error("Prisma instance is null");
     }
     const result = await prisma?.user.findMany({
       select: {
@@ -213,9 +245,9 @@ class UserRepositorie {
             user_discipulador_usuario_discipulador_idTouser: {
               select: {
                 id: true,
-                first_name: true
-              }
-            }
+                first_name: true,
+              },
+            },
           },
         },
         discipulador_usuario_discipulador_usuario_discipulador_idTouser: {
@@ -223,19 +255,19 @@ class UserRepositorie {
             user_discipulador_usuario_usuario_idTouser: {
               select: {
                 id: true,
-                first_name: true
-              }
-            }
+                first_name: true,
+              },
+            },
           },
         },
         user_roles: {
           select: {
             rolenew: {
               select: {
-                name: true
-              }
-            }
-          }
+                name: true,
+              },
+            },
+          },
         },
         image_url: true,
         email: false,
@@ -314,15 +346,15 @@ class UserRepositorie {
         password: false,
       },
     });
-    await disconnectPrisma()
-    return result
+    await disconnectPrisma();
+    return result;
   }
 
   async findAll() {
-    const prisma = createPrismaInstance()
+    const prisma = createPrismaInstance();
 
     if (!prisma) {
-      throw new Error('Prisma instance is null');
+      throw new Error("Prisma instance is null");
     }
     const result = await prisma?.user.findMany({
       select: {
@@ -333,9 +365,9 @@ class UserRepositorie {
             user_discipulador_usuario_discipulador_idTouser: {
               select: {
                 id: true,
-                first_name: true
-              }
-            }
+                first_name: true,
+              },
+            },
           },
         },
         discipulador_usuario_discipulador_usuario_discipulador_idTouser: {
@@ -343,19 +375,19 @@ class UserRepositorie {
             user_discipulador_usuario_usuario_idTouser: {
               select: {
                 id: true,
-                first_name: true
-              }
-            }
+                first_name: true,
+              },
+            },
           },
         },
         user_roles: {
           select: {
             rolenew: {
               select: {
-                name: true
-              }
-            }
-          }
+                name: true,
+              },
+            },
+          },
         },
         image_url: true,
         email: true,
@@ -434,15 +466,15 @@ class UserRepositorie {
         password: false,
       },
     });
-    await disconnectPrisma()
-    return result
+    await disconnectPrisma();
+    return result;
   }
 
   async findByIdCell(id: string) {
-    const prisma = createPrismaInstance()
+    const prisma = createPrismaInstance();
 
     if (!prisma) {
-      throw new Error('Prisma instance is null');
+      throw new Error("Prisma instance is null");
     }
     const result = await prisma?.user.findUnique({
       where: {
@@ -461,9 +493,9 @@ class UserRepositorie {
             user_discipulador_usuario_discipulador_idTouser: {
               select: {
                 id: true,
-                first_name: true
-              }
-            }
+                first_name: true,
+              },
+            },
           },
         },
         // DISCIPULO(S)
@@ -472,9 +504,9 @@ class UserRepositorie {
             user_discipulador_usuario_usuario_idTouser: {
               select: {
                 id: true,
-                first_name: true
-              }
-            }
+                first_name: true,
+              },
+            },
           },
         },
         user_roles: {
@@ -482,10 +514,10 @@ class UserRepositorie {
             rolenew: {
               select: {
                 id: true,
-                name: true
-              }
-            }
-          }
+                name: true,
+              },
+            },
+          },
         },
         cpf: true,
         date_nascimento: true,
@@ -567,16 +599,16 @@ class UserRepositorie {
         password: false,
       },
     });
-    await disconnectPrisma()
-    return result
+    await disconnectPrisma();
+    return result;
   }
 
   async findById(id: string) {
-    const prisma = createPrismaInstance()
-    console.log('idRepo:', id)
+    const prisma = createPrismaInstance();
+    console.log("idRepo:", id);
 
     if (!prisma) {
-      throw new Error('Prisma instance is null');
+      throw new Error("Prisma instance is null");
     }
     const result = await prisma?.user.findUnique({
       where: {
@@ -595,9 +627,9 @@ class UserRepositorie {
             user_discipulador_usuario_discipulador_idTouser: {
               select: {
                 id: true,
-                first_name: true
-              }
-            }
+                first_name: true,
+              },
+            },
           },
         },
         // DISCIPULO(S)
@@ -606,9 +638,9 @@ class UserRepositorie {
             user_discipulador_usuario_usuario_idTouser: {
               select: {
                 id: true,
-                first_name: true
-              }
-            }
+                first_name: true,
+              },
+            },
           },
         },
         user_roles: {
@@ -616,10 +648,10 @@ class UserRepositorie {
             rolenew: {
               select: {
                 id: true,
-                name: true
-              }
-            }
-          }
+                name: true,
+              },
+            },
+          },
         },
         cpf: true,
         date_nascimento: true,
@@ -701,14 +733,14 @@ class UserRepositorie {
         password: false,
       },
     });
-    console.log('Result Repo:', result)
+    console.log("Result Repo:", result);
 
-    await disconnectPrisma()
-    return result
+    await disconnectPrisma();
+    return result;
   }
 
   async findByEmail(email: string) {
-    const prisma = createPrismaInstance()
+    const prisma = createPrismaInstance();
 
     const result = await prisma?.user.findFirst({
       where: {
@@ -722,9 +754,9 @@ class UserRepositorie {
             user_discipulador_usuario_discipulador_idTouser: {
               select: {
                 id: true,
-                first_name: true
-              }
-            }
+                first_name: true,
+              },
+            },
           },
         },
         discipulador_usuario_discipulador_usuario_discipulador_idTouser: {
@@ -732,19 +764,19 @@ class UserRepositorie {
             user_discipulador_usuario_usuario_idTouser: {
               select: {
                 id: true,
-                first_name: true
-              }
-            }
+                first_name: true,
+              },
+            },
           },
         },
         user_roles: {
           select: {
             rolenew: {
               select: {
-                name: true
-              }
-            }
-          }
+                name: true,
+              },
+            },
+          },
         },
         image_url: true,
         email: true,
@@ -764,7 +796,7 @@ class UserRepositorie {
           select: {
             id: true,
             first_name: true,
-          }
+          },
         },
         estado_civil: true,
         nome_conjuge: true,
@@ -829,12 +861,12 @@ class UserRepositorie {
         password: true,
       },
     });
-    await disconnectPrisma()
-    return result
+    await disconnectPrisma();
+    return result;
   }
 
   async createUser(userDataForm: UserData) {
-    const prisma = createPrismaInstance()
+    const prisma = createPrismaInstance();
 
     const {
       password,
@@ -873,10 +905,10 @@ class UserRepositorie {
         celula: celula ? { connect: { id: celula } } : undefined,
         celula_lidera: celula_lidera
           ? {
-            connect: celula_lidera?.map((celulaLideraId) => ({
-              id: celulaLideraId,
-            })),
-          }
+              connect: celula_lidera?.map((celulaLideraId) => ({
+                id: celulaLideraId,
+              })),
+            }
           : undefined,
         escola_lidera: {
           connect: escola_lidera?.map((escolaLideraId) => ({
@@ -902,7 +934,7 @@ class UserRepositorie {
           connect: presencas_reuniao_celula?.map(
             (presencasReuniaoCelulaId) => ({
               id: presencasReuniaoCelulaId,
-            })
+            }),
           ),
         },
         escolas: {
@@ -922,15 +954,15 @@ class UserRepositorie {
       },
     });
 
-    await disconnectPrisma()
+    await disconnectPrisma();
     return user;
   }
 
   async updateUser(id: string, userDataForm: UserData) {
-    const prisma = createPrismaInstance()
+    const prisma = createPrismaInstance();
 
     if (!prisma) {
-      throw new Error('Prisma instance is null');
+      throw new Error("Prisma instance is null");
     }
     const {
       password,
@@ -1018,14 +1050,14 @@ class UserRepositorie {
       const supervisoesLideraIds = supervisoes_lidera.map(
         (supervisoesLideraId) => ({
           id: supervisoesLideraId,
-        })
+        }),
       );
       updateUserInput.supervisoes_lidera = supervisoesLideraIds.map(
         (supervisoesLideraId) => ({
           connect: {
             id: supervisoesLideraId.id,
           },
-        })
+        }),
       );
     }
 
@@ -1033,14 +1065,14 @@ class UserRepositorie {
       const presencasAulasEscolas = presencas_aulas_escolas.map(
         (presencasAulasEscolasId) => ({
           id: presencasAulasEscolasId,
-        })
+        }),
       );
       updateUserInput.presencas_aulas_escolas = presencasAulasEscolas.map(
         (presencasAulasEscolasId) => ({
           connect: {
             id: presencasAulasEscolasId.id,
           },
-        })
+        }),
       );
     }
 
@@ -1048,14 +1080,14 @@ class UserRepositorie {
       const presencasReuniaoCelulas = presencas_reuniao_celula.map(
         (presencasReuniaoCelulasId) => ({
           id: presencasReuniaoCelulasId,
-        })
+        }),
       );
       updateUserInput.presencas_reuniao_celula = presencasReuniaoCelulas.map(
         (presencasReuniaoCelulasId) => ({
           connect: {
             id: presencasReuniaoCelulasId.id,
           },
-        })
+        }),
       );
     }
 
@@ -1068,7 +1100,7 @@ class UserRepositorie {
           connect: {
             id: presencasCultosId.id,
           },
-        })
+        }),
       );
     }
 
@@ -1116,8 +1148,8 @@ class UserRepositorie {
       },
       data: updateUserInput,
     });
-    await disconnectPrisma()
-    return result
+    await disconnectPrisma();
+    return result;
   }
 
   // async updateDiscipuladorId(userId: string, newDiscipuladorId: string) {
@@ -1170,13 +1202,13 @@ class UserRepositorie {
     const prisma = createPrismaInstance();
 
     if (!prisma) {
-      throw new Error('Prisma instance is null');
+      throw new Error("Prisma instance is null");
     }
 
     try {
       // Check if the new discipuladorId exists before updating
       const discipuladorExists = await prisma.discipulador_usuario.findFirst({
-        where: { discipulador_id: newDiscipuladorId }
+        where: { discipulador_id: newDiscipuladorId },
       });
 
       if (!discipuladorExists) {
@@ -1192,25 +1224,30 @@ class UserRepositorie {
       });
 
       // Update the existing discipulador_usuario relation if it exists
-      const existingUserDiscipulado = await prisma.discipulador_usuario.findFirst({
-        where: { usuario_id: userId }
-      });
-      console.log('existingUserDiscipulado: ', existingUserDiscipulado)
-      console.log('usuario_id: ', userId)
-      console.log('discipulador_id: ', existingUserDiscipulado?.discipulador_id)
-      console.log('newDiscipuladorId: ', newDiscipuladorId)
+      const existingUserDiscipulado =
+        await prisma.discipulador_usuario.findFirst({
+          where: { usuario_id: userId },
+        });
+      console.log("existingUserDiscipulado: ", existingUserDiscipulado);
+      console.log("usuario_id: ", userId);
+      console.log(
+        "discipulador_id: ",
+        existingUserDiscipulado?.discipulador_id,
+      );
+      console.log("newDiscipuladorId: ", newDiscipuladorId);
 
       if (existingUserDiscipulado) {
-        const oldDiscipuladorId = existingUserDiscipulado.discipulador_id
-        const deleteRelationDiscipulado = await prisma?.discipulador_usuario.delete({
-          where: {
-            usuario_id_discipulador_id: {
-              usuario_id: userId,
-              discipulador_id: oldDiscipuladorId
-            }
-          },
-        });
-        console.log('deleteRelationDiscipulado', deleteRelationDiscipulado)
+        const oldDiscipuladorId = existingUserDiscipulado.discipulador_id;
+        const deleteRelationDiscipulado =
+          await prisma?.discipulador_usuario.delete({
+            where: {
+              usuario_id_discipulador_id: {
+                usuario_id: userId,
+                discipulador_id: oldDiscipuladorId,
+              },
+            },
+          });
+        console.log("deleteRelationDiscipulado", deleteRelationDiscipulado);
         // await prisma.discipulador_usuario.update({
         //   where: { // Use both user and discipulador id for unique identification
         //     usuario_id_discipulador_id: {
@@ -1221,17 +1258,20 @@ class UserRepositorie {
         //   data: { discipulador_id: newDiscipuladorId },
         // });
         // Create a new discipulador_usuario relation if it doesn't exist
-        const newRealtionDiscipulado = await prisma.discipulador_usuario.create({
-          data: { usuario_id: userId, discipulador_id: newDiscipuladorId },
-        });
-        console.log('newRealtionDiscipulado', newRealtionDiscipulado)
-
+        const newRealtionDiscipulado = await prisma.discipulador_usuario.create(
+          {
+            data: { usuario_id: userId, discipulador_id: newDiscipuladorId },
+          },
+        );
+        console.log("newRealtionDiscipulado", newRealtionDiscipulado);
       } else {
         // Create a new discipulador_usuario relation if it doesn't exist
-        const newRealtionDiscipulado = await prisma.discipulador_usuario.create({
-          data: { usuario_id: userId, discipulador_id: newDiscipuladorId },
-        });
-        console.log('newRealtionDiscipulado', newRealtionDiscipulado)
+        const newRealtionDiscipulado = await prisma.discipulador_usuario.create(
+          {
+            data: { usuario_id: userId, discipulador_id: newDiscipuladorId },
+          },
+        );
+        console.log("newRealtionDiscipulado", newRealtionDiscipulado);
       }
 
       const success = `Discipulador updated successfully`;
@@ -1244,20 +1284,19 @@ class UserRepositorie {
     }
   }
 
-
   async deleteUser(id: string) {
-    const prisma = createPrismaInstance()
+    const prisma = createPrismaInstance();
 
     if (!prisma) {
-      throw new Error('Prisma instance is null');
+      throw new Error("Prisma instance is null");
     }
     const result = await prisma?.user.delete({
       where: {
         id: id,
       },
     });
-    await disconnectPrisma()
-    return result
+    await disconnectPrisma();
+    return result;
   }
 }
 
