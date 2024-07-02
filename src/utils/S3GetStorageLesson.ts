@@ -15,7 +15,7 @@ const secretAccessKey = process.env.SECRET_ACCESS_KEY;
 
 if (!bucketRegion || !accessKey || !secretAccessKey) {
   console.error(
-    "Certifique-se de definir as variáveis de ambiente corretamente."
+    "Certifique-se de definir as variáveis de ambiente corretamente.",
   );
   process.exit(1);
 }
@@ -32,7 +32,7 @@ const s3Client = new S3Client(s3Config);
 
 class S3GetStorageLesson {
   async getFile(): Promise<string[]> {
-    const folderPath = "licoes-celula-jun-24";
+    const folderPath = "licoes-celula-jul-24";
 
     const params = {
       Bucket: bucketName,
@@ -59,11 +59,11 @@ class S3GetStorageLesson {
           // Gere uma URL assinada para o arquivo
           const url = await getSignedUrl(
             s3Client,
-            new GetObjectCommand(getObjectParams)
+            new GetObjectCommand(getObjectParams),
           );
 
           return url;
-        })
+        }),
       );
       return fileLinks.slice(1);
     } catch (error) {
