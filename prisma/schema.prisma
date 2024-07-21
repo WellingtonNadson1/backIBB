@@ -120,10 +120,10 @@ model ReuniaoCelula {
   data_reuniao                     DateTime?
   status                           String
   celulaId                         String?
-  visitantes                       Int?
-  almas_ganhas                     Int?
   date_create                      DateTime                @default(now())
   date_update                      DateTime
+  visitantes                       Int?
+  almas_ganhas                     Int?
   presencas_membros_reuniao_celula PresencaReuniaoCelula[]
   celula                           Celula?                 @relation(fields: [celulaId], references: [id], onDelete: Cascade)
 

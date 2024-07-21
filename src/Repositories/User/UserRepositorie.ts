@@ -1,4 +1,5 @@
 import { Prisma } from "@prisma/client";
+import dayjs from "dayjs";
 import { UserData } from "../../Controllers/User/schema";
 import { createPrismaInstance, disconnectPrisma } from "../../services/prisma";
 
@@ -977,6 +978,10 @@ class UserRepositorie {
   }
 
   async updateUser(id: string, userDataForm: UserData) {
+    const dataBrasil = dayjs().tz('America/Sao_Paulo');
+    const date_create = dataBrasil.format('YYYY-MM-DDTHH:mm:ss.SSS[Z]')
+    const dataBrasilDate = new Date(date_create);
+    const date_update = dataBrasilDate;
     const prisma = createPrismaInstance();
     if (!prisma) {
       throw new Error("Prisma instance is null");
@@ -1219,7 +1224,7 @@ class UserRepositorie {
         where: {
           id: id,
         },
-        data: updateUserInput,
+        data: { ...updateUserInput, date_update },
       });
 
       await disconnectPrisma();
