@@ -1,13 +1,31 @@
 import { Prisma } from "@prisma/client";
-import { createPrismaInstance, disconnectPrisma } from "../../services/prisma";
 import { UserData } from "../../Controllers/User/schema";
+import { createPrismaInstance, disconnectPrisma } from "../../services/prisma";
 
 type UpdateUserInput = Prisma.UserUpdateInput & {
   connect?: {
     user?: {
       id: string;
     };
+    user_discipulos?: {
+      connect: {
+        usuario_id: string;
+        discipulador_id: string;
+      };
+    };
+    discipulador?: {
+      connect: {
+        usuario_id: string;
+        discipulador_id: string;
+      };
+    };
   };
+  // user_discipulos?: {
+  //   connect: {
+  //     usuario_id: string;
+  //     discipulador_id: string;
+  //   };
+  // };
   supervisao_pertence?: { connect: { id: string } };
   role?: string;
   celula?: { connect: { id: string } };
@@ -52,9 +70,9 @@ class UserRepositorie {
             select: {
               id: true,
               first_name: true,
-              discipulador_usuario_discipulador_usuario_discipulador_idTouser: {
+              discipulos: {
                 select: {
-                  user_discipulador_usuario_usuario_idTouser: {
+                  user_discipulador: {
                     select: {
                       id: true,
                       first_name: true,
@@ -120,9 +138,9 @@ class UserRepositorie {
       select: {
         id: true,
         role: true,
-        discipulador_usuario_discipulador_usuario_usuario_idTouser: {
+        discipulador: {
           select: {
-            user_discipulador_usuario_discipulador_idTouser: {
+            user_discipulos: {
               select: {
                 id: true,
                 first_name: true,
@@ -130,9 +148,9 @@ class UserRepositorie {
             },
           },
         },
-        discipulador_usuario_discipulador_usuario_discipulador_idTouser: {
+        discipulos: {
           select: {
-            user_discipulador_usuario_usuario_idTouser: {
+            user_discipulador: {
               select: {
                 id: true,
                 first_name: true,
@@ -240,9 +258,9 @@ class UserRepositorie {
       select: {
         id: true,
         role: true,
-        discipulador_usuario_discipulador_usuario_usuario_idTouser: {
+        discipulador: {
           select: {
-            user_discipulador_usuario_discipulador_idTouser: {
+            user_discipulos: {
               select: {
                 id: true,
                 first_name: true,
@@ -250,9 +268,9 @@ class UserRepositorie {
             },
           },
         },
-        discipulador_usuario_discipulador_usuario_discipulador_idTouser: {
+        discipulos: {
           select: {
-            user_discipulador_usuario_usuario_idTouser: {
+            user_discipulador: {
               select: {
                 id: true,
                 first_name: true,
@@ -360,9 +378,9 @@ class UserRepositorie {
       select: {
         id: true,
         role: true,
-        discipulador_usuario_discipulador_usuario_usuario_idTouser: {
+        discipulador: {
           select: {
-            user_discipulador_usuario_discipulador_idTouser: {
+            user_discipulos: {
               select: {
                 id: true,
                 first_name: true,
@@ -370,9 +388,9 @@ class UserRepositorie {
             },
           },
         },
-        discipulador_usuario_discipulador_usuario_discipulador_idTouser: {
+        discipulos: {
           select: {
-            user_discipulador_usuario_usuario_idTouser: {
+            user_discipulador: {
               select: {
                 id: true,
                 first_name: true,
@@ -488,9 +506,9 @@ class UserRepositorie {
         image_url: true,
         role: true,
         // DISCIPULADOR
-        discipulador_usuario_discipulador_usuario_usuario_idTouser: {
+        discipulador: {
           select: {
-            user_discipulador_usuario_discipulador_idTouser: {
+            user_discipulos: {
               select: {
                 id: true,
                 first_name: true,
@@ -499,9 +517,9 @@ class UserRepositorie {
           },
         },
         // DISCIPULO(S)
-        discipulador_usuario_discipulador_usuario_discipulador_idTouser: {
+        discipulos: {
           select: {
-            user_discipulador_usuario_usuario_idTouser: {
+            user_discipulador: {
               select: {
                 id: true,
                 first_name: true,
@@ -622,9 +640,9 @@ class UserRepositorie {
         image_url: true,
         role: true,
         // DISCIPULADOR
-        discipulador_usuario_discipulador_usuario_usuario_idTouser: {
+        discipulador: {
           select: {
-            user_discipulador_usuario_discipulador_idTouser: {
+            user_discipulos: {
               select: {
                 id: true,
                 first_name: true,
@@ -633,9 +651,9 @@ class UserRepositorie {
           },
         },
         // DISCIPULO(S)
-        discipulador_usuario_discipulador_usuario_discipulador_idTouser: {
+        discipulos: {
           select: {
-            user_discipulador_usuario_usuario_idTouser: {
+            user_discipulador: {
               select: {
                 id: true,
                 first_name: true,
@@ -749,9 +767,9 @@ class UserRepositorie {
       select: {
         id: true,
         role: true,
-        discipulador_usuario_discipulador_usuario_usuario_idTouser: {
+        discipulador: {
           select: {
-            user_discipulador_usuario_discipulador_idTouser: {
+            user_discipulos: {
               select: {
                 id: true,
                 first_name: true,
@@ -759,9 +777,9 @@ class UserRepositorie {
             },
           },
         },
-        discipulador_usuario_discipulador_usuario_discipulador_idTouser: {
+        discipulos: {
           select: {
-            user_discipulador_usuario_usuario_idTouser: {
+            user_discipulador: {
               select: {
                 id: true,
                 first_name: true,
@@ -905,10 +923,10 @@ class UserRepositorie {
         celula: celula ? { connect: { id: celula } } : undefined,
         celula_lidera: celula_lidera
           ? {
-              connect: celula_lidera?.map((celulaLideraId) => ({
-                id: celulaLideraId,
-              })),
-            }
+            connect: celula_lidera?.map((celulaLideraId) => ({
+              id: celulaLideraId,
+            })),
+          }
           : undefined,
         escola_lidera: {
           connect: escola_lidera?.map((escolaLideraId) => ({
@@ -960,197 +978,257 @@ class UserRepositorie {
 
   async updateUser(id: string, userDataForm: UserData) {
     const prisma = createPrismaInstance();
-
     if (!prisma) {
       throw new Error("Prisma instance is null");
     }
-    const {
-      password,
-      role,
-      supervisao_pertence,
-      celula,
-      celula_lidera,
-      escola_lidera,
-      supervisoes_lidera,
-      presencas_aulas_escolas,
-      presencas_reuniao_celula,
-      presencas_cultos,
-      escolas,
-      encontros,
-      situacao_no_reino,
-      TurmaEscola,
-      date_nascimento,
-      date_batizado,
-      date_casamento,
-      cargo_de_lideranca,
-      discipuladorId,
-      ...userData
-    } = userDataForm;
+    try {
+      const {
+        password,
+        role,
+        supervisao_pertence,
+        celula,
+        celula_lidera,
+        escola_lidera,
+        supervisoes_lidera,
+        presencas_aulas_escolas,
+        presencas_reuniao_celula,
+        presencas_cultos,
+        escolas,
+        encontros,
+        situacao_no_reino,
+        TurmaEscola,
+        date_nascimento,
+        date_batizado,
+        date_casamento,
+        cargo_de_lideranca,
+        discipuladorId,
+        ...userData
+      } = userDataForm;
 
-    const updateUserInput: UpdateUserInput = {
-      ...userData,
-      date_nascimento,
-      date_batizado,
-      date_casamento,
-      password,
-    };
-
-    // Conecte os relacionamentos opcionais apenas se forem fornecidos
-    if (role !== undefined) {
-      updateUserInput.role = role;
-    }
-
-    if (TurmaEscola !== undefined) {
-      updateUserInput.TurmaEscola = {
-        connect: {
-          id: TurmaEscola,
-        },
+      const updateUserInput: UpdateUserInput = {
+        ...userData,
+        date_nascimento,
+        date_batizado,
+        date_casamento,
       };
-    }
 
-    if (supervisao_pertence !== undefined) {
-      updateUserInput.supervisao_pertence = {
-        connect: {
-          id: supervisao_pertence,
-        },
-      };
-    }
-
-    if (celula !== undefined) {
-      updateUserInput.celula = {
-        connect: {
-          id: celula,
-        },
-      };
-    }
-
-    if (celula_lidera !== undefined) {
-      const celulaLideraIds = celula_lidera.map((celulaLideraId) => ({
-        id: celulaLideraId,
-      }));
-      updateUserInput.celula_lidera = celulaLideraIds.map((celulaLideraId) => ({
-        connect: {
-          id: celulaLideraId.id,
-        },
-      }));
-    }
-
-    if (escola_lidera !== undefined) {
-      const escolaLideraIds = escola_lidera.map((escolaLideraId) => ({
-        id: escolaLideraId,
-      }));
-      updateUserInput.escola_lidera = escolaLideraIds.map((escolaLideraId) => ({
-        connect: {
-          id: escolaLideraId.id,
-        },
-      }));
-    }
-
-    if (supervisoes_lidera !== undefined) {
-      const supervisoesLideraIds = supervisoes_lidera.map(
-        (supervisoesLideraId) => ({
-          id: supervisoesLideraId,
-        }),
-      );
-      updateUserInput.supervisoes_lidera = supervisoesLideraIds.map(
-        (supervisoesLideraId) => ({
-          connect: {
-            id: supervisoesLideraId.id,
+      const discipulador = await prisma.user.findFirst(
+        {
+          where: {
+            id: id,
           },
-        }),
-      );
-    }
+          select: {
+            discipulador: true
+          }
+        }
+      )
+      console.log(discipulador)
 
-    if (presencas_aulas_escolas !== undefined) {
-      const presencasAulasEscolas = presencas_aulas_escolas.map(
-        (presencasAulasEscolasId) => ({
-          id: presencasAulasEscolasId,
-        }),
-      );
-      updateUserInput.presencas_aulas_escolas = presencasAulasEscolas.map(
-        (presencasAulasEscolasId) => ({
-          connect: {
-            id: presencasAulasEscolasId.id,
+      const discipulos = await prisma.user.findFirst(
+        {
+          where: {
+            id: id,
           },
-        }),
-      );
-    }
-
-    if (presencas_reuniao_celula !== undefined) {
-      const presencasReuniaoCelulas = presencas_reuniao_celula.map(
-        (presencasReuniaoCelulasId) => ({
-          id: presencasReuniaoCelulasId,
-        }),
-      );
-      updateUserInput.presencas_reuniao_celula = presencasReuniaoCelulas.map(
-        (presencasReuniaoCelulasId) => ({
-          connect: {
-            id: presencasReuniaoCelulasId.id,
+          select: {
+            discipulos: true
+          }
+        }
+      )
+      console.log(discipulos)
+      // Conecte os relacionamentos opcionais apenas se forem fornecidos
+      // Conectar ao discipulador_usuario
+      if (discipuladorId) {
+        updateUserInput.connect = {
+          user_discipulos: {
+            connect: {
+              usuario_id: id, // ID do usuário que está sendo atualizado
+              discipulador_id: discipuladorId, // Novo discipulador ID
+            },
           },
-        }),
-      );
-    }
+        };
+      }
 
-    if (presencas_cultos !== undefined) {
-      const presencasCultos = presencas_cultos.map((presencasCultosId) => ({
-        id: presencasCultosId,
-      }));
-      updateUserInput.presencas_cultos = presencasCultos.map(
-        (presencasCultosId) => ({
+      if (discipulador) {
+        updateUserInput.discipulos
+      }
+      // if (discipuladorId) {
+      //   // Remove existing connection if needed (optional, depending on use case)
+      //   await prisma.discipulador_usuario.deleteMany({
+      //     where: { usuario_id: id },
+      //   });
+
+      //   updateUserInput.user_discipulos = {
+      //     connect: {
+      //       usuario_id: id, // ID do usuário que está sendo atualizado
+      //       discipulador_id: discipuladorId, // Novo discipulador ID
+      //     },
+      //   };
+
+      //   await prisma.discipulador_usuario.create({
+      //     data: {
+      //       usuario_id: id,
+      //       discipulador_id: discipuladorId,
+      //     },
+      //   });
+      // }
+
+      if (role !== undefined) {
+        updateUserInput.role = role;
+      }
+
+      if (TurmaEscola !== undefined) {
+        updateUserInput.TurmaEscola = {
           connect: {
-            id: presencasCultosId.id,
+            id: TurmaEscola,
           },
-        }),
-      );
-    }
+        };
+      }
 
-    if (escolas !== undefined) {
-      const escolasIds = escolas.map((escolaId) => ({
-        id: escolaId,
-      }));
-      updateUserInput.escolas = escolasIds.map((escolaId) => ({
-        connect: {
-          id: escolaId.id,
+      if (supervisao_pertence !== undefined) {
+        updateUserInput.supervisao_pertence = {
+          connect: {
+            id: supervisao_pertence,
+          },
+        };
+      }
+
+      if (celula !== undefined) {
+        updateUserInput.celula = {
+          connect: {
+            id: celula,
+          },
+        };
+      }
+
+      if (celula_lidera !== undefined) {
+        const celulaLideraIds = celula_lidera.map((celulaLideraId) => ({
+          id: celulaLideraId,
+        }));
+        updateUserInput.celula_lidera = celulaLideraIds.map((celulaLideraId) => ({
+          connect: {
+            id: celulaLideraId.id,
+          },
+        }));
+      }
+
+      if (escola_lidera !== undefined) {
+        const escolasIds = escola_lidera.map((escolasId) => ({
+          id: escolasId,
+        }));
+        updateUserInput.escola_lidera = escolasIds.map((escolaId) => ({
+          connect: {
+            id: escolaId.id,
+          },
+        }));
+      }
+
+      if (supervisoes_lidera !== undefined) {
+        const supervisoesIds = supervisoes_lidera.map((supervisoesId) => ({
+          id: supervisoesId,
+        }));
+        updateUserInput.supervisoes_lidera = supervisoesIds.map((supervisaoId) => ({
+          connect: {
+            id: supervisaoId.id,
+          },
+        }));
+      }
+
+      if (presencas_aulas_escolas !== undefined) {
+        const aulaEscolaIds = presencas_aulas_escolas.map((aulaEscolaId) => ({
+          id: aulaEscolaId,
+        }));
+        updateUserInput.presencas_aulas_escolas = aulaEscolaIds.map((aulaId) => ({
+          connect: {
+            id: aulaId.id,
+          },
+        }));
+      }
+
+      if (presencas_reuniao_celula !== undefined) {
+        const ReuniaoCelulaIds = presencas_reuniao_celula?.map((reuniaoCelulaId) => ({
+          id: reuniaoCelulaId,
+        }));
+        updateUserInput.presencas_reuniao_celula = ReuniaoCelulaIds?.map((reuniaoCelulaId) => ({
+          connect: {
+            id: reuniaoCelulaId.id,
+          },
+        }));
+      }
+
+      if (presencas_cultos !== undefined) {
+        const CultosIds = presencas_cultos?.map((cultoId) => ({
+          id: cultoId,
+        }));
+        updateUserInput.presencas_cultos = CultosIds?.map((cultoId) => ({
+          connect: {
+            id: cultoId.id,
+          },
+        }));
+      }
+
+      if (escolas !== undefined) {
+        const EscolasIds = escolas?.map((escolaId) => ({
+          id: escolaId,
+        }));
+        updateUserInput.escolas = EscolasIds?.map((escolaId) => ({
+          connect: {
+            id: escolaId.id,
+          },
+        }));
+      }
+
+      if (encontros !== undefined) {
+        const EncontrosIds = encontros?.map((EncontroId) => ({
+          id: EncontroId,
+        }));
+        updateUserInput.encontros = EncontrosIds?.map((encontrId) => ({
+          connect: {
+            id: encontrId.id,
+          },
+        }));
+      }
+
+      // if (discipulador?.discipulador !== undefined) {
+      //   const DiscipulosIds = discipulador?.discipulador?.map((DiscipuloId) => ({
+      //     id: DiscipuloId
+      //   }))
+      //   updateUserInput.discipulador = DiscipulosIds?.map((discipuloId) => ({
+      //     connect: {
+      //       id: discipuloId
+      //     }
+      //   }))
+      // }
+
+      if (situacao_no_reino !== undefined) {
+        updateUserInput.situacao_no_reino = {
+          connect: {
+            id: situacao_no_reino,
+          },
+        };
+      }
+
+      if (cargo_de_lideranca !== undefined) {
+        updateUserInput.cargo_de_lideranca = {
+          connect: {
+            id: cargo_de_lideranca,
+          },
+        };
+      }
+
+      const result = await prisma?.user.update({
+        where: {
+          id: id,
         },
-      }));
-    }
+        data: updateUserInput,
+      });
 
-    if (encontros !== undefined) {
-      const encontrosIds = encontros.map((encontroId) => ({
-        id: encontroId,
-      }));
-      updateUserInput.encontros = encontrosIds.map((encontroId) => ({
-        connect: {
-          id: encontroId.id,
-        },
-      }));
+      await disconnectPrisma();
+      return result;
+    } catch (error) {
+      console.error(error)
     }
-
-    if (situacao_no_reino !== undefined) {
-      updateUserInput.situacao_no_reino = {
-        connect: {
-          id: situacao_no_reino,
-        },
-      };
-    }
-
-    if (cargo_de_lideranca !== undefined) {
-      updateUserInput.cargo_de_lideranca = {
-        connect: {
-          id: cargo_de_lideranca,
-        },
-      };
-    }
-
-    const result = await prisma?.user.update({
-      where: {
-        id: id,
-      },
-      data: updateUserInput,
-    });
-    await disconnectPrisma();
-    return result;
   }
+
 
   // async updateDiscipuladorId(userId: string, newDiscipuladorId: string) {
   //   const prisma = createPrismaInstance();

@@ -1,4 +1,5 @@
 import { PrismaClient } from "@prisma/client";
+import dayjs from "dayjs";
 import { PresencaAulaData } from "../../Controllers/Escola/PresencaAula";
 
 const prisma = new PrismaClient();
@@ -29,10 +30,14 @@ class PresencaAulaRepositorie {
   }
 
   async createPresencaAula(presencaAulaDataForm: PresencaAulaData) {
-    const {aluno, aula_presenca_qual_escola, ...PresencaAulaData } = presencaAulaDataForm;
+    const { aluno, aula_presenca_qual_escola, status } = presencaAulaDataForm;
+    const dataBrasil = dayjs().tz('America/Sao_Paulo');
+    const date_create = dataBrasil.format('YYYY-MM-DDTHH:mm:ss.SSS[Z]')
+    const dataBrasilDate = new Date(date_create);
+    const date_update = dataBrasilDate;
     return await prisma.presencaEscola.create({
       data: {
-        ...PresencaAulaData,
+        status,
         aluno: {
           connect: {
             id: aluno,
@@ -43,6 +48,7 @@ class PresencaAulaRepositorie {
             id: aula_presenca_qual_escola,
           }
         },
+        date_update
       },
     });
   }

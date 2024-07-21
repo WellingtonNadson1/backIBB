@@ -1,20 +1,19 @@
 import bcrypt from "bcrypt";
 import { FastifyReply, FastifyRequest } from "fastify";
-import { UserData } from "./schema";
 import UserRepositorie from "../../Repositories/User/UserRepositorie";
-import { PresencaDiscipuladoParams } from "../Discipulado/schema";
+import { UserData } from "./schema";
 
 export interface UserParams {
   id: string;
 }
 
-const formatDatatoISO8601 = (dataString: string) => {
-  const dataObj = new Date(dataString);
-  return dataObj.toISOString();
+const formatDateToISO8601 = (dateString: string) => {
+  const dateObj = new Date(dateString);
+  return dateObj.toISOString();
 };
 
 class UserController {
-  // Fazendo uso do Fastify
+  // Combine requests
   async combinationRequests(request: FastifyRequest, reply: FastifyReply) {
     try {
       const data = await UserRepositorie.getCombinedData();
@@ -24,164 +23,171 @@ class UserController {
     }
   }
 
+  // Get all users in a cell
   async indexcell(request: FastifyRequest, reply: FastifyReply) {
-    const users = await UserRepositorie.findAllCell();
-    if (!users) {
+    try {
+      const users = await UserRepositorie.findAllCell();
+      return reply.code(200).send(users);
+    } catch (error) {
       return reply.code(500).send({ error: "Internal Server Error" });
     }
-    return reply.code(200).send(users);
   }
 
+  // Get all users
   async index(request: FastifyRequest, reply: FastifyReply) {
-    const users = await UserRepositorie.findAll();
-    if (!users) {
+    try {
+      const users = await UserRepositorie.findAll();
+      return reply.code(200).send(users);
+    } catch (error) {
       return reply.code(500).send({ error: "Internal Server Error" });
     }
-    return reply.code(200).send(users);
   }
 
+  // Get all users with disciplado
   async indexDiscipulados(request: FastifyRequest, reply: FastifyReply) {
-    const users = await UserRepositorie.findAllDiscipulados();
-    if (!users) {
+    try {
+      const users = await UserRepositorie.findAllDiscipulados();
+      return reply.code(200).send(users);
+    } catch (error) {
       return reply.code(500).send({ error: "Internal Server Error" });
     }
-    return reply.code(200).send(users);
   }
 
+  // Show a user by ID in a cell
   async showcell(
-    request: FastifyRequest<{
-      Params: UserParams;
-    }>,
+    request: FastifyRequest<{ Params: UserParams }>,
     reply: FastifyReply
   ) {
-    const id = request.params.id;
-    const user = await UserRepositorie.findByIdCell(id);
-    if (!user) {
-      return reply.code(404).send({ message: "User not found!" });
+    try {
+      const id = request.params.id;
+      const user = await UserRepositorie.findByIdCell(id);
+      if (!user) {
+        return reply.code(404).send({ message: "User not found!" });
+      }
+      return reply.code(200).send(user);
+    } catch (error) {
+      return reply.code(500).send({ error: "Internal Server Error" });
     }
-    return reply.code(200).send(user);
   }
 
+  // Show a user by ID
   async show(
-    request: FastifyRequest<{
-      Params: UserParams;
-    }>,
+    request: FastifyRequest<{ Params: UserParams }>,
     reply: FastifyReply
   ) {
-    const id = request.params.id;
-    console.log('id', id)
-    const user = await UserRepositorie.findById(id);
-    if (!user) {
-      return reply.code(404).send({ message: "User not found!" });
+    try {
+      const id = request.params.id;
+      const user = await UserRepositorie.findById(id);
+      if (!user) {
+        return reply.code(404).send({ message: "User not found!" });
+      }
+      return reply.code(200).send(user);
+    } catch (error) {
+      return reply.code(500).send({ error: "Internal Server Error" });
     }
-    return reply.code(200).send(user);
   }
 
+  // Create a new user
   async store(request: FastifyRequest, reply: FastifyReply) {
-    const userDataForm = request.body as UserData;
-    const { email } = userDataForm;
-    let { date_nascimento, date_batizado, date_casamento, date_decisao } =
-      userDataForm;
-    const userExist = await UserRepositorie.findByEmail(email);
-    if (userExist) {
-      return reply
-        .code(404)
-        .send({ message: "User already exist, please try other email!" });
-    }
+    try {
+      const userDataForm = request.body as UserData;
+      const { email } = userDataForm;
+      let { date_nascimento, date_batizado, date_casamento, date_decisao } = userDataForm;
 
-    if (date_nascimento) {
-      date_nascimento = formatDatatoISO8601(date_nascimento);
-    }
-    if (date_batizado) {
-      date_batizado = formatDatatoISO8601(date_batizado);
-    }
-    if (date_casamento) {
-      date_casamento = formatDatatoISO8601(date_casamento);
-    }
-    if (date_decisao) {
-      date_decisao = formatDatatoISO8601(date_decisao);
-    }
+      // Check if user already exists
+      const userExist = await UserRepositorie.findByEmail(email);
+      if (userExist) {
+        return reply.code(400).send({ message: "User already exists. Please try another email!" });
+      }
 
-    const { password } = userDataForm;
-    const saltRounds = 10;
+      // Format dates
+      if (date_nascimento) date_nascimento = formatDateToISO8601(date_nascimento);
+      if (date_batizado) date_batizado = formatDateToISO8601(date_batizado);
+      if (date_casamento) date_casamento = formatDateToISO8601(date_casamento);
+      if (date_decisao) date_decisao = formatDateToISO8601(date_decisao);
 
-    const hashPassword: string = bcrypt.hashSync(password, saltRounds);
+      // Hash password
+      const { password } = userDataForm;
+      const saltRounds = 10;
+      const hashPassword = bcrypt.hashSync(password, saltRounds);
 
-    const user = await UserRepositorie.createUser({
-      ...userDataForm,
-      date_nascimento,
-      date_batizado,
-      date_casamento,
-      date_decisao,
-      password: hashPassword,
-    });
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    const { password: _, ...newUser } = user;
-    return reply.code(201).send(newUser);
+      // Create user
+      const user = await UserRepositorie.createUser({
+        ...userDataForm,
+        date_nascimento,
+        date_batizado,
+        date_casamento,
+        date_decisao,
+        password: hashPassword,
+      });
+
+      const { password: _, ...newUser } = user;
+      return reply.code(201).send(newUser);
+    } catch (error) {
+      return reply.code(500).send({ error: "Failed to create user." });
+    }
   }
 
+  // Update a user
   async update(
-    request: FastifyRequest<{
-      Params: UserParams;
-    }>,
+    request: FastifyRequest<{ Params: UserParams }>,
     reply: FastifyReply
   ) {
-    const id = request.params.id;
-    const userDataForm = request.body as UserData;
-    let { date_nascimento, date_batizado, date_casamento, date_decisao } =
-      userDataForm;
+    try {
+      const id = request.params.id;
+      const userDataForm = request.body as UserData;
+      let { date_nascimento, date_batizado, date_casamento, date_decisao } = userDataForm;
 
-    if (date_nascimento) {
-      date_nascimento = formatDatatoISO8601(date_nascimento);
-    }
-    if (date_batizado) {
-      date_batizado = formatDatatoISO8601(date_batizado);
-    }
-    if (date_casamento) {
-      date_casamento = formatDatatoISO8601(date_casamento);
-    }
-    if (date_decisao) {
-      date_decisao = formatDatatoISO8601(date_decisao);
-    }
-    const { password } = userDataForm;
-    const saltRounds = 10;
+      // Format dates
+      if (date_nascimento) date_nascimento = formatDateToISO8601(date_nascimento);
+      if (date_batizado) date_batizado = formatDateToISO8601(date_batizado);
+      if (date_casamento) date_casamento = formatDateToISO8601(date_casamento);
+      if (date_decisao) date_decisao = formatDateToISO8601(date_decisao);
 
-    const hashPassword: string = bcrypt.hashSync(password, saltRounds);
-    const user = await UserRepositorie.updateUser(id, {
-      ...userDataForm,
-      date_nascimento,
-      date_batizado,
-      date_casamento,
-      date_decisao,
-      password: hashPassword,
-    });
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    const { password: _, ...newUser } = user;
-    return reply.code(202).send(newUser);
+      // Update user
+      const user = await UserRepositorie.updateUser(id, {
+        ...userDataForm,
+        date_nascimento,
+        date_batizado,
+        date_casamento,
+        date_decisao,
+      });
+
+      return reply.code(202).send(user);
+    } catch (error) {
+      return reply.code(500).send({ error: "Failed to update user." });
+    }
   }
 
-  async updateDisicipulo(
-    request: FastifyRequest<{
-      Params: UserParams
-    }>,
-    reply: FastifyReply) {
-    const { id, discipuladorId } = request.body as UserData
-    if (discipuladorId) {
-      const result = await UserRepositorie.updateDiscipuladorId(id, discipuladorId)
-      return result
+  // Update discipulador ID
+  async updateDiscipulo(
+    request: FastifyRequest<{ Params: UserParams }>,
+    reply: FastifyReply
+  ) {
+    try {
+      const { id, discipuladorId } = request.body as UserData;
+      if (discipuladorId) {
+        const result = await UserRepositorie.updateDiscipuladorId(id, discipuladorId);
+        return reply.code(200).send(result);
+      }
+      return reply.code(400).send({ message: "Discipulador ID not provided." });
+    } catch (error) {
+      return reply.code(500).send({ error: "Failed to update discipulador ID." });
     }
-    return null;
   }
 
+  // Delete a user
   async delete(
-    request: FastifyRequest<{
-      Params: UserParams;
-    }>,
+    request: FastifyRequest<{ Params: UserParams }>,
     reply: FastifyReply
   ) {
-    const id = request.params.id;
-    await UserRepositorie.deleteUser(id);
-    return reply.code(204).send();
+    try {
+      const id = request.params.id;
+      await UserRepositorie.deleteUser(id);
+      return reply.code(204).send();
+    } catch (error) {
+      return reply.code(500).send({ error: "Failed to delete user." });
+    }
   }
 }
 

@@ -1,10 +1,9 @@
-import { PresencaCultoData } from "../../Controllers/Culto/PresencaCulto";
-import utc from "dayjs/plugin/utc";
-import timezone from "dayjs/plugin/timezone";
 import dayjs from "dayjs";
-import { createPrismaInstance, disconnectPrisma } from "../../services/prisma";
-import { CultoIndividualRepositorie } from "../Culto";
+import timezone from "dayjs/plugin/timezone";
+import utc from "dayjs/plugin/utc";
+import { PresencaCultoData } from "../../Controllers/Culto/PresencaCulto";
 import { dataSchemaCreateDiscipulado } from "../../Controllers/Discipulado/schema";
+import { createPrismaInstance, disconnectPrisma } from "../../services/prisma";
 
 dayjs.extend(utc);
 dayjs.extend(timezone);
@@ -245,21 +244,21 @@ class RegisterDiscipuladoRepositorie {
                 },
               },
 
-              discipulador_usuario_discipulador_usuario_discipulador_idTouser: {
+              discipulador: {
                 select: {
-                  user_discipulador_usuario_usuario_idTouser: {
+                  user_discipulador: {
                     select: {
                       first_name: true,
-                      discipulador_usuario_discipulador_usuario_usuario_idTouser:
-                        {
-                          select: {
-                            user_discipulador_usuario_discipulador_idTouser: {
-                              select: {
-                                first_name: true,
-                              },
+                      discipulos:
+                      {
+                        select: {
+                          user_discipulos: {
+                            select: {
+                              first_name: true,
                             },
                           },
                         },
+                      },
                     },
                   },
                   discipulado: {
@@ -272,7 +271,7 @@ class RegisterDiscipuladoRepositorie {
                     select: {
                       // discipulador_usuario: {
                       //   select: {
-                      //     user_discipulador_usuario_discipulador_idTouser: {
+                      //     user_discipulos: {
                       //       select: {
                       //         first_name: true
                       //       }
@@ -329,9 +328,9 @@ class RegisterDiscipuladoRepositorie {
                   nome: true,
                 },
               },
-              discipulador_usuario_discipulador_usuario_usuario_idTouser: {
+              discipulos: {
                 select: {
-                  user_discipulador_usuario_discipulador_idTouser: {
+                  user_discipulos: {
                     select: {
                       first_name: true,
                     },
@@ -346,7 +345,7 @@ class RegisterDiscipuladoRepositorie {
                     select: {
                       discipulador_usuario: {
                         select: {
-                          user_discipulador_usuario_discipulador_idTouser: {
+                          user_discipulos: {
                             select: {
                               first_name: true,
                             },
@@ -547,7 +546,7 @@ class RegisterDiscipuladoRepositorie {
       const result = await prisma.user.findMany({
         where: {
           id: supervisor_id,
-          // discipulador_usuario_discipulador_usuario_usuario_idTouser: {
+          // discipulos: {
           //   some: {
           //     discipulado: {
           //       some: {
@@ -570,9 +569,9 @@ class RegisterDiscipuladoRepositorie {
             },
           },
           // DISCIPULADOR
-          discipulador_usuario_discipulador_usuario_usuario_idTouser: {
+          discipulos: {
             select: {
-              user_discipulador_usuario_discipulador_idTouser: {
+              user_discipulos: {
                 select: {
                   id: true,
                   first_name: true,
@@ -604,9 +603,9 @@ class RegisterDiscipuladoRepositorie {
             },
           },
           // DISCIPULOS
-          discipulador_usuario_discipulador_usuario_discipulador_idTouser: {
+          discipulador: {
             select: {
-              user_discipulador_usuario_usuario_idTouser: {
+              user_discipulos: {
                 select: {
                   id: true,
                   first_name: true,
@@ -671,7 +670,7 @@ class RegisterDiscipuladoRepositorie {
           id: cell_id,
           // membros: {
           //   some: {
-          //     discipulador_usuario_discipulador_usuario_usuario_idTouser: {
+          //     discipulos: {
           //       some: {
           //         discipulado: {
           //           some: {
@@ -697,9 +696,9 @@ class RegisterDiscipuladoRepositorie {
                   nome: true,
                 },
               },
-              discipulador_usuario_discipulador_usuario_usuario_idTouser: {
+              discipulos: {
                 select: {
-                  user_discipulador_usuario_discipulador_idTouser: {
+                  user_discipulos: {
                     select: {
                       id: true,
                       first_name: true,

@@ -1,5 +1,5 @@
-import { CelulaData } from "../Controllers/CelulaController";
 import { Prisma } from "@prisma/client";
+import { CelulaData } from "../Controllers/CelulaController";
 import { createPrismaInstance, disconnectPrisma } from "../services/prisma";
 
 function getStartOfDay(date: Date): Date {
@@ -95,9 +95,9 @@ class CelulaRepositorie {
                 },
               },
             },
-            discipulador_usuario_discipulador_usuario_usuario_idTouser: {
+            discipulador: {
               select: {
-                user_discipulador_usuario_discipulador_idTouser: {
+                user_discipulador: {
                   select: {
                     id: true,
                     first_name: true,
@@ -105,9 +105,9 @@ class CelulaRepositorie {
                 },
               },
             },
-            discipulador_usuario_discipulador_usuario_discipulador_idTouser: {
+            discipulos: {
               select: {
-                user_discipulador_usuario_usuario_idTouser: {
+                user_discipulos: {
                   select: {
                     id: true,
                     first_name: true,
