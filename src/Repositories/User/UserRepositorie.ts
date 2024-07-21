@@ -141,7 +141,7 @@ class UserRepositorie {
         role: true,
         discipulador: {
           select: {
-            user_discipulos: {
+            user_discipulador: {
               select: {
                 id: true,
                 first_name: true,
@@ -151,7 +151,7 @@ class UserRepositorie {
         },
         discipulos: {
           select: {
-            user_discipulador: {
+            user_discipulos: {
               select: {
                 id: true,
                 first_name: true,
@@ -261,7 +261,7 @@ class UserRepositorie {
         role: true,
         discipulador: {
           select: {
-            user_discipulos: {
+            user_discipulador: {
               select: {
                 id: true,
                 first_name: true,
@@ -271,7 +271,7 @@ class UserRepositorie {
         },
         discipulos: {
           select: {
-            user_discipulador: {
+            user_discipulos: {
               select: {
                 id: true,
                 first_name: true,
@@ -381,7 +381,7 @@ class UserRepositorie {
         role: true,
         discipulador: {
           select: {
-            user_discipulos: {
+            user_discipulador: {
               select: {
                 id: true,
                 first_name: true,
@@ -391,7 +391,7 @@ class UserRepositorie {
         },
         discipulos: {
           select: {
-            user_discipulador: {
+            user_discipulos: {
               select: {
                 id: true,
                 first_name: true,
@@ -509,7 +509,7 @@ class UserRepositorie {
         // DISCIPULADOR
         discipulador: {
           select: {
-            user_discipulos: {
+            user_discipulador: {
               select: {
                 id: true,
                 first_name: true,
@@ -520,7 +520,7 @@ class UserRepositorie {
         // DISCIPULO(S)
         discipulos: {
           select: {
-            user_discipulador: {
+            user_discipulos: {
               select: {
                 id: true,
                 first_name: true,
@@ -643,7 +643,7 @@ class UserRepositorie {
         // DISCIPULADOR
         discipulador: {
           select: {
-            user_discipulos: {
+            user_discipulador: {
               select: {
                 id: true,
                 first_name: true,
@@ -654,7 +654,7 @@ class UserRepositorie {
         // DISCIPULO(S)
         discipulos: {
           select: {
-            user_discipulador: {
+            user_discipulos: {
               select: {
                 id: true,
                 first_name: true,
@@ -770,7 +770,7 @@ class UserRepositorie {
         role: true,
         discipulador: {
           select: {
-            user_discipulos: {
+            user_discipulador: {
               select: {
                 id: true,
                 first_name: true,
@@ -780,7 +780,7 @@ class UserRepositorie {
         },
         discipulos: {
           select: {
-            user_discipulador: {
+            user_discipulos: {
               select: {
                 id: true,
                 first_name: true,
