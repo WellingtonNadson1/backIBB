@@ -1044,7 +1044,7 @@ class UserRepositorie {
       // Conectar ao discipulador_usuario
       if (discipuladorId) {
         updateUserInput.connect = {
-          user_discipulos: {
+          discipulador: {
             connect: {
               usuario_id: id, // ID do usuário que está sendo atualizado
               discipulador_id: discipuladorId, // Novo discipulador ID
@@ -1053,7 +1053,7 @@ class UserRepositorie {
         };
       }
 
-      if (discipulador) {
+      if (discipulos) {
         updateUserInput.discipulos
       }
       // if (discipuladorId) {
@@ -1220,11 +1220,13 @@ class UserRepositorie {
         };
       }
 
+      console.log('updateUserInput', updateUserInput)
+
       const result = await prisma?.user.update({
         where: {
           id: id,
         },
-        data: { ...updateUserInput, date_update },
+        data: updateUserInput,
       });
 
       await disconnectPrisma();

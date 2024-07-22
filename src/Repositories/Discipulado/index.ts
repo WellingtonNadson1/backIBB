@@ -244,9 +244,9 @@ class RegisterDiscipuladoRepositorie {
                 },
               },
 
-              discipulador: {
+              discipulos: {
                 select: {
-                  user_discipulador: {
+                  user_discipulos: {
                     select: {
                       first_name: true,
                       discipulos:
@@ -328,9 +328,9 @@ class RegisterDiscipuladoRepositorie {
                   nome: true,
                 },
               },
-              discipulos: {
+              discipulador: {
                 select: {
-                  user_discipulos: {
+                  user_discipulador: {
                     select: {
                       first_name: true,
                     },
@@ -696,9 +696,9 @@ class RegisterDiscipuladoRepositorie {
                   nome: true,
                 },
               },
-              discipulos: {
+              discipulador: {
                 select: {
-                  user_discipulos: {
+                  user_discipulador: {
                     select: {
                       id: true,
                       first_name: true,
