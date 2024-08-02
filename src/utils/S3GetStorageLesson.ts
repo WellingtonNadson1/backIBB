@@ -32,7 +32,8 @@ const s3Client = new S3Client(s3Config);
 
 class S3GetStorageLesson {
   async getFile(): Promise<string[]> {
-    const folderPath = "licoes-celula-jul-24";
+    // Para atualizar as licoes do mes alterar a linha abaixo
+    const folderPath = "licoes-celula-ago-24";
 
     const params = {
       Bucket: bucketName,
