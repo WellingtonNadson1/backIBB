@@ -61,6 +61,24 @@ class UserRepositorie {
     if (!prisma) {
       throw new Error("Prisma instance is null");
     }
+    const almasGanhasMes = await prisma?.$transaction([
+      prisma.reuniaoCelula.findMany({
+        where: {
+          data_reuniao: {
+            gte: startOfMonth,
+            lt: new Date(
+              endOfMonth.getFullYear(),
+              endOfMonth.getMonth(),
+              endOfMonth.getDate() + 1,
+            ),
+          },
+        },
+        select: {
+          almas_ganhas: true,
+        },
+      }),
+    ]);
+
     const combinedData = await prisma?.$transaction([
       prisma?.supervisao.findMany({
         select: {
@@ -101,25 +119,10 @@ class UserRepositorie {
       prisma?.encontros.findMany(),
       prisma?.situacaoNoReino.findMany(),
       prisma?.cargoDeLideranca.findMany(),
-      prisma.reuniaoCelula.findMany({
-        where: {
-          data_reuniao: {
-            gte: startOfMonth,
-            lt: new Date(
-              endOfMonth.getFullYear(),
-              endOfMonth.getMonth(),
-              endOfMonth.getDate() + 1,
-            ),
-          },
-        },
-        select: {
-          almas_ganhas: true,
-        },
-      }),
     ]);
     await disconnectPrisma();
     // Calcula a quantidade de almas ganhas no presente mês
-    const almasGanhasNoMes = combinedData[5].reduce(
+    const almasGanhasNoMes = almasGanhasMes[0].reduce(
       (total, reuniao) => total + (reuniao.almas_ganhas ?? 0),
       0,
     );
