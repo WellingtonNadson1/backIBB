@@ -73,7 +73,7 @@ class UserRepositorie {
               first_name: true,
               discipulos: {
                 select: {
-                  user_discipulador: {
+                  user_discipulos: {
                     select: {
                       id: true,
                       first_name: true,
