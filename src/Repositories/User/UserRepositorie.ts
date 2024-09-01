@@ -47,11 +47,39 @@ class UserRepositorie {
   async getCombinedData() {
     const prisma = createPrismaInstance();
 
+    //DEFINE O INICIO DO CORRENTE ANO
+    const startOfYear = new Date(new Date().getFullYear(), 0, 1);
+
+    //DEFINE O FIM DO DIA DE HOJE
+    const endOfToday = new Date();
+    endOfToday.setHours(23, 59, 59, 999);
+
+    const almasGanhasAno = await prisma.$transaction([
+      prisma.reuniaoCelula.findMany({
+        where: {
+          data_reuniao: {
+            gte: startOfYear,
+            lt: endOfToday,
+          },
+        },
+        select: {
+          almas_ganhas: true
+        }
+      })
+    ])
+    const almasGanhasNoAno = almasGanhasAno[0].reduce(
+      (total, reuniao) => total + (reuniao.almas_ganhas ?? 0),
+      0,
+    );
+    console.log('almasGanhasNoAno', almasGanhasNoAno)
+
+    //DEFINE O INICIO DO CORRENTE MES
     const startOfMonth = new Date(
       new Date().getFullYear(),
       new Date().getMonth(),
       1,
     );
+    //DEFINE O FIM DO CORRENTE MES
     const endOfMonth = new Date(
       new Date().getFullYear(),
       new Date().getMonth() + 1,
@@ -129,6 +157,7 @@ class UserRepositorie {
     return {
       combinedData,
       almasGanhasNoMes,
+      almasGanhasNoAno
     };
   }
 
