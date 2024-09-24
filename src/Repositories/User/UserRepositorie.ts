@@ -148,15 +148,54 @@ class UserRepositorie {
       prisma?.situacaoNoReino.findMany(),
       prisma?.cargoDeLideranca.findMany(),
     ]);
-    await disconnectPrisma();
     // Calcula a quantidade de almas ganhas no presente mês
     const almasGanhasNoMes = almasGanhasMes[0].reduce(
       (total, reuniao) => total + (reuniao.almas_ganhas ?? 0),
       0,
     );
+
+    //DEFINE O INICIO DO MES PASSADO
+    const startOfLastMonth = new Date(
+      new Date().getFullYear(),
+      new Date().getMonth() - 1,
+      1
+    )
+
+    //DEFINE O FIM DO MES PASSADO
+    const endOfLastMonth = new Date(
+      new Date().getFullYear(),
+      new Date().getMonth(),
+      0
+    );
+
+    const almasGanhasMesPassado = await prisma.$transaction([
+      prisma.reuniaoCelula.findMany({
+        where: {
+          data_reuniao: {
+            gte: startOfLastMonth,
+            lt: new Date(
+              endOfLastMonth.getFullYear(),
+              endOfLastMonth.getMonth(),
+              endOfLastMonth.getDate() + 1,
+            ),
+          },
+        },
+        select: {
+          almas_ganhas: true,
+        },
+      }),
+    ]);
+
+    const almasGanhasNoMesPassado = almasGanhasMesPassado[0].reduce(
+      (total, reuniao) => total + (reuniao.almas_ganhas ?? 0),
+      0,
+    );
+
+    await disconnectPrisma();
     return {
       combinedData,
       almasGanhasNoMes,
+      almasGanhasNoMesPassado,
       almasGanhasNoAno
     };
   }
