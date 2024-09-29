@@ -138,6 +138,7 @@ class CelulaRepositorie {
         lider: {
           select: {
             id: true,
+            first_name: true,
           },
         },
         supervisao: {
@@ -146,6 +147,12 @@ class CelulaRepositorie {
             nome: true,
           },
         },
+        cep: true,
+        cidade: true,
+        estado: true,
+        bairro: true,
+        endereco: true,
+        numero_casa: true,
         date_que_ocorre: true,
         date_inicio: true,
         date_multipicar: true,
