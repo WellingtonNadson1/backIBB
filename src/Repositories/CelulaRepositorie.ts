@@ -219,43 +219,71 @@ class CelulaRepositorie {
     return result;
   }
 
-  async updateCelula(id: string, celulaDataForm: CelulaData) {
+  async updateCelula(id: string, newData: CelulaData) {
     const prisma = createPrismaInstance();
 
     if (!prisma) {
       throw new Error("Prisma instance is null");
     }
-    const { nome, lider, reunioes_celula, supervisao, membros, ...CelulaData } =
-      celulaDataForm;
-    const result = await prisma?.celula.update({
-      where: {
-        id: id,
-      },
-      data: {
-        ...CelulaData,
-        nome,
-        lider: {
-          connect: {
-            id: lider,
-          },
-        },
-        supervisao: {
-          connect: {
-            id: supervisao,
-          },
-        },
+
+    // Recuperar membros atuais da célula
+    const existingCelula = await prisma.celula.findUnique({
+      where: { id },
+      select: {
         membros: {
-          connect: membros?.map((membroId) => ({ id: membroId })),
-        },
-        reunioes_celula: {
-          connect: reunioes_celula?.map((reuniaoCelulaId) => ({
-            id: reuniaoCelulaId,
-          })),
+          select: { id: true },
         },
       },
     });
+
+    if (!existingCelula) {
+      throw new Error(`Célula com ID ${id} não encontrada.`);
+    }
+
+    // Extrair IDs dos membros atuais e dos novos membros
+    const currentMemberIds = existingCelula.membros.map((m) => m.id);
+    const newMemberIds = newData.membros?.map((m) => m) || [];
+
+    // Identificar membros para adicionar e remover
+    const membersToAdd = newMemberIds.filter((id) => !currentMemberIds.includes(id));
+    const membersToRemove = currentMemberIds.filter((id) => !newMemberIds.includes(id));
+
+    // Atualize apenas os campos que foram passados
+    const updateData: Prisma.CelulaUpdateInput = {
+      ...(newData.nome && { nome: newData.nome }),
+      ...(newData.lider && {
+        lider: {
+          connect: { id: newData.lider },
+        },
+      }),
+      ...(newData.supervisao && {
+        supervisao: {
+          connect: { id: newData.supervisao },
+        },
+      }),
+      ...(newData.cep && { cep: newData.cep }),
+      ...(newData.cidade && { cidade: newData.cidade }),
+      ...(newData.estado && { estado: newData.estado }),
+      ...(newData.bairro && { bairro: newData.bairro }),
+      ...(newData.endereco && { endereco: newData.endereco }),
+      ...(newData.numero_casa && { numero_casa: newData.numero_casa }),
+      ...(newData.date_inicio && { date_inicio: newData.date_inicio }),
+      ...(newData.date_multipicar && { date_multipicar: newData.date_multipicar }),
+      ...(newData.date_que_ocorre && { date_que_ocorre: newData.date_que_ocorre }),
+
+      membros: {
+        connect: membersToAdd.map((id) => ({ id })),
+        disconnect: membersToRemove.map((id) => ({ id })),
+      },
+    };
+
+    // Atualize a célula com os novos dados
+    const updatedCelula = await prisma?.celula.update({
+      where: { id },
+      data: updateData,
+    });
     await disconnectPrisma();
-    return result;
+    return updatedCelula;
   }
 
   async updateDateCelula(id: string, newDate: string) {
