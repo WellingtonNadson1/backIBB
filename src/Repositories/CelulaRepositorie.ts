@@ -87,6 +87,7 @@ class CelulaRepositorie {
           select: {
             id: true,
             first_name: true,
+            password: false,
             presencas_cultos: {
               where: {
                 date_create: {
@@ -164,7 +165,12 @@ class CelulaRepositorie {
             presencas_membros_reuniao_celula: {
               select: {
                 id: true,
-                membro: true,
+                membro: {
+                  select: {
+                    id: true,
+                    first_name: true
+                  }
+                },
                 status: true,
               },
             },
