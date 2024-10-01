@@ -115,6 +115,34 @@ model Celula {
   @@map("celula")
 }
 
+model LicaoCelula {
+  id                String           @id @default(uuid())
+  titulo            String
+  versiculo_cahve   String
+  link_objeto_aws   String?
+  data_inicio       DateTime
+  data_termino      DateTime
+  date_create       DateTime         @default(now())
+  date_update       DateTime
+  TemaLicaoCelula   TemaLicaoCelula? @relation(fields: [temaLicaoCelulaId], references: [id], onDelete: Cascade)
+  temaLicaoCelulaId String?
+
+  @@map("licao_celula")
+}
+
+model TemaLicaoCelula {
+  id              String        @id @default(uuid())
+  tema            String
+  link_folder_aws String?
+  data_inicio     DateTime
+  data_termino    DateTime
+  licoes_celula   LicaoCelula[]
+  date_create     DateTime      @default(now())
+  date_update     DateTime
+
+  @@map("tema_licao_celula")
+}
+
 model ReuniaoCelula {
   id                               String                  @id @default(uuid())
   data_reuniao                     DateTime?
