@@ -14,7 +14,7 @@ model AulaEscola {
   status        String
   turmaEscolaId String?
   date_create   DateTime         @default(now())
-  date_update   DateTime
+  date_update   DateTime         @updatedAt
   turma         TurmaEscola?     @relation(fields: [turmaEscolaId], references: [id])
   presencas     PresencaEscola[]
 }
@@ -36,7 +36,7 @@ model PresencaEscola {
   userId                    String?
   aulaEscolaId              String?
   date_create               DateTime    @default(now())
-  date_update               DateTime
+  date_update               DateTime    @updatedAt
   aula_presenca_qual_escola AulaEscola? @relation(fields: [aulaEscolaId], references: [id])
   aluno                     User?       @relation(fields: [userId], references: [id])
 }
@@ -109,7 +109,7 @@ model CultoIndividual {
   status             String
   cultoSemanalId     String?
   date_create        DateTime        @default(now())
-  date_update        DateTime
+  date_update        DateTime        @updatedAt
   presencas_culto    PresencaCulto[]
   culto_semana       CultoSemanal?   @relation(fields: [cultoSemanalId], references: [id])
 
@@ -180,7 +180,7 @@ model LicaoCelula {
   data_inicio       DateTime
   data_termino      DateTime
   date_create       DateTime         @default(now())
-  date_update       DateTime
+  date_update       DateTime         @updatedAt
   TemaLicaoCelula   TemaLicaoCelula? @relation(fields: [temaLicaoCelulaId], references: [id], onDelete: Cascade)
   temaLicaoCelulaId String?
 
@@ -192,7 +192,7 @@ model NivelSupervisao {
   nome        String
   descricao   String?
   date_create DateTime     @default(now())
-  date_update DateTime
+  date_update DateTime     @updatedAt
   supervisao  Supervisao[]
 
   @@map("nivel_supervisao")
@@ -213,7 +213,7 @@ model ReuniaoCelula {
   status                           String
   celulaId                         String?
   date_create                      DateTime                @default(now())
-  date_update                      DateTime
+  date_update                      DateTime                @updatedAt
   visitantes                       Int?
   almas_ganhas                     Int?
   presencas_membros_reuniao_celula PresencaReuniaoCelula[]
@@ -272,7 +272,7 @@ model TemaLicaoCelula {
   data_termino    DateTime
   licoes_celula   LicaoCelula[]
   date_create     DateTime      @default(now())
-  date_update     DateTime      @updatedAt()
+  date_update     DateTime      @updatedAt
 
   @@map("tema_licao_celula")
 }
