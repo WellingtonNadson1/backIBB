@@ -265,6 +265,7 @@ model Supervisao {
 }
 
 model TemaLicaoCelula {
+  status          Boolean       @default(false)
   id              String        @id @default(uuid())
   tema            String?
   folderName      String?
