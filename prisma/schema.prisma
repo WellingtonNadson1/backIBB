@@ -269,6 +269,7 @@ model TemaLicaoCelula {
   id              String        @id @default(uuid())
   tema            String?
   folderName      String?
+  versiculo_cahve String?
   link_folder_aws String?
   data_inicio     DateTime
   data_termino    DateTime
