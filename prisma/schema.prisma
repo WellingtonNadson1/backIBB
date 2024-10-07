@@ -175,7 +175,7 @@ model Escola {
 model LicaoCelula {
   id                String           @id @default(uuid())
   titulo            String
-  versiculo_cahve   String
+  versiculo_chave   String
   link_objeto_aws   String?
   data_inicio       DateTime
   data_termino      DateTime
@@ -269,7 +269,7 @@ model TemaLicaoCelula {
   id              String        @id @default(uuid())
   tema            String?
   folderName      String?
-  versiculo_cahve String?
+  versiculo_chave String?
   link_folder_aws String?
   data_inicio     DateTime
   data_termino    DateTime
