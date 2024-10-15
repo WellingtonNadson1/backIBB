@@ -173,16 +173,17 @@ model Escola {
 }
 
 model LicaoCelula {
-  id                String           @id @default(uuid())
-  titulo            String
-  versiculo_chave   String
-  link_objeto_aws   String?
-  data_inicio       DateTime
-  data_termino      DateTime
-  date_create       DateTime         @default(now())
-  date_update       DateTime         @updatedAt
-  TemaLicaoCelula   TemaLicaoCelula? @relation(fields: [temaLicaoCelulaId], references: [id], onDelete: Cascade)
-  temaLicaoCelulaId String?
+  id                   String           @id @default(uuid())
+  titulo               String
+  versiculo_chave      String
+  link_objeto_aws      String?
+  licao_lancando_redes Boolean          @default(false)
+  data_inicio          DateTime
+  data_termino         DateTime
+  date_create          DateTime         @default(now())
+  date_update          DateTime         @updatedAt
+  TemaLicaoCelula      TemaLicaoCelula? @relation(fields: [temaLicaoCelulaId], references: [id], onDelete: Cascade)
+  temaLicaoCelulaId    String?
 
   @@map("licao_celula")
 }
