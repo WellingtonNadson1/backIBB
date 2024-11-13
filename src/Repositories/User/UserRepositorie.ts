@@ -326,6 +326,135 @@ class UserRepositorie {
     return result;
   }
 
+  async findAllDiscipulosSUpervisor(
+    {
+      dicipuladosupervisaoId,
+      supervisorId
+    }: {
+      dicipuladosupervisaoId: string,
+      supervisorId: string
+    }
+
+  ) {
+    const prisma = createPrismaInstance();
+
+    console.log('dicipuladosupervisaoId', dicipuladosupervisaoId)
+    console.log('supervisorId', supervisorId)
+
+    if (!prisma) {
+      throw new Error("Prisma instance is null");
+    }
+    const result = await prisma?.user.findMany({
+      where: {
+        supervisaoId: dicipuladosupervisaoId,
+        discipuladorId: supervisorId,
+      },
+      select: {
+        id: true,
+        role: true,
+        discipulador: {
+          select: {
+            user_discipulador: {
+              select: {
+                id: true,
+                first_name: true,
+              },
+            },
+          },
+        },
+        discipulos: {
+          select: {
+            user_discipulos: {
+              select: {
+                id: true,
+                first_name: true,
+                cargo_de_lideranca: true
+              },
+            },
+          },
+        },
+        user_roles: {
+          select: {
+            rolenew: {
+              select: {
+                name: true,
+              },
+            },
+          },
+        },
+        image_url: true,
+        email: false,
+        first_name: true,
+        last_name: true,
+        cpf: false,
+        date_nascimento: false,
+        sexo: false,
+        telefone: false,
+        escolaridade: false,
+        profissao: false,
+        batizado: true,
+        date_batizado: false,
+        is_discipulado: true,
+        discipuladorId: true,
+        estado_civil: false,
+        nome_conjuge: false,
+        date_casamento: false,
+        has_filho: false,
+        quantidade_de_filho: false,
+        date_decisao: false,
+        celulaId: false,
+        cep: false,
+        cidade: false,
+        estado: false,
+        bairro: false,
+        endereco: false,
+        numero_casa: false,
+        supervisaoId: false,
+        situacaoNoReinoId: false,
+        cargoDeLiderancaId: false,
+        supervisao_pertence: {
+          select: {
+            id: true,
+            nome: true,
+          },
+        },
+        celula: {
+          select: {
+            id: true,
+            nome: true,
+          },
+        },
+        celula_lidera: {
+          select: {
+            id: true,
+            nome: true,
+          },
+        },
+        situacao_no_reino: {
+          select: {
+            id: true,
+            nome: true,
+          },
+        },
+        cargo_de_lideranca: {
+          select: {
+            id: true,
+            nome: true,
+          },
+        },
+        escolas: false,
+        encontros: false,
+        presencas_aulas_escolas: false,
+        presencas_cultos: false,
+        password: false,
+      },
+    });
+    await disconnectPrisma();
+
+    console.log('result', result)
+    return result;
+  }
+
   async findAllDiscipulosSUpervisores(
     {
       dicipuladosupervisaoId,

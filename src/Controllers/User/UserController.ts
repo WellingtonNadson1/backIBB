@@ -24,6 +24,18 @@ class UserController {
   }
 
   // Get all users in a Id Supervision
+  async indexDiscipulosSupervisor(request: FastifyRequest, reply: FastifyReply) {
+    try {
+      const userDataForm = request.body as any
+      console.log('userDataForm', userDataForm)
+      const users = await UserRepositorie.findAllDiscipulosSUpervisor(userDataForm);
+      return reply.code(200).send(users);
+    } catch (error) {
+      return reply.code(500).send({ error: "Internal Server Error" });
+    }
+  }
+
+  // Get all users in a Id Supervision
   async indexDiscipuladoSuperviso(request: FastifyRequest, reply: FastifyReply) {
     try {
       const userDataForm = request.body as any
