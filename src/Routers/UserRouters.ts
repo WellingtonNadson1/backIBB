@@ -6,7 +6,7 @@ const routerUser = async (fastify: FastifyInstance) => {
   fastify.get("/users/all", UserController.combinationRequests);
   fastify.get("/users", UserController.index);
   fastify.get("/users/alldiscipulados", UserController.indexDiscipulados);
-  fastify.post("/users/alldiscipulossupervisor", UserController.indexDiscipuladoSuperviso);
+  fastify.post("/users/alldiscipulossupervisor", UserController.indexDiscipulosSupervisor);
   fastify.post("/users/alldiscipuladossupervisores", UserController.indexDiscipuladoSuperviso);
   fastify.get("/users/cell", UserController.indexcell);
   fastify.get("/users/cell/:id", UserController.showcell);
