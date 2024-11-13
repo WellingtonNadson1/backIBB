@@ -123,7 +123,12 @@ class UserRepositorie {
                     select: {
                       id: true,
                       first_name: true,
-                      cargo_de_lideranca: true
+                      cargo_de_lideranca: {
+                        select: {
+                          id: true,
+                          nome: true
+                        }
+                      }
                     },
                   },
                 },
