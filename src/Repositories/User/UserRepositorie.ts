@@ -326,7 +326,7 @@ class UserRepositorie {
     return result;
   }
 
-  async findAllDiscipulosSUpervisor(
+  async findAllDiscipulosSupervisor(
     {
       dicipuladosupervisaoId,
       supervisorId
@@ -334,9 +334,12 @@ class UserRepositorie {
       dicipuladosupervisaoId: string,
       supervisorId: string
     }
-
   ) {
     const prisma = createPrismaInstance();
+
+    if (!supervisorId) {
+      throw new Error("Supervisor ID is not defined");
+    }
 
     console.log('dicipuladosupervisaoId', dicipuladosupervisaoId)
     console.log('supervisorId', supervisorId)
@@ -347,7 +350,11 @@ class UserRepositorie {
     const result = await prisma?.user.findMany({
       where: {
         supervisaoId: dicipuladosupervisaoId,
-        discipuladorId: supervisorId,
+        discipulador: {
+          every: {
+            discipulador_id: supervisorId
+          }
+        }
       },
       select: {
         id: true,
@@ -451,11 +458,11 @@ class UserRepositorie {
     });
     await disconnectPrisma();
 
-    console.log('result', result)
+    console.log('result discipulos', result)
     return result;
   }
 
-  async findAllDiscipulosSUpervisores(
+  async findAllDiscipulosSupervisores(
     {
       dicipuladosupervisaoId,
       cargoLiderancaSupervisores
