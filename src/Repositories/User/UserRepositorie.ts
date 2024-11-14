@@ -349,12 +349,7 @@ class UserRepositorie {
     }
     const result = await prisma?.user.findMany({
       where: {
-        supervisaoId: dicipuladosupervisaoId,
-        discipulador: {
-          every: {
-            discipulador_id: supervisorId
-          }
-        }
+        discipuladorId: supervisorId
       },
       select: {
         id: true,

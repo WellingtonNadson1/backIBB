@@ -388,6 +388,8 @@ enum Role {
   USERPASTOR
   MEMBER
   ADMIN
+  OUTRAIGREJA
+  AFASTADO
 }
 
 enum TokenType {
@@ -401,4 +403,6 @@ enum role {
   USERPASTOR
   MEMBER
   ADMIN
+  OUTRAIGREJA
+  AFASTADO
 }
