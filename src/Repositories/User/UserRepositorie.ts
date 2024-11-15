@@ -350,7 +350,7 @@ class UserRepositorie {
     const result = await prisma?.user.findMany({
       where: {
         discipulador: {
-          every: {
+          some: {
             user_discipulador: {
               id: supervisorId
             }
