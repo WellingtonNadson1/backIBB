@@ -64,6 +64,129 @@ class CelulaRepositorie {
     return result;
   }
 
+  async PresenceByCultoIndividual(id: string, idsCultos: string[]) {
+    const prisma = createPrismaInstance();
+
+    if (!prisma) {
+      throw new Error("Prisma instance is null");
+    }
+
+    const todayDate = new Date();
+    const startOfDay = getStartOfDay(todayDate);
+    const endOfDay = getEndOfDay(todayDate);
+
+    console.log("todayDate", todayDate);
+    const result = await prisma?.celula.findUnique({
+      where: {
+        id: id,
+      },
+      select: {
+        id: true,
+        nome: true,
+        membros: {
+          select: {
+            id: true,
+            first_name: true,
+            password: false,
+            presencas_cultos: {
+              where: {
+                cultoIndividualId: {
+                  in: idsCultos
+                },
+                // date_create: {
+                //   gte: startOfDay,
+                //   lte: endOfDay,
+                // },
+              },
+            },
+            discipulador: {
+              select: {
+                user_discipulador: {
+                  select: {
+                    id: true,
+                    first_name: true,
+                  },
+                },
+              },
+            },
+            discipulos: {
+              select: {
+                user_discipulos: {
+                  select: {
+                    id: true,
+                    first_name: true,
+                  },
+                },
+              },
+            },
+            cargo_de_lideranca: {
+              select: {
+                id: true,
+                nome: true,
+              },
+            },
+            situacao_no_reino: {
+              select: {
+                id: true,
+                nome: true,
+              },
+            },
+            user: {
+              select: {
+                id: true,
+                first_name: true,
+              },
+            },
+          },
+        },
+        lider: {
+          select: {
+            id: true,
+            first_name: true,
+          },
+        },
+        supervisao: {
+          select: {
+            id: true,
+            nome: true,
+          },
+        },
+        cep: true,
+        cidade: true,
+        estado: true,
+        bairro: true,
+        endereco: true,
+        numero_casa: true,
+        date_que_ocorre: true,
+        date_inicio: true,
+        date_multipicar: true,
+        reunioes_celula: {
+          select: {
+            id: true,
+            data_reuniao: true,
+            status: true,
+            presencas_membros_reuniao_celula: {
+              select: {
+                id: true,
+                membro: {
+                  select: {
+                    id: true,
+                    first_name: true
+                  }
+                },
+                status: true,
+              },
+            },
+          },
+        },
+      },
+    });
+
+    await disconnectPrisma();
+    console.log(result?.membros[0].presencas_cultos);
+    return result;
+  }
+
   async findById(id: string) {
     const prisma = createPrismaInstance();
 

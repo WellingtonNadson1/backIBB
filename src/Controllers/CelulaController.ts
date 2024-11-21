@@ -2,7 +2,7 @@ import { FastifyReply, FastifyRequest } from "fastify";
 import { Input, array, date, object, string } from 'valibot';
 import CelulaRepositorie from "../Repositories/CelulaRepositorie";
 
-const CelulaDataSchema = object ({
+const CelulaDataSchema = object({
   nome: string(),
   lider: string(),
   supervisao: string(),
@@ -21,12 +21,12 @@ const CelulaDataSchema = object ({
 
 export type CelulaData = Input<typeof CelulaDataSchema>
 
-const CelulaChangeDateSchema = object ({
+const CelulaChangeDateSchema = object({
   id: string(),
   date_que_ocorre: string(),
 })
 
-export type CelulaChangeDate = Input<typeof  CelulaChangeDateSchema>
+export type CelulaChangeDate = Input<typeof CelulaChangeDateSchema>
 
 interface CelulaParams {
   id: string;
@@ -40,6 +40,25 @@ class CelulaController {
       return reply.code(500).send({ error: "Internal Server Error" });
     }
     return reply.send(celulas);
+  }
+
+  async getPresenceByCultoIndividual(
+    request: FastifyRequest<{
+      Params: CelulaParams;
+      Body: { idsCultos: string[] };
+    }>,
+    reply: FastifyReply
+  ) {
+    const id = request.params.id;
+    const { idsCultos } = request.body;
+
+    console.log('IDs dos cultos:', idsCultos);
+
+    const celula = await CelulaRepositorie.PresenceByCultoIndividual(id, idsCultos);
+    if (!celula) {
+      return reply.code(404).send({ message: "Celula not found!" });
+    }
+    return reply.code(200).send(celula);
   }
 
   async show(

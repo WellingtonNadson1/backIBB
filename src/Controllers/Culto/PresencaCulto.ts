@@ -1,7 +1,7 @@
-import { FastifyReply, FastifyRequest } from "fastify";
-import { Input, boolean, object, string, array } from "valibot";
-import { PresencaCultoRepositorie } from "../../Repositories/Culto";
 import dayjs from "dayjs";
+import { FastifyReply, FastifyRequest } from "fastify";
+import { Input, array, boolean, object, string } from "valibot";
+import { PresencaCultoRepositorie } from "../../Repositories/Culto";
 
 type CultoIndividual = {
   startDate: Date;
@@ -142,8 +142,6 @@ class PresencaCultoController {
 
   async searchByIdCulto(request: FastifyRequest, reply: FastifyReply) {
     const { culto, lider } = request.params as PresencaCultoParams;
-    console.log("culto: ", culto);
-
     const presencaCultoIsRegister =
       await PresencaCultoRepositorie.findByIdCulto(culto, lider);
     if (!presencaCultoIsRegister) {

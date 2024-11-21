@@ -1,12 +1,12 @@
+import dayjs from "dayjs";
+import timezone from "dayjs/plugin/timezone";
+import utc from "dayjs/plugin/utc";
+import { CultoIndividualRepositorie } from ".";
 import {
   PresencaCultoData,
   PresencaCultoDataNew,
 } from "../../Controllers/Culto/PresencaCulto";
-import utc from "dayjs/plugin/utc";
-import timezone from "dayjs/plugin/timezone";
-import dayjs from "dayjs";
 import { createPrismaInstance, disconnectPrisma } from "../../services/prisma";
-import { CultoIndividualRepositorie } from ".";
 
 dayjs.extend(utc);
 dayjs.extend(timezone);
@@ -122,7 +122,7 @@ class PresencaCultoRepositorie {
               return (
                 total +
                 (presente.status === true &&
-                presente.presenca_culto?.culto_semana?.id ===
+                  presente.presenca_culto?.culto_semana?.id ===
                   "bffb62af-8d03-473a-ba20-ab5a9d7dafbe"
                   ? 1
                   : 0)
@@ -136,7 +136,7 @@ class PresencaCultoRepositorie {
               return (
                 total +
                 (presente.status === true &&
-                presente.presenca_culto?.culto_semana?.id ===
+                  presente.presenca_culto?.culto_semana?.id ===
                   "e7bc72d1-8faa-4bbe-9c24-475b64f956cf"
                   ? 1
                   : 0)
@@ -148,7 +148,7 @@ class PresencaCultoRepositorie {
               return (
                 total +
                 (presente.status === true &&
-                presente.presenca_culto?.culto_semana?.id ===
+                  presente.presenca_culto?.culto_semana?.id ===
                   "4064be1d-bf55-4851-9f76-99c4554a6265"
                   ? 1
                   : 0)
@@ -162,7 +162,7 @@ class PresencaCultoRepositorie {
               return (
                 total +
                 (presente.status === true &&
-                presente.presenca_culto?.culto_semana?.id ===
+                  presente.presenca_culto?.culto_semana?.id ===
                   "84acfbe4-c7e0-4841-813c-04731ffa9c67"
                   ? 1
                   : 0)
@@ -176,7 +176,7 @@ class PresencaCultoRepositorie {
               return (
                 total +
                 (presente.status === true &&
-                presente.presenca_culto?.culto_semana?.id ===
+                  presente.presenca_culto?.culto_semana?.id ===
                   "cab02f30-cade-46ca-b118-930461013d53"
                   ? 1
                   : 0)
@@ -188,7 +188,7 @@ class PresencaCultoRepositorie {
               return (
                 total +
                 (presente.status === true &&
-                presente.presenca_culto?.culto_semana?.id ===
+                  presente.presenca_culto?.culto_semana?.id ===
                   "ea08ec9b-3d1b-42f3-818a-ec53ef99b78f"
                   ? 1
                   : 0)
@@ -492,6 +492,8 @@ class PresencaCultoRepositorie {
 
   async findByIdCulto(culto: string, lider: string) {
     const prisma = createPrismaInstance();
+    console.log('culto', culto)
+    console.log('lider', lider)
 
     const result = await prisma.presencaCulto.findFirst({
       where: {
