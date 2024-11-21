@@ -26,6 +26,18 @@ class SupervisiaoRepositorie {
           select: {
             id: true,
             first_name: true,
+            situacao_no_reino: {
+              select: {
+                id: true,
+                nome: true
+              }
+            },
+            cargo_de_lideranca: {
+              select: {
+                id: true,
+                nome: true
+              }
+            }
           }
         },
       }
@@ -34,7 +46,7 @@ class SupervisiaoRepositorie {
     return result
   }
 
-  async findById(id: string){
+  async findById(id: string) {
     const supervisaoExistById = await prisma.supervisao.findUnique({
       where: {
         id: id,
@@ -87,10 +99,10 @@ class SupervisiaoRepositorie {
           }
         },
         celulas: {
-          connect: celulas.map((celulaId) => ({id: celulaId}))
+          connect: celulas.map((celulaId) => ({ id: celulaId }))
         },
         membros: {
-          connect: membros.map((membroId) => ({id: membroId}))
+          connect: membros.map((membroId) => ({ id: membroId }))
 
         },
       },
@@ -114,10 +126,10 @@ class SupervisiaoRepositorie {
           }
         },
         celulas: {
-          connect: celulas.map((celulaId) => ({id: celulaId}))
+          connect: celulas.map((celulaId) => ({ id: celulaId }))
         },
         membros: {
-          connect: membros.map((membroId) => ({id: membroId}))
+          connect: membros.map((membroId) => ({ id: membroId }))
 
         },
       },
