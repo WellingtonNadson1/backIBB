@@ -1597,6 +1597,8 @@ class UserRepositorie {
       where: { usuario_id: userId },
     });
 
+    console.log('existingRelation com Disicipulo: ', existingRelation)
+
     if (existingRelation) {
       // Deletar a relação existente
       await prisma.discipulador_usuario.delete({
@@ -1613,6 +1615,10 @@ class UserRepositorie {
         data: { usuario_id: userId, discipulador_id: discipuladorId },
       });
     }
+    // Criar nova relação
+    return await prisma.discipulador_usuario.create({
+      data: { usuario_id: userId, discipulador_id: discipuladorId },
+    });
   }
 
   async updateDiscipuladorId(userId: string, discipuladorId: string) {
