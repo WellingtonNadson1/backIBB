@@ -1586,7 +1586,7 @@ class UserRepositorie {
   }
 
   // Função para criar ou atualizar a relação discipulador_usuario
-  async createOrUpdateDiscipuladorRelation(userId: string, newDiscipuladorId: string) {
+  async createOrUpdateDiscipuladorRelation(userId: string, discipuladorId: string) {
     const prisma = createPrismaInstance();
 
     if (!prisma) {
@@ -1610,39 +1610,39 @@ class UserRepositorie {
 
       // Criar nova relação
       return await prisma.discipulador_usuario.create({
-        data: { usuario_id: userId, discipulador_id: newDiscipuladorId },
+        data: { usuario_id: userId, discipulador_id: discipuladorId },
       });
     }
   }
 
-  async updateDiscipuladorId(userId: string, newDiscipuladorId: string) {
+  async updateDiscipuladorId(userId: string, discipuladorId: string) {
     const prisma = createPrismaInstance();
 
     if (!prisma) {
       throw new Error("Prisma instance is null");
     }
-    console.log('newDiscipuladorId', newDiscipuladorId)
+    console.log('discipuladorId', discipuladorId)
 
     try {
       // Check if the new discipuladorId exists before updating
       const discipuladorExists = await prisma.discipulador_usuario.findFirst({
-        where: { discipulador_id: newDiscipuladorId },
+        where: { discipulador_id: discipuladorId },
       });
 
       if (!discipuladorExists) {
         // Create a new discipulador_usuario relation if it doesn't exist
         await prisma.discipulador_usuario.create({
-          data: { usuario_id: userId, discipulador_id: newDiscipuladorId },
+          data: { usuario_id: userId, discipulador_id: discipuladorId },
         });
       }
 
       await prisma.user.update({
         where: { id: userId },
-        data: { discipuladorId: newDiscipuladorId },
+        data: { discipuladorId: discipuladorId },
       });
 
       // Criar ou atualizar a relação discipulador_usuario
-      const newRelation = await this.createOrUpdateDiscipuladorRelation(userId, newDiscipuladorId);
+      const newRelation = await this.createOrUpdateDiscipuladorRelation(userId, discipuladorId);
       console.log("New relation created or updated:", newRelation);
 
       await disconnectPrisma();

@@ -189,11 +189,11 @@ class UserController {
     reply: FastifyReply
   ) {
     try {
-      const { id, newDiscipuladorId } = request.body as any;
-      if (newDiscipuladorId) {
+      const { id, discipuladorId } = request.body as any;
+      if (discipuladorId) {
         console.log('id', id)
-        console.log('newDiscipuladorId', newDiscipuladorId)
-        const result = await UserRepositorie.updateDiscipuladorId(id, newDiscipuladorId);
+        console.log('discipuladorId', discipuladorId)
+        const result = await UserRepositorie.updateDiscipuladorId(id, discipuladorId);
         return reply.code(200).send(result);
       }
       return reply.code(400).send({ message: "Discipulador ID not provided." });
