@@ -1,6 +1,11 @@
 import { FastifyReply, FastifyRequest } from "fastify";
+import LicoesCelulaRepositorie from "../../Repositories/LicoesCelulaRepositorie";
 import UploadLicoesCelulasService from "../../services/UploadLicoesCelulasService";
 import S3GetStorageLesson from "../../utils/S3GetStorageLesson";
+
+interface LicoesParams {
+  id: string;
+}
 
 // Defina uma interface personalizada para estender FastifyRequest
 export interface CustomFastifyRequest extends FastifyRequest {
@@ -37,6 +42,32 @@ class LicoesCelulaController {
     } catch (error) {
       return reply.code(400).send(error);
     }
+  }
+
+  async getLicoes(
+    request: FastifyRequest,
+    reply: FastifyReply
+  ) {
+    const { id } = request.params as LicoesParams;
+
+    const licoes =
+      await LicoesCelulaRepositorie.findById(id);
+    if (!licoes) {
+      return reply.code(404).send({ message: "Sem Lições de Célula!" });
+    }
+    return reply.code(200).send(licoes);
+
+  }
+  async getTema(
+    request: FastifyRequest,
+    reply: FastifyReply
+  ) {
+    const licoes =
+      await LicoesCelulaRepositorie.findMany();
+    if (!licoes) {
+      return reply.code(404).send({ message: "Sem Lições de Célula!" });
+    }
+    return reply.code(200).send(licoes);
   }
 }
 

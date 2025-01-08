@@ -18,9 +18,15 @@ const routerLicoesCelula = async (fastify: FastifyInstance) => {
     }
   );
   fastify.get(
-    "/licoescelulas",
+    "/api/licoes-celula",
     async (request: FastifyRequest, reply: FastifyReply) => {
-      await LicoesCelulaController.getLessons(request, reply);
+      await LicoesCelulaController.getLicoes(request, reply);
+    }
+  );
+  fastify.get(
+    "/api/licoes-celula/tema-of-month",
+    async (request: FastifyRequest, reply: FastifyReply) => {
+      await LicoesCelulaController.getTema(request, reply);
     }
   );
 };
