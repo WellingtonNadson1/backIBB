@@ -533,7 +533,7 @@ class PresencaCultoRepositorie {
                 id: id,
               },
             },
-            status: status,
+            status: Boolean(status),
             date_create: dataBrasilDate,
             date_update: date_update,
           },
