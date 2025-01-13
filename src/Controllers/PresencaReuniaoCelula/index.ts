@@ -1,5 +1,6 @@
 import { FastifyReply, FastifyRequest } from "fastify";
 import { Input, boolean, object, string } from "valibot";
+import { z } from "zod";
 import PresencaReuniaoCelulaRepositorie from "../../Repositories/PresencaReuniaoCelula";
 
 const PresencaReuniaoCelulaDataSchema = object({
@@ -11,6 +12,18 @@ const PresencaReuniaoCelulaDataSchema = object({
 export type PresencaReuniaoCelulaData = Input<
   typeof PresencaReuniaoCelulaDataSchema
 >;
+
+const NewPresencaReuniaoCelulaDataSchema = z.object({
+  which_reuniao_celula: z.string(),
+  membro: z.array(
+    z.object({
+      id: z.string(),
+      status: z.boolean(), //Pode ter um status (presente, ausente, justificado, etc.)
+    }),
+  ),
+});
+
+export type NewPresencaReuniaoCelulaDataSchema = z.infer<typeof NewPresencaReuniaoCelulaDataSchema>;
 
 interface PresencaReuniaoCelulaParams {
   id: string;
@@ -29,9 +42,9 @@ class PresencaReuniaoCelulaController {
 
   async isregister(
     request: FastifyRequest<{
-    Params: PresencaReuniaoCelulaParams;
-  }>,
-  reply: FastifyReply) {
+      Params: PresencaReuniaoCelulaParams;
+    }>,
+    reply: FastifyReply) {
     const { id } = request.params;
     console.log('Id mandado do front', id)
     const presencasReuniaoCelula =
@@ -75,14 +88,48 @@ class PresencaReuniaoCelulaController {
           .send({ message: "Presença de Culto já registrada para hoje!" });
       }
 
-        const presencaCelula =
-          await PresencaReuniaoCelulaRepositorie.createPresencaReuniaCelula({
-            ...presencasReuniaoCelulaDataForm,
-          });
-        return reply.code(201).send(presencaCelula);
+      const presencaCelula =
+        await PresencaReuniaoCelulaRepositorie.createPresencaReuniaCelula({
+          ...presencasReuniaoCelulaDataForm,
+        });
+      return reply.code(201).send(presencaCelula);
 
     } catch (error) {
       return reply.code(400).send(error);
+    }
+  }
+
+  async newstore(request: FastifyRequest, reply: FastifyReply) {
+    try {
+      const presencasReuniaoCelulaDataForm =
+        request.body as NewPresencaReuniaoCelulaDataSchema;
+
+      const { which_reuniao_celula, membro } = presencasReuniaoCelulaDataForm;
+      // Verifique se já existe uma presença registrada para o membro e culto
+      const existingPresenca = await PresencaReuniaoCelulaRepositorie.findFirst({
+        which_reuniao_celula: which_reuniao_celula,
+        membro: membro[0].id,
+      });
+
+      if (existingPresenca) {
+        return reply
+          .code(409)
+          .send({ message: "Presença de Célula já registrada para hoje!" });
+      }
+
+      const presencaCelula =
+        await PresencaReuniaoCelulaRepositorie.createNewPresencaReuniaCelula({
+          ...presencasReuniaoCelulaDataForm,
+        });
+
+      return reply.code(201).send({
+        presencaCelula,
+        message: "Presença Registrada!",
+      });
+
+    } catch (error: any) {
+      console.error(error); // Log o erro no console para depuração
+      return reply.code(400).send(error.message || "Erro interno do servidor");
     }
   }
 

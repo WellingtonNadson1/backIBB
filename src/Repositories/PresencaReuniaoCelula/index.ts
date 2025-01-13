@@ -1,11 +1,24 @@
-import { PresencaReuniaoCelulaData } from "../../Controllers/PresencaReuniaoCelula";
-import utc from "dayjs/plugin/utc"
-import timezone from "dayjs/plugin/timezone"
 import dayjs from "dayjs";
+import timezone from "dayjs/plugin/timezone";
+import utc from "dayjs/plugin/utc";
+import { z } from "zod";
+import { PresencaReuniaoCelulaData } from "../../Controllers/PresencaReuniaoCelula";
 import { createPrismaInstance, disconnectPrisma } from "../../services/prisma";
 
 dayjs.extend(utc);
 dayjs.extend(timezone);
+
+const PresencaNewReuniaoCelulaSchema = z.object({
+  which_reuniao_celula: z.string(),
+  membro: z.array(
+    z.object({
+      id: z.string(),
+      status: z.boolean(), //Pode ter um status (presente, ausente, justificado, etc.)
+    }),
+  ),
+});
+
+export type PresencaNewReuniaoCelula = z.infer<typeof PresencaNewReuniaoCelulaSchema>;
 
 const prisma = createPrismaInstance()
 
@@ -37,7 +50,7 @@ class PresencaReuniaoCelulaRepositorie {
     id: string) {
     const result = await prisma?.presencaReuniaoCelula.findFirst({
       where: {
-        which_reuniao_celula: {id: id},
+        which_reuniao_celula: { id: id },
       },
       select: {
         id: true,
@@ -69,8 +82,8 @@ class PresencaReuniaoCelulaRepositorie {
   }) {
     const result = await prisma?.presencaReuniaoCelula.findFirst({
       where: {
-        which_reuniao_celula: { id: which_reuniao_celula},
-        membro: { id: membro},
+        which_reuniao_celula: { id: which_reuniao_celula },
+        membro: { id: membro },
       },
       select: {
         id: true,
@@ -146,6 +159,41 @@ class PresencaReuniaoCelulaRepositorie {
     await disconnectPrisma()
     return result;
   }
+
+  async createNewPresencaReuniaCelula(presencaNewReuniaoDataForm: PresencaNewReuniaoCelula) {
+    const prisma = createPrismaInstance();
+
+    const { membro, which_reuniao_celula } = presencaNewReuniaoDataForm;
+    const dataBrasil = dayjs().tz("America/Sao_Paulo");
+    const date_create = dataBrasil.format("YYYY-MM-DDTHH:mm:ss.SSS[Z]");
+    const dataBrasilDate = new Date(date_create);
+    const date_update = dataBrasilDate;
+
+    const result = await prisma.$transaction(
+      membro.map(({ id, status }) =>
+        prisma.presencaReuniaoCelula.create({
+          data: {
+            which_reuniao_celula: {
+              connect: {
+                id: which_reuniao_celula,
+              },
+            },
+            membro: {
+              connect: {
+                id: id,
+              },
+            },
+            status: Boolean(status),
+            date_create: dataBrasilDate,
+            date_update: date_update,
+          },
+        }),
+      ),
+    );
+    await disconnectPrisma();
+    return result;
+  }
+
 
   async updatePresencaReuniaoCelula(id: string, presencaReuniaoCelulaDataForm: PresencaReuniaoCelulaData) {
     const { membro, ...presencaReuniaoCelulaData } = presencaReuniaoCelulaDataForm;
