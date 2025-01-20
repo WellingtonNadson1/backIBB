@@ -14,6 +14,16 @@ function getEndOfDay(date: Date): Date {
   return endOfDay;
 }
 
+function getStartOfMonth(date: Date): Date {
+  const startOfMonth = new Date(Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), 1));
+  return startOfMonth;
+}
+
+function getEndOfMonth(date: Date): Date {
+  const endOfMonth = new Date(Date.UTC(date.getUTCFullYear(), date.getUTCMonth() + 1, 0, 23, 59, 59, 999));
+  return endOfMonth;
+}
+
 class CelulaRepositorie {
   async findAll() {
     const prisma = createPrismaInstance();
@@ -185,6 +195,131 @@ class CelulaRepositorie {
     await disconnectPrisma();
     console.log(result?.membros[0].presencas_cultos);
     return result;
+  }
+
+  async findByIdDetails(id: string) {
+    const prisma = createPrismaInstance();
+
+    if (!prisma) {
+      throw new Error("Prisma instance is null");
+    }
+
+    const todayDate = new Date();
+    const startOfMonth = getStartOfMonth(todayDate);
+    const endOfMonth = getEndOfMonth(todayDate);
+
+    const result = await prisma?.celula.findUnique({
+      where: {
+        id: id,
+      },
+      select: {
+        id: true,
+        nome: true,
+        membros: {
+          select: {
+            id: true,
+            first_name: true,
+            presencas_cultos: {
+              where: {
+                date_create: {
+                  gte: startOfMonth,
+                  lte: endOfMonth,
+                },
+              },
+            },
+            presencas_reuniao_celula: {
+              where: {
+                date_create: {
+                  gte: startOfMonth,
+                  lte: endOfMonth,
+                },
+                status: true
+              },
+            },
+            discipulador: {
+              select: {
+                user_discipulador: {
+                  select: {
+                    id: true,
+                    first_name: true,
+                  },
+                },
+              },
+            },
+            discipulos: {
+              select: {
+                user_discipulos: {
+                  select: {
+                    id: true,
+                    first_name: true,
+                  },
+                },
+                _count: {
+                  select: {
+                    discipulado: {
+                      where: {
+                        data_ocorreu: {
+                          gte: startOfMonth,
+                          lte: endOfMonth,
+                        }
+                      }
+                    },
+                  }
+                }
+              },
+
+            },
+            cargo_de_lideranca: {
+              select: {
+                id: true,
+                nome: true,
+              },
+            },
+            situacao_no_reino: {
+              select: {
+                id: true,
+                nome: true,
+              },
+            },
+            user: {
+              select: {
+                id: true,
+                first_name: true,
+              },
+            },
+          },
+        },
+        lider: {
+          select: {
+            id: true,
+            first_name: true,
+          },
+        },
+        supervisao: {
+          select: {
+            id: true,
+            nome: true,
+          },
+        },
+      },
+    });
+
+    await disconnectPrisma();
+
+    // Preparando o resultado
+    const membrosComCultos = result?.membros.map(membro => ({
+      id: membro.id,
+      first_name: membro.first_name,
+      total_cultos: membro.presencas_cultos.length,
+      cultos_status_true: membro.presencas_cultos.filter(culto => culto.status).length,
+      total_celulas: membro.presencas_reuniao_celula.length,
+      celulas_status_true: membro.presencas_reuniao_celula.filter(celula => celula.status).length,
+    }));
+
+    // Logando os cultos
+    console.log(membrosComCultos);
+
+    return { membrosComCultos };
   }
 
   async findById(id: string) {

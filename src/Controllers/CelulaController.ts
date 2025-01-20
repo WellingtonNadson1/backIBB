@@ -73,6 +73,20 @@ class CelulaController {
       return reply.code(404).send({ message: "Celula not found!" });
     }
     return reply.code(200).send(celula);
+
+  }
+  async showDetails(
+    request: FastifyRequest<{
+      Params: CelulaParams;
+    }>,
+    reply: FastifyReply
+  ) {
+    const id = request.params.id;
+    const celula = await CelulaRepositorie.findByIdDetails(id);
+    if (!celula) {
+      return reply.code(404).send({ message: "Celula not found!" });
+    }
+    return reply.code(200).send(celula);
   }
 
   async store(request: FastifyRequest, reply: FastifyReply) {
