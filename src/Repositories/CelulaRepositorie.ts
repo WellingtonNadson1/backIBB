@@ -310,6 +310,10 @@ class CelulaRepositorie {
     const membrosComCultos = result?.membros.map(membro => ({
       id: membro.id,
       first_name: membro.first_name,
+      possui_disciopulador: membro.discipulador.length > 0,
+      discipula: membro.discipulos.length > 0,
+      cargo_de_lideranca: membro.cargo_de_lideranca?.nome,
+      situacao_no_reino: membro.situacao_no_reino?.nome,
       total_cultos: membro.presencas_cultos.length,
       cultos_status_true: membro.presencas_cultos.filter(culto => culto.status).length,
       total_celulas: membro.presencas_reuniao_celula.length,
