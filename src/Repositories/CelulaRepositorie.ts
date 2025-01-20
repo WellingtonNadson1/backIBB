@@ -350,7 +350,7 @@ class CelulaRepositorie {
     // console.log(result);
     console.log(membrosComCultos);
 
-    return { result, membrosComCultos };
+    return { membrosComCultos };
   }
 
   async findById(id: string) {
