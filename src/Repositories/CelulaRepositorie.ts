@@ -215,6 +215,32 @@ class CelulaRepositorie {
       select: {
         id: true,
         nome: true,
+        reunioes_celula: {
+          where: {
+            data_reuniao: {
+              gte: startOfMonth,
+              lte: endOfMonth,
+            }
+          },
+          select: {
+            id: true,
+            data_reuniao: true,
+            visitantes: true,
+            almas_ganhas: true,
+            presencas_membros_reuniao_celula: {
+              select: {
+                status: true,
+                membro: {
+                  select: {
+                    id: true,
+                    first_name: true,
+                    last_name: true,
+                  },
+                },
+              },
+            },
+          },
+        },
         membros: {
           select: {
             id: true,
@@ -316,14 +342,15 @@ class CelulaRepositorie {
       situacao_no_reino: membro.situacao_no_reino?.nome,
       total_cultos: membro.presencas_cultos.length,
       cultos_status_true: membro.presencas_cultos.filter(culto => culto.status).length,
-      total_celulas: membro.presencas_reuniao_celula.length,
+      total_celulas: result.reunioes_celula.length,
       celulas_status_true: membro.presencas_reuniao_celula.filter(celula => celula.status).length,
     }));
 
     // Logando os cultos
+    // console.log(result);
     console.log(membrosComCultos);
 
-    return { membrosComCultos };
+    return { result, membrosComCultos };
   }
 
   async findById(id: string) {

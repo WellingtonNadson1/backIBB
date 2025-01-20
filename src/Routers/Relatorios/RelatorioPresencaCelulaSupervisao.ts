@@ -1,7 +1,7 @@
-import { FastifyInstance, FastifyReply, FastifyRequest } from "fastify";
-import { createPrismaInstance, disconnectPrisma } from "../../services/prisma";
 import dayjs from "dayjs";
+import { FastifyInstance, FastifyReply, FastifyRequest } from "fastify";
 import { CultoIndividualForDate } from "../../Controllers/Culto/CultoIndividual";
+import { createPrismaInstance, disconnectPrisma } from "../../services/prisma";
 
 const routerRelatorioPresencaCelula = async (fastify: FastifyInstance) => {
   fastify.post(
@@ -13,7 +13,6 @@ const routerRelatorioPresencaCelula = async (fastify: FastifyInstance) => {
         const { startDate, endDate, superVisionId } =
           request.body as CultoIndividualForDate;
 
-        const dataInicio = dayjs(startDate).toISOString();
         const dataFim = dayjs(endDate).endOf("day").toISOString();
 
         const supervisionData = await prisma.supervisao.findUnique({
