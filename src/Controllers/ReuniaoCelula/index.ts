@@ -1,3 +1,4 @@
+import dayjs from "dayjs";
 import { FastifyReply, FastifyRequest } from "fastify";
 import ReuniaoCelulaRepositorie from "../../Repositories/ReuniaoCelula";
 
@@ -51,8 +52,12 @@ class ReuniaoSemanalCelulaController {
     try {
       const reuniaoCelulaDataForm = request.body as ReuniaoCelulaData;
       const { data_reuniao, celula } = reuniaoCelulaDataForm
+
+      // Formatar a data para ignorar o horário
+      const dataReuniaoFormatada = dayjs(data_reuniao).format('YYYY-MM-DD');
+
       const reuniaoCelulaExist = await ReuniaoCelulaRepositorie.reuniaoCelulaExist({
-        data_reuniao, celula
+        data_reuniao: dataReuniaoFormatada, celula
       })
       if (reuniaoCelulaExist.length > 0) {
         return reply

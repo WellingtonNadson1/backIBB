@@ -1,8 +1,8 @@
-import { Prisma, PrismaClient } from "@prisma/client";
-import { ReuniaoCelulaData } from "../../Controllers/ReuniaoCelula";
-import utc from "dayjs/plugin/utc";
-import timezone from "dayjs/plugin/timezone";
+import { Prisma } from "@prisma/client";
 import dayjs from "dayjs";
+import timezone from "dayjs/plugin/timezone";
+import utc from "dayjs/plugin/utc";
+import { ReuniaoCelulaData } from "../../Controllers/ReuniaoCelula";
 import { createPrismaInstance, disconnectPrisma } from "../../services/prisma";
 
 interface ReuniaoCelulaResult {
@@ -30,7 +30,7 @@ class ReuniaoCelulaRepositorie {
     data_reuniao,
     celula,
   }: {
-    data_reuniao: Date;
+    data_reuniao: string;
     celula: string;
   }): Promise<ReuniaoCelulaResult[]> {
     console.log("Data Reunia: ", data_reuniao);
