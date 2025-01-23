@@ -1,6 +1,7 @@
 import { Prisma } from "@prisma/client";
 import { CelulaData } from "../Controllers/CelulaController";
 import { createPrismaInstance, disconnectPrisma } from "../services/prisma";
+import { CultoIndividualRepositorie } from "./Culto";
 
 function getStartOfDay(date: Date): Date {
   const startOfDay = new Date(date);
@@ -207,6 +208,13 @@ class CelulaRepositorie {
     const todayDate = new Date();
     const startOfMonth = getStartOfMonth(todayDate);
     const endOfMonth = getEndOfMonth(todayDate);
+    const endOfDay = getEndOfDay(todayDate);
+
+    const cultosIndividuaisPerPeriod =
+      await CultoIndividualRepositorie.findPerPeriod(
+        startOfMonth,
+        endOfDay,
+      );
 
     const result = await prisma?.celula.findUnique({
       where: {
@@ -340,15 +348,11 @@ class CelulaRepositorie {
       discipula: membro.discipulos.length > 0,
       cargo_de_lideranca: membro.cargo_de_lideranca?.nome,
       situacao_no_reino: membro.situacao_no_reino?.nome,
-      total_cultos: membro.presencas_cultos.length,
+      total_cultos: cultosIndividuaisPerPeriod.length,
       cultos_status_true: membro.presencas_cultos.filter(culto => culto.status).length,
       total_celulas: result.reunioes_celula.length,
       celulas_status_true: membro.presencas_reuniao_celula.filter(celula => celula.status).length,
     }));
-
-    // Logando os cultos
-    // console.log(result);
-    console.log(membrosComCultos);
 
     return { membrosComCultos };
   }
