@@ -1,7 +1,7 @@
 import { Prisma } from "@prisma/client";
+import dayjs from "dayjs";
 import { CultoIndividualData } from "../../Controllers/Culto/CultoIndividual";
 import { createPrismaInstance, disconnectPrisma } from "../../services/prisma";
-import dayjs from "dayjs";
 
 type UpdateCultoIndividualInput = Prisma.CultoIndividualUpdateInput & {
   presencas_culto?: { connect: { id: string } }[];
@@ -98,7 +98,7 @@ class CultoIndividualRepositorie {
         return (
           total +
           (sacrificio.culto_semana?.id ===
-          "e7bc72d1-8faa-4bbe-9c24-475b64f956cf"
+            "e7bc72d1-8faa-4bbe-9c24-475b64f956cf"
             ? 1
             : 0)
         );
@@ -126,7 +126,7 @@ class CultoIndividualRepositorie {
         return (
           total +
           (domingoManha.culto_semana?.id ===
-          "cab02f30-cade-46ca-b118-930461013d53"
+            "cab02f30-cade-46ca-b118-930461013d53"
             ? 1
             : 0)
         );
@@ -136,7 +136,7 @@ class CultoIndividualRepositorie {
         return (
           total +
           (domingoTarde.culto_semana?.id ===
-          "ea08ec9b-3d1b-42f3-818a-ec53ef99b78f"
+            "ea08ec9b-3d1b-42f3-818a-ec53ef99b78f"
             ? 1
             : 0)
         );
@@ -204,6 +204,38 @@ class CultoIndividualRepositorie {
         },
         take: limit,
         skip: offset,
+      });
+      return result;
+    } finally {
+      await disconnectPrisma();
+    }
+  }
+
+  async findPerPeriodDetails(firstDayOfMonth: Date, lastDayOfPeriod: Date) {
+    const prisma = createPrismaInstance();
+    try {
+      const lastDayOfPeriodQuery = dayjs(lastDayOfPeriod).endOf("day");
+      const result = await prisma?.cultoIndividual.findMany({
+        where: {
+          data_inicio_culto: {
+            gte: firstDayOfMonth,
+            lte: lastDayOfPeriodQuery.toISOString(),
+          },
+        },
+        orderBy: {
+          data_inicio_culto: "asc", // Ordena em ordem crescente
+        },
+        select: {
+          id: true,
+          data_inicio_culto: true,
+          data_termino_culto: true,
+          culto_semana: {
+            select: {
+              id: true,
+              nome: true,
+            },
+          },
+        },
       });
       return result;
     } finally {

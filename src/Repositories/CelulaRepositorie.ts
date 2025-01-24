@@ -15,6 +15,11 @@ function getEndOfDay(date: Date): Date {
   return endOfDay;
 }
 
+function getEndOfDayUTC(date: Date): Date {
+  const endOfDay = new Date(Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), date.getUTCDate(), 23, 59, 59, 999));
+  return endOfDay;
+}
+
 function getStartOfMonth(date: Date): Date {
   const startOfMonth = new Date(Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), 1));
   return startOfMonth;
@@ -82,11 +87,6 @@ class CelulaRepositorie {
       throw new Error("Prisma instance is null");
     }
 
-    const todayDate = new Date();
-    const startOfDay = getStartOfDay(todayDate);
-    const endOfDay = getEndOfDay(todayDate);
-
-    console.log("todayDate", todayDate);
     const result = await prisma?.celula.findUnique({
       where: {
         id: id,
@@ -104,10 +104,6 @@ class CelulaRepositorie {
                 cultoIndividualId: {
                   in: idsCultos
                 },
-                // date_create: {
-                //   gte: startOfDay,
-                //   lte: endOfDay,
-                // },
               },
             },
             discipulador: {
@@ -194,7 +190,6 @@ class CelulaRepositorie {
     });
 
     await disconnectPrisma();
-    console.log(result?.membros[0].presencas_cultos);
     return result;
   }
 
@@ -208,10 +203,10 @@ class CelulaRepositorie {
     const todayDate = new Date();
     const startOfMonth = getStartOfMonth(todayDate);
     const endOfMonth = getEndOfMonth(todayDate);
-    const endOfDay = getEndOfDay(todayDate);
+    const endOfDay = getEndOfDayUTC(todayDate);
 
     const cultosIndividuaisPerPeriod =
-      await CultoIndividualRepositorie.findPerPeriod(
+      await CultoIndividualRepositorie.findPerPeriodDetails(
         startOfMonth,
         endOfDay,
       );
