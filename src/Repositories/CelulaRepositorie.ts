@@ -203,13 +203,17 @@ class CelulaRepositorie {
     const todayDate = new Date();
     const startOfMonth = getStartOfMonth(todayDate);
     const endOfMonth = getEndOfMonth(todayDate);
-    const endOfDay = getEndOfDayUTC(todayDate);
+    const endOfDay = getEndOfDay(todayDate);
 
     const cultosIndividuaisPerPeriod =
       await CultoIndividualRepositorie.findPerPeriodDetails(
         startOfMonth,
         endOfDay,
       );
+    console.log('todayDate', todayDate)
+    console.log('startOfMonth', startOfMonth)
+    console.log('endOfDay', endOfDay)
+    console.log('cultosIndividuaisPerPeriod', cultosIndividuaisPerPeriod)
 
     const result = await prisma?.celula.findUnique({
       where: {

@@ -1,6 +1,5 @@
 import { FastifyInstance } from "fastify";
 import { ZodTypeProvider } from "fastify-type-provider-zod";
-import { z } from "zod";
 
 type ResetPasswordData = {
   email: string;
@@ -19,7 +18,7 @@ export async function requestResetPassword(fastify: FastifyInstance) {
           where: { email }
         })
         if (!userForEmail) {
-          return reply.status(201).send()
+          return reply.status(500).send()
         }
         const tokenCreated = await prisma?.token.create({
           data: {
