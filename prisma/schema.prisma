@@ -177,13 +177,13 @@ model LicaoCelula {
   titulo               String
   versiculo_chave      String
   link_objeto_aws      String?
-  licao_lancando_redes Boolean          @default(false)
   data_inicio          DateTime
   data_termino         DateTime
   date_create          DateTime         @default(now())
   date_update          DateTime         @updatedAt
-  TemaLicaoCelula      TemaLicaoCelula? @relation(fields: [temaLicaoCelulaId], references: [id], onDelete: Cascade)
   temaLicaoCelulaId    String?
+  licao_lancando_redes Boolean?         @default(false)
+  TemaLicaoCelula      TemaLicaoCelula? @relation(fields: [temaLicaoCelulaId], references: [id], onDelete: Cascade)
 
   @@map("licao_celula")
 }
@@ -265,18 +265,31 @@ model Supervisao {
   @@map("supervisao")
 }
 
+model Agenda {
+  status       Boolean  @default(false)
+  id           String   @id @default(uuid())
+  title        String?
+  description  String?
+  data_inicio  DateTime
+  data_termino DateTime
+  date_create  DateTime @default(now())
+  date_update  DateTime @updatedAt
+
+  @@map("agenda")
+}
+
 model TemaLicaoCelula {
-  status          Boolean       @default(false)
   id              String        @id @default(uuid())
-  tema            String?
-  folderName      String?
-  versiculo_chave String?
+  tema            String
   link_folder_aws String?
   data_inicio     DateTime
   data_termino    DateTime
-  licoes_celula   LicaoCelula[]
   date_create     DateTime      @default(now())
   date_update     DateTime      @updatedAt
+  folderName      String?
+  status          Boolean       @default(false)
+  versiculo_chave String?       @default("versiculo")
+  licoes_celula   LicaoCelula[]
 
   @@map("tema_licao_celula")
 }
