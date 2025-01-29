@@ -5,25 +5,26 @@ import Fastify, { FastifyInstance } from "fastify";
 import multer from "fastify-multer";
 import { requireAuth } from "./Middlewares/authMiddleware";
 // import routerAccount from "./Routers/AccountRouters";
+import { PrismaClient } from "@prisma/client";
+import routerAgenda from "./Routers/Agenda";
 import routerCargoslideranca from "./Routers/Cargoslideranca";
 import routerCelula from "./Routers/CelulaRouters";
 import registerCultoRoutes from "./Routers/Culto";
+import routerRegisterDiscipulado from "./Routers/DiscipuladosIBB";
 import routerEncontro from "./Routers/EncontroRouters";
 import registerEscolaRoutes from "./Routers/Escola";
 import routerLogin from "./Routers/LoginRouter";
 import routerPresencaReuniaCelula from "./Routers/PresencaReuniaoCelula";
 import routerRelatorioPresencaCulto from "./Routers/Relatorios/RelatorioCultosSupervisao";
+import routerRelatorioPresencaCelula from "./Routers/Relatorios/RelatorioPresencaCelulaSupervisao";
 import routerReuniaoSemanalCelula from "./Routers/ReuniaoCelula";
 import routerSituacaoNoReino from "./Routers/SituacaoNoReino";
 import routerSupervisao from "./Routers/SupervisaoRouters";
 import routerUser from "./Routers/UserRouters";
 import routerLicoesCelula from "./Routers/upLoads/LicoesCelula";
-import { createPrismaInstance, disconnectPrisma } from "./services/prisma";
-import { PrismaClient } from "@prisma/client";
-import routerRegisterDiscipulado from "./Routers/DiscipuladosIBB";
-import routerRelatorioPresencaCelula from "./Routers/Relatorios/RelatorioPresencaCelulaSupervisao";
 import { requestResetPassword } from "./auth/request-reset-password";
 import { ResetPassword } from "./auth/reset-password";
+import { createPrismaInstance, disconnectPrisma } from "./services/prisma";
 // import routerLicoesCelula from "./Routers/upLoads/LicoesCelula";
 
 declare module 'fastify' {
@@ -77,6 +78,7 @@ const start = async () => {
     await app.register(routerRelatorioPresencaCelula);
     await app.register(requestResetPassword);
     await app.register(ResetPassword);
+    await app.register(routerAgenda);
     // console.log('server', app.register(routerRegisterDiscipulado))
 
     await app.listen({
