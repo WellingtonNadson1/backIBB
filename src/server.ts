@@ -21,13 +21,14 @@ import routerReuniaoSemanalCelula from "./Routers/ReuniaoCelula";
 import routerSituacaoNoReino from "./Routers/SituacaoNoReino";
 import routerSupervisao from "./Routers/SupervisaoRouters";
 import routerUser from "./Routers/UserRouters";
+import { dizimoRoutes } from "./Routers/dizimoRoutes";
 import routerLicoesCelula from "./Routers/upLoads/LicoesCelula";
 import { requestResetPassword } from "./auth/request-reset-password";
 import { ResetPassword } from "./auth/reset-password";
 import { createPrismaInstance, disconnectPrisma } from "./services/prisma";
 // import routerLicoesCelula from "./Routers/upLoads/LicoesCelula";
 
-declare module 'fastify' {
+declare module "fastify" {
   export interface FastifyRequest {
     prisma: PrismaClient;
   }
@@ -44,22 +45,21 @@ app.register(cors, {
 
 app.addHook("onRequest", requireAuth);
 
-app.addHook('onRequest', async (request, reply) => {
+app.addHook("onRequest", async (request, reply) => {
   request.prisma = createPrismaInstance();
 });
 
-app.addHook('onResponse', async (request, reply) => {
+app.addHook("onResponse", async (request, reply) => {
   if (request.prisma) {
     await disconnectPrisma();
   }
 });
 
-
 const start = async () => {
-
   try {
     await app.register(multer.contentParser);
     await app.register(routerLogin);
+    await app.register(dizimoRoutes);
     // await app.register(routerEvento)
     await registerEscolaRoutes(app);
     await registerCultoRoutes(app);

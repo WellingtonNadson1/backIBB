@@ -265,6 +265,30 @@ model Supervisao {
   @@map("supervisao")
 }
 
+model Dizimo {
+  id           String   @id @default(uuid())
+  user         User?    @relation(fields: [userId], references: [id])
+  valor        Decimal?
+  data_dizimou DateTime
+  date_create  DateTime @default(now())
+  date_update  DateTime @updatedAt
+  userId       String?
+
+  @@map("dizimo")
+}
+
+model Oferta {
+  id           String   @id @default(uuid())
+  user         User?    @relation(fields: [userId], references: [id])
+  valor        Decimal?
+  data_ofertou DateTime
+  date_create  DateTime @default(now())
+  date_update  DateTime @updatedAt
+  userId       String?
+
+  @@map("oferta")
+}
+
 model Agenda {
   status       Boolean  @default(false)
   id           String   @id @default(uuid())
@@ -381,6 +405,8 @@ model User {
   user_roles               user_roles[]
   encontros                Encontros[]             @relation("EncontrosToUser")
   escolas                  Escola[]                @relation("EscolaToUser")
+  Dizimo                   Dizimo[]
+  Oferta                   Oferta[]
 
   @@map("user")
 }
