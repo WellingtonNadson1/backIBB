@@ -63,27 +63,27 @@ class UserRepositorie {
           },
         },
         select: {
-          almas_ganhas: true
-        }
-      })
-    ])
+          almas_ganhas: true,
+        },
+      }),
+    ]);
     const almasGanhasNoAno = almasGanhasAno[0].reduce(
       (total, reuniao) => total + (reuniao.almas_ganhas ?? 0),
-      0,
+      0
     );
-    console.log('almasGanhasNoAno', almasGanhasNoAno)
+    console.log("almasGanhasNoAno", almasGanhasNoAno);
 
     //DEFINE O INICIO DO CORRENTE MES
     const startOfMonth = new Date(
       new Date().getFullYear(),
       new Date().getMonth(),
-      1,
+      1
     );
     //DEFINE O FIM DO CORRENTE MES
     const endOfMonth = new Date(
       new Date().getFullYear(),
       new Date().getMonth() + 1,
-      0,
+      0
     );
 
     if (!prisma) {
@@ -97,7 +97,7 @@ class UserRepositorie {
             lt: new Date(
               endOfMonth.getFullYear(),
               endOfMonth.getMonth(),
-              endOfMonth.getDate() + 1,
+              endOfMonth.getDate() + 1
             ),
           },
         },
@@ -126,9 +126,9 @@ class UserRepositorie {
                       cargo_de_lideranca: {
                         select: {
                           id: true,
-                          nome: true
-                        }
-                      }
+                          nome: true,
+                        },
+                      },
                     },
                   },
                 },
@@ -157,7 +157,7 @@ class UserRepositorie {
     // Calcula a quantidade de almas ganhas no presente mês
     const almasGanhasNoMes = almasGanhasMes[0].reduce(
       (total, reuniao) => total + (reuniao.almas_ganhas ?? 0),
-      0,
+      0
     );
 
     //DEFINE O INICIO DO MES PASSADO
@@ -165,7 +165,7 @@ class UserRepositorie {
       new Date().getFullYear(),
       new Date().getMonth() - 1,
       1
-    )
+    );
 
     //DEFINE O FIM DO MES PASSADO
     const endOfLastMonth = new Date(
@@ -182,7 +182,7 @@ class UserRepositorie {
             lt: new Date(
               endOfLastMonth.getFullYear(),
               endOfLastMonth.getMonth(),
-              endOfLastMonth.getDate() + 1,
+              endOfLastMonth.getDate() + 1
             ),
           },
         },
@@ -194,7 +194,7 @@ class UserRepositorie {
 
     const almasGanhasNoMesPassado = almasGanhasMesPassado[0].reduce(
       (total, reuniao) => total + (reuniao.almas_ganhas ?? 0),
-      0,
+      0
     );
 
     await disconnectPrisma();
@@ -202,7 +202,7 @@ class UserRepositorie {
       combinedData,
       almasGanhasNoMes,
       almasGanhasNoMesPassado,
-      almasGanhasNoAno
+      almasGanhasNoAno,
     };
   }
 
@@ -326,23 +326,21 @@ class UserRepositorie {
     return result;
   }
 
-  async findAllDiscipulosSupervisor(
-    {
-      dicipuladosupervisaoId,
-      supervisorId
-    }: {
-      dicipuladosupervisaoId: string,
-      supervisorId: string
-    }
-  ) {
+  async findAllDiscipulosSupervisor({
+    dicipuladosupervisaoId,
+    supervisorId,
+  }: {
+    dicipuladosupervisaoId: string;
+    supervisorId: string;
+  }) {
     const prisma = createPrismaInstance();
 
     if (!supervisorId) {
       throw new Error("Supervisor ID is not defined");
     }
 
-    console.log('dicipuladosupervisaoId', dicipuladosupervisaoId)
-    console.log('supervisorId', supervisorId)
+    console.log("dicipuladosupervisaoId", dicipuladosupervisaoId);
+    console.log("supervisorId", supervisorId);
 
     if (!prisma) {
       throw new Error("Prisma instance is null");
@@ -352,10 +350,10 @@ class UserRepositorie {
         discipulador: {
           some: {
             user_discipulador: {
-              id: supervisorId
-            }
-          }
-        }
+              id: supervisorId,
+            },
+          },
+        },
       },
       select: {
         id: true,
@@ -376,7 +374,7 @@ class UserRepositorie {
               select: {
                 id: true,
                 first_name: true,
-                cargo_de_lideranca: true
+                cargo_de_lideranca: true,
               },
             },
           },
@@ -459,24 +457,21 @@ class UserRepositorie {
     });
     await disconnectPrisma();
 
-    console.log('result discipulos', result)
+    console.log("result discipulos", result);
     return result;
   }
 
-  async findAllDiscipulosSupervisores(
-    {
-      dicipuladosupervisaoId,
-      cargoLiderancaSupervisores
-    }: {
-      dicipuladosupervisaoId: string,
-      cargoLiderancaSupervisores: { id: string, nome: string }[]
-    }
-
-  ) {
+  async findAllDiscipulosSupervisores({
+    dicipuladosupervisaoId,
+    cargoLiderancaSupervisores,
+  }: {
+    dicipuladosupervisaoId: string;
+    cargoLiderancaSupervisores: { id: string; nome: string }[];
+  }) {
     const prisma = createPrismaInstance();
 
-    console.log('dicipuladosupervisaoId', dicipuladosupervisaoId)
-    console.log('cargoLiderancaSupervisores', cargoLiderancaSupervisores)
+    console.log("dicipuladosupervisaoId", dicipuladosupervisaoId);
+    console.log("cargoLiderancaSupervisores", cargoLiderancaSupervisores);
 
     if (!prisma) {
       throw new Error("Prisma instance is null");
@@ -484,10 +479,10 @@ class UserRepositorie {
     const result = await prisma?.user.findMany({
       where: {
         supervisaoId: dicipuladosupervisaoId,
-        OR: cargoLiderancaSupervisores.map(cargo => ({
+        OR: cargoLiderancaSupervisores.map((cargo) => ({
           cargo_de_lideranca: {
             nome: {
-              contains: cargo.nome
+              contains: cargo.nome,
             },
           },
         })),
@@ -511,7 +506,7 @@ class UserRepositorie {
               select: {
                 id: true,
                 first_name: true,
-                cargo_de_lideranca: true
+                cargo_de_lideranca: true,
               },
             },
           },
@@ -594,7 +589,7 @@ class UserRepositorie {
     });
     await disconnectPrisma();
 
-    console.log('result', result)
+    console.log("result", result);
     return result;
   }
 
@@ -712,6 +707,57 @@ class UserRepositorie {
         presencas_aulas_escolas: false,
         presencas_cultos: false,
         password: false,
+      },
+    });
+    await disconnectPrisma();
+    return result;
+  }
+
+  async findAllMembers() {
+    const prisma = createPrismaInstance();
+
+    if (!prisma) {
+      throw new Error("Prisma instance is null");
+    }
+    const result = await prisma?.user.findMany({
+      select: {
+        id: true,
+        user_roles: {
+          select: {
+            rolenew: {
+              select: {
+                name: true,
+              },
+            },
+          },
+        },
+        image_url: true,
+        first_name: true,
+        last_name: true,
+        supervisao_pertence: {
+          select: {
+            id: true,
+            nome: true,
+          },
+        },
+        celula: {
+          select: {
+            id: true,
+            nome: true,
+          },
+        },
+        situacao_no_reino: {
+          select: {
+            id: true,
+            nome: true,
+          },
+        },
+        cargo_de_lideranca: {
+          select: {
+            id: true,
+            nome: true,
+          },
+        },
       },
     });
     await disconnectPrisma();
@@ -1273,10 +1319,10 @@ class UserRepositorie {
         celula: celula ? { connect: { id: celula } } : undefined,
         celula_lidera: celula_lidera
           ? {
-            connect: celula_lidera?.map((celulaLideraId) => ({
-              id: celulaLideraId,
-            })),
-          }
+              connect: celula_lidera?.map((celulaLideraId) => ({
+                id: celulaLideraId,
+              })),
+            }
           : undefined,
         escola_lidera: {
           connect: escola_lidera?.map((escolaLideraId) => ({
@@ -1302,7 +1348,7 @@ class UserRepositorie {
           connect: presencas_reuniao_celula?.map(
             (presencasReuniaoCelulaId) => ({
               id: presencasReuniaoCelulaId,
-            }),
+            })
           ),
         },
         escolas: {
@@ -1327,8 +1373,8 @@ class UserRepositorie {
   }
 
   async updateUser(id: string, userDataForm: UserData) {
-    const dataBrasil = dayjs().tz('America/Sao_Paulo');
-    const date_create = dataBrasil.format('YYYY-MM-DDTHH:mm:ss.SSS[Z]')
+    const dataBrasil = dayjs().tz("America/Sao_Paulo");
+    const date_create = dataBrasil.format("YYYY-MM-DDTHH:mm:ss.SSS[Z]");
     const dataBrasilDate = new Date(date_create);
     const date_update = dataBrasilDate;
     const prisma = createPrismaInstance();
@@ -1366,29 +1412,25 @@ class UserRepositorie {
         date_casamento,
       };
 
-      const discipulador = await prisma.user.findFirst(
-        {
-          where: {
-            id: id,
-          },
-          select: {
-            discipulador: true
-          }
-        }
-      )
-      console.log(discipulador)
+      const discipulador = await prisma.user.findFirst({
+        where: {
+          id: id,
+        },
+        select: {
+          discipulador: true,
+        },
+      });
+      console.log(discipulador);
 
-      const discipulos = await prisma.user.findFirst(
-        {
-          where: {
-            id: id,
-          },
-          select: {
-            discipulos: true
-          }
-        }
-      )
-      console.log(discipulos)
+      const discipulos = await prisma.user.findFirst({
+        where: {
+          id: id,
+        },
+        select: {
+          discipulos: true,
+        },
+      });
+      console.log(discipulos);
       // Conecte os relacionamentos opcionais apenas se forem fornecidos
       // Conectar ao discipulador_usuario
       if (discipuladorId) {
@@ -1403,7 +1445,7 @@ class UserRepositorie {
       }
 
       if (discipulos) {
-        updateUserInput.discipulos
+        updateUserInput.discipulos;
       }
       // if (discipuladorId) {
       //   // Remove existing connection if needed (optional, depending on use case)
@@ -1458,11 +1500,13 @@ class UserRepositorie {
         const celulaLideraIds = celula_lidera.map((celulaLideraId) => ({
           id: celulaLideraId,
         }));
-        updateUserInput.celula_lidera = celulaLideraIds.map((celulaLideraId) => ({
-          connect: {
-            id: celulaLideraId.id,
-          },
-        }));
+        updateUserInput.celula_lidera = celulaLideraIds.map(
+          (celulaLideraId) => ({
+            connect: {
+              id: celulaLideraId.id,
+            },
+          })
+        );
       }
 
       if (escola_lidera !== undefined) {
@@ -1480,33 +1524,41 @@ class UserRepositorie {
         const supervisoesIds = supervisoes_lidera.map((supervisoesId) => ({
           id: supervisoesId,
         }));
-        updateUserInput.supervisoes_lidera = supervisoesIds.map((supervisaoId) => ({
-          connect: {
-            id: supervisaoId.id,
-          },
-        }));
+        updateUserInput.supervisoes_lidera = supervisoesIds.map(
+          (supervisaoId) => ({
+            connect: {
+              id: supervisaoId.id,
+            },
+          })
+        );
       }
 
       if (presencas_aulas_escolas !== undefined) {
         const aulaEscolaIds = presencas_aulas_escolas.map((aulaEscolaId) => ({
           id: aulaEscolaId,
         }));
-        updateUserInput.presencas_aulas_escolas = aulaEscolaIds.map((aulaId) => ({
-          connect: {
-            id: aulaId.id,
-          },
-        }));
+        updateUserInput.presencas_aulas_escolas = aulaEscolaIds.map(
+          (aulaId) => ({
+            connect: {
+              id: aulaId.id,
+            },
+          })
+        );
       }
 
       if (presencas_reuniao_celula !== undefined) {
-        const ReuniaoCelulaIds = presencas_reuniao_celula?.map((reuniaoCelulaId) => ({
-          id: reuniaoCelulaId,
-        }));
-        updateUserInput.presencas_reuniao_celula = ReuniaoCelulaIds?.map((reuniaoCelulaId) => ({
-          connect: {
-            id: reuniaoCelulaId.id,
-          },
-        }));
+        const ReuniaoCelulaIds = presencas_reuniao_celula?.map(
+          (reuniaoCelulaId) => ({
+            id: reuniaoCelulaId,
+          })
+        );
+        updateUserInput.presencas_reuniao_celula = ReuniaoCelulaIds?.map(
+          (reuniaoCelulaId) => ({
+            connect: {
+              id: reuniaoCelulaId.id,
+            },
+          })
+        );
       }
 
       if (presencas_cultos !== undefined) {
@@ -1569,7 +1621,7 @@ class UserRepositorie {
         };
       }
 
-      console.log('updateUserInput', updateUserInput)
+      console.log("updateUserInput", updateUserInput);
 
       const result = await prisma?.user.update({
         where: {
@@ -1581,12 +1633,15 @@ class UserRepositorie {
       await disconnectPrisma();
       return result;
     } catch (error) {
-      console.error(error)
+      console.error(error);
     }
   }
 
   // Função para criar ou atualizar a relação discipulador_usuario
-  async createOrUpdateDiscipuladorRelation(userId: string, discipuladorId: string) {
+  async createOrUpdateDiscipuladorRelation(
+    userId: string,
+    discipuladorId: string
+  ) {
     const prisma = createPrismaInstance();
 
     if (!prisma) {
@@ -1597,7 +1652,7 @@ class UserRepositorie {
       where: { usuario_id: userId },
     });
 
-    console.log('existingRelation com Disicipulo: ', existingRelation)
+    console.log("existingRelation com Disicipulo: ", existingRelation);
 
     if (existingRelation) {
       // Deletar a relação existente
@@ -1627,7 +1682,7 @@ class UserRepositorie {
     if (!prisma) {
       throw new Error("Prisma instance is null");
     }
-    console.log('discipuladorId', discipuladorId)
+    console.log("discipuladorId", discipuladorId);
 
     try {
       // Check if the new discipuladorId exists before updating
@@ -1648,7 +1703,10 @@ class UserRepositorie {
       });
 
       // Criar ou atualizar a relação discipulador_usuario
-      const newRelation = await this.createOrUpdateDiscipuladorRelation(userId, discipuladorId);
+      const newRelation = await this.createOrUpdateDiscipuladorRelation(
+        userId,
+        discipuladorId
+      );
       console.log("New relation created or updated:", newRelation);
 
       await disconnectPrisma();

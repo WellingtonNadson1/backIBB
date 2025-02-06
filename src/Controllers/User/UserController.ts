@@ -24,11 +24,16 @@ class UserController {
   }
 
   // Get all users in a Id Supervision
-  async indexDiscipulosSupervisor(request: FastifyRequest, reply: FastifyReply) {
+  async indexDiscipulosSupervisor(
+    request: FastifyRequest,
+    reply: FastifyReply
+  ) {
     try {
-      const userDataForm = request.body as any
-      console.log('userDataForm Supervisor', userDataForm)
-      const users = await UserRepositorie.findAllDiscipulosSupervisor(userDataForm);
+      const userDataForm = request.body as any;
+      console.log("userDataForm Supervisor", userDataForm);
+      const users = await UserRepositorie.findAllDiscipulosSupervisor(
+        userDataForm
+      );
       return reply.code(200).send(users);
     } catch (error) {
       return reply.code(500).send({ error: "Internal Server Error" });
@@ -36,11 +41,16 @@ class UserController {
   }
 
   // Get all users in a Id Supervision
-  async indexDiscipuladoSupervisorSupervisao(request: FastifyRequest, reply: FastifyReply) {
+  async indexDiscipuladoSupervisorSupervisao(
+    request: FastifyRequest,
+    reply: FastifyReply
+  ) {
     try {
-      const userDataForm = request.body as any
-      console.log('userDataForm', userDataForm)
-      const users = await UserRepositorie.findAllDiscipulosSupervisores(userDataForm);
+      const userDataForm = request.body as any;
+      console.log("userDataForm", userDataForm);
+      const users = await UserRepositorie.findAllDiscipulosSupervisores(
+        userDataForm
+      );
       return reply.code(200).send(users);
     } catch (error) {
       return reply.code(500).send({ error: "Internal Server Error" });
@@ -51,6 +61,16 @@ class UserController {
   async indexcell(request: FastifyRequest, reply: FastifyReply) {
     try {
       const users = await UserRepositorie.findAllCell();
+      return reply.code(200).send(users);
+    } catch (error) {
+      return reply.code(500).send({ error: "Internal Server Error" });
+    }
+  }
+
+  // Get all users
+  async getAllMembers(request: FastifyRequest, reply: FastifyReply) {
+    try {
+      const users = await UserRepositorie.findAllMembers();
       return reply.code(200).send(users);
     } catch (error) {
       return reply.code(500).send({ error: "Internal Server Error" });
@@ -116,16 +136,20 @@ class UserController {
     try {
       const userDataForm = request.body as UserData;
       const { email } = userDataForm;
-      let { date_nascimento, date_batizado, date_casamento, date_decisao } = userDataForm;
+      let { date_nascimento, date_batizado, date_casamento, date_decisao } =
+        userDataForm;
 
       // Check if user already exists
       const userExist = await UserRepositorie.findByEmail(email);
       if (userExist) {
-        return reply.code(400).send({ message: "User already exists. Please try another email!" });
+        return reply
+          .code(400)
+          .send({ message: "User already exists. Please try another email!" });
       }
 
       // Format dates
-      if (date_nascimento) date_nascimento = formatDateToISO8601(date_nascimento);
+      if (date_nascimento)
+        date_nascimento = formatDateToISO8601(date_nascimento);
       if (date_batizado) date_batizado = formatDateToISO8601(date_batizado);
       if (date_casamento) date_casamento = formatDateToISO8601(date_casamento);
       if (date_decisao) date_decisao = formatDateToISO8601(date_decisao);
@@ -160,10 +184,12 @@ class UserController {
     try {
       const id = request.params.id;
       const userDataForm = request.body as UserData;
-      let { date_nascimento, date_batizado, date_casamento, date_decisao } = userDataForm;
+      let { date_nascimento, date_batizado, date_casamento, date_decisao } =
+        userDataForm;
 
       // Format dates
-      if (date_nascimento) date_nascimento = formatDateToISO8601(date_nascimento);
+      if (date_nascimento)
+        date_nascimento = formatDateToISO8601(date_nascimento);
       if (date_batizado) date_batizado = formatDateToISO8601(date_batizado);
       if (date_casamento) date_casamento = formatDateToISO8601(date_casamento);
       if (date_decisao) date_decisao = formatDateToISO8601(date_decisao);
@@ -191,14 +217,19 @@ class UserController {
     try {
       const { id, discipuladorId } = request.body as any;
       if (discipuladorId) {
-        console.log('id', id)
-        console.log('discipuladorId', discipuladorId)
-        const result = await UserRepositorie.updateDiscipuladorId(id, discipuladorId);
+        console.log("id", id);
+        console.log("discipuladorId", discipuladorId);
+        const result = await UserRepositorie.updateDiscipuladorId(
+          id,
+          discipuladorId
+        );
         return reply.code(200).send(result);
       }
       return reply.code(400).send({ message: "Discipulador ID not provided." });
     } catch (error) {
-      return reply.code(500).send({ error: "Failed to update discipulador ID." });
+      return reply
+        .code(500)
+        .send({ error: "Failed to update discipulador ID." });
     }
   }
 
