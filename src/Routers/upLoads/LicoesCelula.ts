@@ -18,7 +18,7 @@ const routerLicoesCelula = async (fastify: FastifyInstance) => {
     }
   );
   fastify.get(
-    "/api/licoes-celula",
+    "/api/licoes-celula/:id",
     async (request: FastifyRequest, reply: FastifyReply) => {
       await LicoesCelulaController.getLicoes(request, reply);
     }

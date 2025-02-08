@@ -44,26 +44,18 @@ class LicoesCelulaController {
     }
   }
 
-  async getLicoes(
-    request: FastifyRequest,
-    reply: FastifyReply
-  ) {
+  async getLicoes(request: FastifyRequest, reply: FastifyReply) {
     const { id } = request.params as LicoesParams;
+    console.log("id lessosn: ", id);
 
-    const licoes =
-      await LicoesCelulaRepositorie.findById(id);
+    const licoes = await LicoesCelulaRepositorie.findById(id);
     if (!licoes) {
       return reply.code(404).send({ message: "Sem Lições de Célula!" });
     }
     return reply.code(200).send(licoes);
-
   }
-  async getTema(
-    request: FastifyRequest,
-    reply: FastifyReply
-  ) {
-    const licoes =
-      await LicoesCelulaRepositorie.findMany();
+  async getTema(request: FastifyRequest, reply: FastifyReply) {
+    const licoes = await LicoesCelulaRepositorie.findMany();
     if (!licoes) {
       return reply.code(404).send({ message: "Sem Lições de Célula!" });
     }

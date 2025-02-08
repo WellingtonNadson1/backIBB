@@ -22,22 +22,22 @@ class LicoesCelulaRepositorie {
           data_inicio: true,
           data_termino: true,
         },
-      })
+      });
 
       await disconnectPrisma();
 
       return allLicoes;
     } catch (error) {
-      console.error('Ocorreu um error ao buscar as licoes: ', error)
+      console.error("Ocorreu um error ao buscar as licoes: ", error);
     }
   }
 
   async findMany() {
     try {
-      const prisma = createPrismaInstance()
+      const prisma = createPrismaInstance();
 
       if (!prisma) {
-        throw new Error('Prisma instance is null')
+        throw new Error("Prisma instance is null");
       }
 
       const temaMonth = await prisma?.temaLicaoCelula.findMany({
@@ -52,16 +52,15 @@ class LicoesCelulaRepositorie {
           data_inicio: true,
           data_termino: true,
         },
-      })
-      console.log('temaMonth', temaMonth)
-      await disconnectPrisma()
+      });
+      console.log("temaMonth", temaMonth);
+      await disconnectPrisma();
 
-      return temaMonth
-
+      return temaMonth;
     } catch (error) {
-      await disconnectPrisma()
-      console.error('Ocorreu um erro ao buscar o tema', error)
-      return error
+      await disconnectPrisma();
+      console.error("Ocorreu um erro ao buscar o tema", error);
+      return error;
     }
   }
 }
