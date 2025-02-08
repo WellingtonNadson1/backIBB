@@ -49,13 +49,18 @@ class AgendaRepositorie {
 
   async findAll() {
     const result = await prisma?.agenda.findMany({
+      where: {
+        status: {
+          equals: true,
+        },
+      },
       select: {
         id: true,
         status: true,
         title: true,
         description: true,
         data_inicio: true,
-        data_termino: true
+        data_termino: true,
       },
     });
     await disconnectPrisma();
