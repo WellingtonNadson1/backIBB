@@ -23,7 +23,7 @@ class PresencaCultoRepositorie {
     startDate: Date,
     endDate: Date,
     superVisionId: string,
-    cargoLideranca: string[],
+    cargoLideranca: string[]
   ) {
     try {
       const prisma = createPrismaInstance();
@@ -83,7 +83,7 @@ class PresencaCultoRepositorie {
         await CultoIndividualRepositorie.findAllIntervall(
           startDate,
           endDate,
-          superVisionId,
+          superVisionId
         );
 
       const totalCultosPeriodo = cultosIndividuaisForDate.totalCultosPeriodo;
@@ -107,14 +107,14 @@ class PresencaCultoRepositorie {
                 dataPresenca.isAfter(dayjs(dataInicio).utcOffset(0)) &&
                 dataPresenca.isBefore(dayjs(dataFim).utcOffset(0))
               );
-            },
+            }
           );
 
           const quantidadeCultosPresentes = presencasFiltradas.reduce(
             (total, presente) => {
               return total + (presente.status === true ? 1 : 0);
             },
-            0,
+            0
           );
 
           const quantidadeCultosPresentePrimicia = presencasFiltradas.reduce(
@@ -122,13 +122,13 @@ class PresencaCultoRepositorie {
               return (
                 total +
                 (presente.status === true &&
-                  presente.presenca_culto?.culto_semana?.id ===
+                presente.presenca_culto?.culto_semana?.id ===
                   "bffb62af-8d03-473a-ba20-ab5a9d7dafbe"
                   ? 1
                   : 0)
               );
             },
-            0,
+            0
           );
 
           const quantidadeCultosPresenteDomingoSacrificio =
@@ -136,7 +136,7 @@ class PresencaCultoRepositorie {
               return (
                 total +
                 (presente.status === true &&
-                  presente.presenca_culto?.culto_semana?.id ===
+                presente.presenca_culto?.culto_semana?.id ===
                   "e7bc72d1-8faa-4bbe-9c24-475b64f956cf"
                   ? 1
                   : 0)
@@ -148,13 +148,13 @@ class PresencaCultoRepositorie {
               return (
                 total +
                 (presente.status === true &&
-                  presente.presenca_culto?.culto_semana?.id ===
+                presente.presenca_culto?.culto_semana?.id ===
                   "4064be1d-bf55-4851-9f76-99c4554a6265"
                   ? 1
                   : 0)
               );
             },
-            0,
+            0
           );
 
           const quantidadeCultosPresenteSabado = presencasFiltradas.reduce(
@@ -162,13 +162,13 @@ class PresencaCultoRepositorie {
               return (
                 total +
                 (presente.status === true &&
-                  presente.presenca_culto?.culto_semana?.id ===
+                presente.presenca_culto?.culto_semana?.id ===
                   "84acfbe4-c7e0-4841-813c-04731ffa9c67"
                   ? 1
                   : 0)
               );
             },
-            0,
+            0
           );
 
           const quantidadeCultosPresenteDomingoManha =
@@ -176,7 +176,7 @@ class PresencaCultoRepositorie {
               return (
                 total +
                 (presente.status === true &&
-                  presente.presenca_culto?.culto_semana?.id ===
+                presente.presenca_culto?.culto_semana?.id ===
                   "cab02f30-cade-46ca-b118-930461013d53"
                   ? 1
                   : 0)
@@ -188,7 +188,7 @@ class PresencaCultoRepositorie {
               return (
                 total +
                 (presente.status === true &&
-                  presente.presenca_culto?.culto_semana?.id ===
+                presente.presenca_culto?.culto_semana?.id ===
                   "ea08ec9b-3d1b-42f3-818a-ec53ef99b78f"
                   ? 1
                   : 0)
@@ -290,7 +290,7 @@ class PresencaCultoRepositorie {
             presencasFiltradas,
             cultos: cultos,
           };
-        },
+        }
       );
 
       return membrosCompareceramCultosFiltrados;
@@ -400,7 +400,7 @@ class PresencaCultoRepositorie {
             },
           });
           return result;
-        }),
+        })
       );
 
       // Filtra os resultados para excluir nulos (caso não haja registro para um membro específico)
@@ -492,8 +492,8 @@ class PresencaCultoRepositorie {
 
   async findByIdCulto(culto: string, lider: string) {
     const prisma = createPrismaInstance();
-    console.log('culto', culto)
-    console.log('lider', lider)
+    console.log("culto", culto);
+    console.log("lider", lider);
 
     const result = await prisma.presencaCulto.findFirst({
       where: {
@@ -537,8 +537,8 @@ class PresencaCultoRepositorie {
             date_create: dataBrasilDate,
             date_update: date_update,
           },
-        }),
-      ),
+        })
+      )
     );
     await disconnectPrisma();
     return result;
@@ -576,7 +576,7 @@ class PresencaCultoRepositorie {
 
   async updatePresencaCulto(
     id: string,
-    presencaCultoDataForm: PresencaCultoData,
+    presencaCultoDataForm: PresencaCultoData
   ) {
     const prisma = createPrismaInstance();
 

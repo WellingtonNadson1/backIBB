@@ -21,6 +21,7 @@ import routerReuniaoSemanalCelula from "./Routers/ReuniaoCelula";
 import routerSituacaoNoReino from "./Routers/SituacaoNoReino";
 import routerSupervisao from "./Routers/SupervisaoRouters";
 import routerUser from "./Routers/UserRouters";
+import { dizimoRelatorioRoutes } from "./Routers/dizimoRelatorioRoutes";
 import { dizimoRoutes } from "./Routers/dizimoRoutes";
 import routerLicoesCelula from "./Routers/upLoads/LicoesCelula";
 import { requestResetPassword } from "./auth/request-reset-password";
@@ -60,6 +61,7 @@ const start = async () => {
     await app.register(multer.contentParser);
     await app.register(routerLogin);
     await app.register(dizimoRoutes);
+    await app.register(dizimoRelatorioRoutes);
     // await app.register(routerEvento)
     await registerEscolaRoutes(app);
     await registerCultoRoutes(app);

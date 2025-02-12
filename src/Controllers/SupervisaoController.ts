@@ -1,6 +1,6 @@
-import { FastifyReply, FastifyRequest } from 'fastify';
-import { Input, array, object, string } from 'valibot';
-import SupervisaoRepositorie from '../Repositories/SupervisaoRepositorie';
+import { FastifyReply, FastifyRequest } from "fastify";
+import { Input, array, object, string } from "valibot";
+import SupervisaoRepositorie from "../Repositories/SupervisaoRepositorie";
 
 const SupervisaoDataSchema = object({
   nome: string(),
@@ -8,28 +8,39 @@ const SupervisaoDataSchema = object({
   supervisor: string(),
   celulas: array(string()),
   membros: array(string()),
-})
+});
 
-export type SupervisaoData = Input<typeof SupervisaoDataSchema>
+export type SupervisaoData = Input<typeof SupervisaoDataSchema>;
 
 interface SupervisaoParams {
   id: string;
 }
 
 class SupervisaoController {
-
   // Fazendo uso do Fastify
-  async index(request: FastifyRequest, reply: FastifyReply) {
+  async indexAll(request: FastifyRequest, reply: FastifyReply) {
     const supervisoes = await SupervisaoRepositorie.findAll();
     if (!supervisoes) {
-      return reply.code(500).send({ error: 'Internal Server Error' });
+      return reply.code(500).send({ error: "Internal Server Error" });
     }
     return reply.code(200).send(supervisoes);
   }
 
-  async show(request: FastifyRequest <{
-    Params: SupervisaoParams }>, reply: FastifyReply) {
-    const id = request.params.id
+  async index(request: FastifyRequest, reply: FastifyReply) {
+    const supervisoes = await SupervisaoRepositorie.findAll();
+    if (!supervisoes) {
+      return reply.code(500).send({ error: "Internal Server Error" });
+    }
+    return reply.code(200).send(supervisoes);
+  }
+
+  async show(
+    request: FastifyRequest<{
+      Params: SupervisaoParams;
+    }>,
+    reply: FastifyReply
+  ) {
+    const id = request.params.id;
     const supervisao = await SupervisaoRepositorie.findById(id);
     if (!supervisao) {
       return reply.code(404).send({ message: "Supervisao not found!" });
@@ -45,8 +56,12 @@ class SupervisaoController {
     return reply.code(201).send(supervisao);
   }
 
-  async update(request: FastifyRequest <{
-    Params: SupervisaoParams }>, reply: FastifyReply) {
+  async update(
+    request: FastifyRequest<{
+      Params: SupervisaoParams;
+    }>,
+    reply: FastifyReply
+  ) {
     const id = request.params.id;
     const supervisaoDataForm = request.body as SupervisaoData;
     const supervisao = await SupervisaoRepositorie.updateSupervisao(id, {
@@ -55,8 +70,12 @@ class SupervisaoController {
     return reply.code(202).send(supervisao);
   }
 
-  async delete(request: FastifyRequest <{
-    Params: SupervisaoParams }>, reply: FastifyReply) {
+  async delete(
+    request: FastifyRequest<{
+      Params: SupervisaoParams;
+    }>,
+    reply: FastifyReply
+  ) {
     const id = request.params.id;
     await SupervisaoRepositorie.deleteSupervisao(id);
     return reply.code(204).send();

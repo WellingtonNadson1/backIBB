@@ -16,7 +16,7 @@ const PresencaCultoDataNewSchema = object({
     object({
       id: string(),
       status: boolean(), //Pode ter um status (presente, ausente, justificado, etc.)
-    }),
+    })
   ),
 });
 
@@ -61,7 +61,7 @@ class PresencaCultoController {
     request: FastifyRequest<{
       Params: PresencaCultoParams;
     }>,
-    reply: FastifyReply,
+    reply: FastifyReply
   ) {
     const id = request.params.id;
     const presencaCulto = await PresencaCultoRepositorie.findById(id);
@@ -81,7 +81,7 @@ class PresencaCultoController {
         startDate,
         endDate,
         superVisionId,
-        cargoLideranca,
+        cargoLideranca
       );
 
     if (!resultRelatorioCultos) {
@@ -127,12 +127,12 @@ class PresencaCultoController {
       culto.presencas_culto
         .filter(
           (presenca) =>
-            presenca.membro?.supervisao_pertence?.id === params.supervisaoId,
+            presenca.membro?.supervisao_pertence?.id === params.supervisaoId
         )
         .map((presenca) => ({
           culto,
           membro: presenca.membro,
-        })),
+        }))
     );
 
     console.log(resultRelatorioCultos);
@@ -162,6 +162,8 @@ class PresencaCultoController {
           presence_culto,
           membro,
         });
+
+      console.log("existingPresenca", JSON.stringify(existingPresenca.result));
 
       if (existingPresenca.result.length !== 0) {
         console.log({ existingPresenca });
@@ -219,7 +221,7 @@ class PresencaCultoController {
     request: FastifyRequest<{
       Params: PresencaCultoParams;
     }>,
-    reply: FastifyReply,
+    reply: FastifyReply
   ) {
     const id = request.params.id;
     const presencaCultoDataForm = request.body as PresencaCultoData;
@@ -227,7 +229,7 @@ class PresencaCultoController {
       id,
       {
         ...presencaCultoDataForm,
-      },
+      }
     );
     return reply.code(202).send(presencaCulto);
   }
@@ -236,7 +238,7 @@ class PresencaCultoController {
     request: FastifyRequest<{
       Params: PresencaCultoParams;
     }>,
-    reply: FastifyReply,
+    reply: FastifyReply
   ) {
     const id = request.params.id;
     await PresencaCultoRepositorie.deletePresencaCulto(id);

@@ -1,7 +1,7 @@
 import { SupervisaoData } from "../Controllers/SupervisaoController";
 import { createPrismaInstance, disconnectPrisma } from "../services/prisma";
 
-const prisma = createPrismaInstance()
+const prisma = createPrismaInstance();
 
 class SupervisiaoRepositorie {
   async findAll() {
@@ -14,36 +14,18 @@ class SupervisiaoRepositorie {
           select: {
             id: true,
             first_name: true,
-          }
+          },
         },
         celulas: {
           select: {
             id: true,
             nome: true,
-          }
+          },
         },
-        membros: {
-          select: {
-            id: true,
-            first_name: true,
-            situacao_no_reino: {
-              select: {
-                id: true,
-                nome: true
-              }
-            },
-            cargo_de_lideranca: {
-              select: {
-                id: true,
-                nome: true
-              }
-            }
-          }
-        },
-      }
+      },
     });
-    await disconnectPrisma()
-    return result
+    await disconnectPrisma();
+    return result;
   }
 
   async findById(id: string) {
@@ -60,7 +42,7 @@ class SupervisiaoRepositorie {
             id: true,
             first_name: true,
             image_url: true,
-          }
+          },
         },
         celulas: {
           select: {
@@ -70,49 +52,48 @@ class SupervisiaoRepositorie {
               select: {
                 id: true,
                 first_name: true,
-              }
-            }
-          }
+              },
+            },
+          },
         },
         membros: {
           select: {
             id: true,
             first_name: true,
             image_url: true,
-          }
+          },
         },
-      }
-    })
-    await disconnectPrisma()
-    return supervisaoExistById
+      },
+    });
+    await disconnectPrisma();
+    return supervisaoExistById;
   }
 
   async createSupervisao(supervisaoDataForm: SupervisaoData) {
-    const { nome, cor, supervisor, celulas, membros } = supervisaoDataForm
+    const { nome, cor, supervisor, celulas, membros } = supervisaoDataForm;
     const result = await prisma.supervisao.create({
       data: {
         nome,
         cor,
         supervisor: {
           connect: {
-            id: supervisor
-          }
+            id: supervisor,
+          },
         },
         celulas: {
-          connect: celulas.map((celulaId) => ({ id: celulaId }))
+          connect: celulas.map((celulaId) => ({ id: celulaId })),
         },
         membros: {
-          connect: membros.map((membroId) => ({ id: membroId }))
-
+          connect: membros.map((membroId) => ({ id: membroId })),
         },
       },
     });
-    await disconnectPrisma()
-    return result
+    await disconnectPrisma();
+    return result;
   }
 
   async updateSupervisao(id: string, supervisaoDataForm: SupervisaoData) {
-    const { nome, cor, supervisor, celulas, membros } = supervisaoDataForm
+    const { nome, cor, supervisor, celulas, membros } = supervisaoDataForm;
     const result = await prisma.supervisao.update({
       where: {
         id: id,
@@ -122,20 +103,19 @@ class SupervisiaoRepositorie {
         cor,
         supervisor: {
           connect: {
-            id: supervisor
-          }
+            id: supervisor,
+          },
         },
         celulas: {
-          connect: celulas.map((celulaId) => ({ id: celulaId }))
+          connect: celulas.map((celulaId) => ({ id: celulaId })),
         },
         membros: {
-          connect: membros.map((membroId) => ({ id: membroId }))
-
+          connect: membros.map((membroId) => ({ id: membroId })),
         },
       },
     });
-    await disconnectPrisma()
-    return result
+    await disconnectPrisma();
+    return result;
   }
 
   async deleteSupervisao(id: string) {
@@ -144,8 +124,8 @@ class SupervisiaoRepositorie {
         id: id,
       },
     });
-    await disconnectPrisma()
-    return result
+    await disconnectPrisma();
+    return result;
   }
 }
 
