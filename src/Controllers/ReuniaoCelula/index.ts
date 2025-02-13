@@ -1,15 +1,14 @@
-import dayjs from "dayjs";
 import { FastifyReply, FastifyRequest } from "fastify";
 import ReuniaoCelulaRepositorie from "../../Repositories/ReuniaoCelula";
 
 export interface ReuniaoCelulaData {
-  data_reuniao: Date,
-  status: string,
-  presencas_membros_reuniao_celula: string[],
-  celula: string,
-  visitantes: number,
-  almas_ganhas: number,
-};
+  data_reuniao: Date;
+  status: string;
+  presencas_membros_reuniao_celula: string[];
+  celula: string;
+  visitantes: number;
+  almas_ganhas: number;
+}
 
 interface ReuniaoCelulaParams {
   id: string;
@@ -41,9 +40,8 @@ class ReuniaoSemanalCelulaController {
 
   async getReunionForDate(request: FastifyRequest, reply: FastifyReply) {
     try {
-      const { data_reuniao, celula } = request.body as ReuniaoCelulaData
-    }
-    catch (error) {
+      const { data_reuniao, celula } = request.body as ReuniaoCelulaData;
+    } catch (error) {
       return reply.code(400).send(error);
     }
   }
@@ -51,18 +49,17 @@ class ReuniaoSemanalCelulaController {
   async store(request: FastifyRequest, reply: FastifyReply) {
     try {
       const reuniaoCelulaDataForm = request.body as ReuniaoCelulaData;
-      const { data_reuniao, celula } = reuniaoCelulaDataForm
+      const { data_reuniao, celula } = reuniaoCelulaDataForm;
 
       // Formatar a data para ignorar o horário
-      const dataReuniaoFormatada = dayjs(data_reuniao).format('YYYY-MM-DD');
+      // const dataReuniaoFormatada = dayjs(data_reuniao).format("YYYY-MM-DD");
 
-      const reuniaoCelulaExist = await ReuniaoCelulaRepositorie.reuniaoCelulaExist({
-        data_reuniao: dataReuniaoFormatada, celula
-      })
-      if (reuniaoCelulaExist.length > 0) {
-        return reply
-          .code(409)
-          .send(reuniaoCelulaExist);
+      const reuniaoCelulaExist = await ReuniaoCelulaRepositorie.findFirst({
+        data_reuniao,
+        celula,
+      });
+      if (!reuniaoCelulaExist) {
+        return reply.code(409).send(reuniaoCelulaExist);
       }
       // Se não existir, crie a reunião
       const presencaCulto = await ReuniaoCelulaRepositorie.createReuniaoCelula({

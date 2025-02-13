@@ -85,12 +85,13 @@ class ReuniaoCelulaRepositorie {
     data_reuniao: Date;
     celula: string;
   }) {
-    const dataReuniaoModify = dayjs(data_reuniao)
-      .toISOString()
-      .substring(0, 10);
+    const dataReuniaoConvertida = new Date(data_reuniao);
+    // const dataReuniaoModify = dayjs(data_reuniao)
+    //   .toISOString()
+    //   .substring(0, 10);
     const result = await prisma?.reuniaoCelula.findFirst({
       where: {
-        data_reuniao: dataReuniaoModify,
+        data_reuniao: dataReuniaoConvertida,
         celula: { id: celula },
       },
       select: {
@@ -212,7 +213,7 @@ class ReuniaoCelulaRepositorie {
         data: {
           presencas_membros_reuniao_celula: {
             connect: presencas_membros_reuniao_celula.map(
-              (reuniaoCelulaId) => ({ id: reuniaoCelulaId }),
+              (reuniaoCelulaId) => ({ id: reuniaoCelulaId })
             ),
           },
         },
@@ -224,7 +225,7 @@ class ReuniaoCelulaRepositorie {
 
   async updateReuniaoCelula(
     id: string,
-    reuniaoCelulaDataForm: ReuniaoCelulaData,
+    reuniaoCelulaDataForm: ReuniaoCelulaData
   ) {
     const {
       presencas_membros_reuniao_celula,
