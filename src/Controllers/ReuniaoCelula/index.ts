@@ -58,7 +58,7 @@ class ReuniaoSemanalCelulaController {
         data_reuniao,
         celula,
       });
-      if (!reuniaoCelulaExist) {
+      if (reuniaoCelulaExist) {
         return reply.code(409).send(reuniaoCelulaExist);
       }
       // Se não existir, crie a reunião
