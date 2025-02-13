@@ -85,13 +85,17 @@ class ReuniaoCelulaRepositorie {
     data_reuniao: Date;
     celula: string;
   }) {
-    const dataReuniaoConvertida = new Date(data_reuniao);
+    const startOfDay = dayjs(data_reuniao).startOf("day").toDate(); // Início do dia como Date
+    const endOfDay = dayjs(data_reuniao).endOf("day").toDate();
     // const dataReuniaoModify = dayjs(data_reuniao)
     //   .toISOString()
     //   .substring(0, 10);
     const result = await prisma?.reuniaoCelula.findFirst({
       where: {
-        data_reuniao: dataReuniaoConvertida,
+        data_reuniao: {
+          gte: startOfDay, // Usando o Date
+          lt: endOfDay, // Usando o Date
+        },
         celula: { id: celula },
       },
       select: {

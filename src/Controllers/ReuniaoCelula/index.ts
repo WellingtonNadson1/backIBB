@@ -51,9 +51,6 @@ class ReuniaoSemanalCelulaController {
       const reuniaoCelulaDataForm = request.body as ReuniaoCelulaData;
       const { data_reuniao, celula } = reuniaoCelulaDataForm;
 
-      // Formatar a data para ignorar o horário
-      // const dataReuniaoFormatada = dayjs(data_reuniao).format("YYYY-MM-DD");
-
       const reuniaoCelulaExist = await ReuniaoCelulaRepositorie.findFirst({
         data_reuniao,
         celula,
