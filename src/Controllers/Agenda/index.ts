@@ -18,8 +18,30 @@ const agendaSchema = z.object({
 
 export type TAgenda = z.infer<typeof agendaSchema>;
 
+const agendaReturnSchema = z.object({
+  id: z.string(),
+  status: z.boolean(),
+  title: z.string(),
+  description: z.string().min(1, { message: "A comment is required." }),
+  date: z
+    .object({
+      from: z.date().optional(),
+      to: z.date().optional(),
+    })
+    .refine((date) => {
+      return !!date.from;
+    }),
+});
+
+export type TAgendaReturn = z.infer<typeof agendaReturnSchema>;
+
 interface AgendaParams {
   eventoAgendaId: string;
+}
+
+interface AgendaReturnParams {
+  idEventoAgenda: string;
+  status: boolean;
 }
 
 class AgendaController {
@@ -86,6 +108,21 @@ class AgendaController {
     }
   }
 
+  async patch(request: FastifyRequest, reply: FastifyReply) {
+    console.log("request.body", request.body);
+    const { id: idEventoAgenda, status: statusDataForm } =
+      request.body as TAgendaReturn;
+
+    if (!statusDataForm && !idEventoAgenda) {
+      return reply.send({ message: "STATUS and ID is required" }).code(400);
+    }
+    const reuniaoCelula = await AgendaRepositorie.patchAgenda({
+      statusDataForm,
+      idEventoAgenda,
+    });
+    return reply.code(202).send(reuniaoCelula);
+  }
+
   async update(request: FastifyRequest, reply: FastifyReply) {
     const reuniaoCelulaDataForm = request.body as TAgenda;
     const { id } = reuniaoCelulaDataForm;
@@ -104,6 +141,7 @@ class AgendaController {
     }>,
     reply: FastifyReply
   ) {
+    console.log("request.params", request.params.eventoAgendaId);
     const id = request.params.eventoAgendaId;
     await AgendaRepositorie.deleteAgenda(id);
     return reply.code(204).send();

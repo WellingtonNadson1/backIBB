@@ -220,6 +220,44 @@ class AgendaRepositorie {
     }
   }
 
+  async patchAgenda({
+    idEventoAgenda,
+    statusDataForm,
+  }: {
+    idEventoAgenda: string;
+    statusDataForm: boolean;
+  }) {
+    const eventoAgenda = await prisma?.agenda.findUnique({
+      where: {
+        id: idEventoAgenda,
+      },
+      select: {
+        id: true,
+        status: true,
+        title: true,
+        description: true,
+        data_inicio: true,
+        data_termino: true,
+      },
+    });
+
+    if (!eventoAgenda) {
+      throw new Error("Evento not found.");
+    }
+
+    const result = await prisma?.agenda.update({
+      where: {
+        id: idEventoAgenda,
+      },
+      data: {
+        status: statusDataForm,
+      },
+    });
+
+    await disconnectPrisma();
+    return result;
+  }
+
   async updateAgenda(id: string, agendaDataForm: TAgenda) {
     const { title, description, date } = agendaDataForm;
 

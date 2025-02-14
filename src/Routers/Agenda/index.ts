@@ -15,12 +15,16 @@ const routerAgenda = async (fastify: FastifyInstance) => {
     "/agenda-ibb-service/create-evento-agenda",
     AgendaController.store
   );
+  fastify.patch(
+    "/agenda-ibb-service/create-evento-agenda",
+    AgendaController.patch
+  );
   fastify.put(
     "/agenda-ibb-service/create-evento-agenda",
     AgendaController.update
   );
   fastify.delete(
-    "/agenda-ibb-service/create-evento-agenda/?eventoAgendaId=${eventoAgendaId}",
+    "/agenda-ibb-service/create-evento-agenda/:eventoAgendaId",
     AgendaController.delete
   );
 };
