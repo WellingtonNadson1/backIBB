@@ -4,6 +4,10 @@ import AgendaController from "../../Controllers/Agenda";
 const routerAgenda = async (fastify: FastifyInstance) => {
   // TURMA ESCOLA
   fastify.get(
+    "/agenda-ibb-service/create-evento-agenda/all",
+    AgendaController.getAll
+  );
+  fastify.get(
     "/agenda-ibb-service/create-evento-agenda",
     AgendaController.index
   );

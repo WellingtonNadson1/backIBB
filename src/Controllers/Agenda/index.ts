@@ -24,8 +24,17 @@ interface AgendaParams {
 
 class AgendaController {
   // Fazendo uso do Fastify
-  async index(request: FastifyRequest, reply: FastifyReply) {
+  async getAll(request: FastifyRequest, reply: FastifyReply) {
     const reuniaoCelula = await AgendaRepositorie.findAll();
+    if (!reuniaoCelula) {
+      return reply.code(500).send({ error: "Internal Server Error" });
+    }
+    console.log("reuniaoCelula all", reuniaoCelula);
+    return reply.send(reuniaoCelula);
+  }
+
+  async index(request: FastifyRequest, reply: FastifyReply) {
+    const reuniaoCelula = await AgendaRepositorie.find();
     if (!reuniaoCelula) {
       return reply.code(500).send({ error: "Internal Server Error" });
     }
@@ -58,7 +67,9 @@ class AgendaController {
 
   async store(request: FastifyRequest, reply: FastifyReply) {
     try {
+      console.log("request.body: ", request.body);
       const agendaDataForm = request.body as TAgenda;
+      console.log("agendaDataForm: ", agendaDataForm);
       const { title } = agendaDataForm;
 
       if (!title) {
