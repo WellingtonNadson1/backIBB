@@ -1,14 +1,26 @@
 import { FastifyReply, FastifyRequest } from "fastify";
+import { z } from "zod";
 import AgendaRepositorie from "../../Repositories/Agenda";
 
-export interface ReuniaoCelulaData {
-  data_reuniao: Date,
-  status: string,
-  presencas_membros_reuniao_celula: string[],
-  celula: string,
-  visitantes: number,
-  almas_ganhas: number,
-};
+const agendaSchema = z.object({
+  id: z.string().optional(),
+  title: z.string(),
+  description: z.string().min(1, { message: "A comment is required." }),
+  date: z
+    .object({
+      from: z.date().optional(),
+      to: z.date().optional(),
+    })
+    .refine((date) => {
+      return !!date.from;
+    }),
+});
+
+export type TAgenda = z.infer<typeof agendaSchema>;
+
+interface AgendaParams {
+  eventoAgendaId: string;
+}
 
 class AgendaController {
   // Fazendo uso do Fastify
@@ -17,7 +29,7 @@ class AgendaController {
     if (!reuniaoCelula) {
       return reply.code(500).send({ error: "Internal Server Error" });
     }
-    console.log('reuniaoCelula', reuniaoCelula)
+    console.log("reuniaoCelula", reuniaoCelula);
     return reply.send(reuniaoCelula);
   }
 
@@ -44,59 +56,47 @@ class AgendaController {
   //   }
   // }
 
-  // async store(request: FastifyRequest, reply: FastifyReply) {
-  //   try {
-  //     const reuniaoCelulaDataForm = request.body as ReuniaoCelulaData;
-  //     const { data_reuniao, celula } = reuniaoCelulaDataForm
+  async store(request: FastifyRequest, reply: FastifyReply) {
+    try {
+      const agendaDataForm = request.body as TAgenda;
+      const { title } = agendaDataForm;
 
-  //     // Formatar a data para ignorar o horário
-  //     const dataReuniaoFormatada = dayjs(data_reuniao).format('YYYY-MM-DD');
+      if (!title) {
+        return reply.send({ message: "Title name is required" }).code(400);
+      }
 
-  //     const reuniaoCelulaExist = await ReuniaoCelulaRepositorie.reuniaoCelulaExist({
-  //       data_reuniao: dataReuniaoFormatada, celula
-  //     })
-  //     if (reuniaoCelulaExist.length > 0) {
-  //       return reply
-  //         .code(409)
-  //         .send(reuniaoCelulaExist);
-  //     }
-  //     // Se não existir, crie a reunião
-  //     const presencaCulto = await ReuniaoCelulaRepositorie.createReuniaoCelula({
-  //       ...reuniaoCelulaDataForm,
-  //     });
-  //     return reply.code(201).send(presencaCulto);
-  //   } catch (error) {
-  //     return reply.code(400).send(error);
-  //   }
-  // }
+      // Se não existir, crie a reunião
+      const agendaCreate = await AgendaRepositorie.createAgenda({
+        ...agendaDataForm,
+      });
+      return reply.code(201).send(agendaCreate);
+    } catch (error) {
+      return reply.code(400).send(error);
+    }
+  }
 
-  // async update(
-  //   request: FastifyRequest<{
-  //     Params: ReuniaoCelulaParams;
-  //   }>,
-  //   reply: FastifyReply
-  // ) {
-  //   const { id } = request.params;
-  //   const reuniaoCelulaDataForm = request.body as ReuniaoCelulaData;
-  //   const reuniaoCelula = await ReuniaoCelulaRepositorie.updateReuniaoCelula(
-  //     id,
-  //     {
-  //       ...reuniaoCelulaDataForm,
-  //     }
-  //   );
-  //   return reply.code(202).send(reuniaoCelula);
-  // }
+  async update(request: FastifyRequest, reply: FastifyReply) {
+    const reuniaoCelulaDataForm = request.body as TAgenda;
+    const { id } = reuniaoCelulaDataForm;
+    if (!id) {
+      return reply.send({ message: "ID is required" }).code(400);
+    }
+    const reuniaoCelula = await AgendaRepositorie.updateAgenda(id, {
+      ...reuniaoCelulaDataForm,
+    });
+    return reply.code(202).send(reuniaoCelula);
+  }
 
-  // async delete(
-  //   request: FastifyRequest<{
-  //     Params: ReuniaoCelulaParams;
-  //   }>,
-  //   reply: FastifyReply
-  // ) {
-  //   const id = request.params.id;
-  //   await ReuniaoCelulaRepositorie.deleteReuniaoCelula(id);
-  //   return reply.code(204).send();
-  // }
+  async delete(
+    request: FastifyRequest<{
+      Params: AgendaParams;
+    }>,
+    reply: FastifyReply
+  ) {
+    const id = request.params.eventoAgendaId;
+    await AgendaRepositorie.deleteAgenda(id);
+    return reply.code(204).send();
+  }
 }
 
 export default new AgendaController();

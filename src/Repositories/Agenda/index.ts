@@ -2,6 +2,7 @@ import { Prisma } from "@prisma/client";
 import dayjs from "dayjs";
 import timezone from "dayjs/plugin/timezone";
 import utc from "dayjs/plugin/utc";
+import { TAgenda } from "../../Controllers/Agenda";
 import { createPrismaInstance, disconnectPrisma } from "../../services/prisma";
 
 interface ReuniaoCelulaResult {
@@ -175,106 +176,63 @@ class AgendaRepositorie {
   //   return result;
   // }
 
-  // async createReuniaoCelula(reuniaoCelulaDataForm: ReuniaoCelulaData) {
-  //   const { presencas_membros_reuniao_celula, celula, status, data_reuniao } =
-  //     reuniaoCelulaDataForm;
-  //   const dataBrasil = dayjs().tz("America/Sao_Paulo");
-  //   const date_create = dataBrasil.format("YYYY-MM-DDTHH:mm:ss.SSS[Z]");
-  //   const date_createBrasilDate = new Date(date_create);
-  //   const date_update = date_createBrasilDate;
-  //   const reuniaoCelula = await prisma?.reuniaoCelula.create({
-  //     data: {
-  //       celula: {
-  //         connect: {
-  //           id: celula,
-  //         },
-  //       },
-  //       data_reuniao: date_createBrasilDate,
-  //       date_update: date_update,
-  //       status: status,
-  //     },
-  //   });
-  //   // Conecte os relacionamentos opcionais, se fornecidos
-  //   if (presencas_membros_reuniao_celula) {
-  //     await prisma?.reuniaoCelula.update({
-  //       where: { id: reuniaoCelula?.id },
-  //       data: {
-  //         presencas_membros_reuniao_celula: {
-  //           connect: presencas_membros_reuniao_celula.map(
-  //             (reuniaoCelulaId) => ({ id: reuniaoCelulaId }),
-  //           ),
-  //         },
-  //       },
-  //     });
-  //   }
-  //   await disconnectPrisma();
-  //   return reuniaoCelula;
-  // }
+  async createAgenda(reuniaoCelulaDataForm: TAgenda) {
+    try {
+      const prisma = createPrismaInstance();
 
-  // async updateReuniaoCelula(
-  //   id: string,
-  //   reuniaoCelulaDataForm: ReuniaoCelulaData,
-  // ) {
-  //   const {
-  //     presencas_membros_reuniao_celula,
-  //     celula,
-  //     visitantes,
-  //     almas_ganhas,
-  //     ...ReuniaoCelulaData
-  //   } = reuniaoCelulaDataForm;
-  //   const updateReuniaoCelulaInput: UpdateReuniaCelulaInput = {
-  //     ...ReuniaoCelulaData,
-  //     date_update: new Date(), // Atualizando a data de atualização
-  //   };
+      if (!prisma) {
+        throw new Error("Prisma instance is null");
+      }
 
-  //   // Conecte os relacionamentos opcionais apenas se forem fornecidos
-  //   if (celula !== undefined) {
-  //     updateReuniaoCelulaInput.celula = {
-  //       connect: {
-  //         id: celula,
-  //       },
-  //     };
-  //   }
+      const resultCreateEventoAgenda = await prisma?.agenda.create({
+        data: {
+          title: reuniaoCelulaDataForm.title,
+          description: reuniaoCelulaDataForm.description,
+          data_inicio: new Date(
+            reuniaoCelulaDataForm.date.from as unknown as string
+          ),
+          data_termino: new Date(
+            reuniaoCelulaDataForm.date.to as unknown as string
+          ),
+        },
+      });
 
-  //   if (visitantes !== undefined) {
-  //     updateReuniaoCelulaInput.visitantes = {
-  //       set: Number(visitantes),
-  //     };
-  //   }
+      console.log("resultCreateEventoAgenda", resultCreateEventoAgenda);
 
-  //   if (almas_ganhas !== undefined) {
-  //     updateReuniaoCelulaInput.almas_ganhas = {
-  //       set: Number(almas_ganhas),
-  //     };
-  //   }
+      return resultCreateEventoAgenda;
+    } catch (error) {
+      console.error("Error creating aagenda:", error);
+    }
+  }
 
-  //   if (presencas_membros_reuniao_celula !== undefined) {
-  //     updateReuniaoCelulaInput.presencas_membros_reuniao_celula =
-  //       presencas_membros_reuniao_celula.map((presencaReuniaCelulaId) => ({
-  //         connect: {
-  //           id: presencaReuniaCelulaId,
-  //         },
-  //       })) as ReuniaCelulaConnect[];
-  //   }
-  //   const result = await prisma?.reuniaoCelula.update({
-  //     where: {
-  //       id: id,
-  //     },
-  //     data: updateReuniaoCelulaInput,
-  //   });
-  //   await disconnectPrisma();
-  //   return result;
-  // }
+  async updateAgenda(id: string, agendaDataForm: TAgenda) {
+    const { title, description, date } = agendaDataForm;
 
-  // async deleteReuniaoCelula(id: string) {
-  //   const result = await prisma?.reuniaoCelula.delete({
-  //     where: {
-  //       id: id,
-  //     },
-  //   });
-  //   await disconnectPrisma();
-  //   return result;
-  // }
+    const result = await prisma?.agenda.update({
+      where: {
+        id: id,
+      },
+      data: {
+        title: title,
+        description: description,
+        data_inicio: date.from,
+        data_termino: date.to,
+      },
+    });
+
+    await disconnectPrisma();
+    return result;
+  }
+
+  async deleteAgenda(id: string) {
+    const result = await prisma?.agenda.delete({
+      where: {
+        id: id,
+      },
+    });
+    await disconnectPrisma();
+    return result;
+  }
 }
 
 export default new AgendaRepositorie();
