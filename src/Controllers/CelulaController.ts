@@ -125,7 +125,7 @@ class CelulaController {
   ) {
     const id = request.params.id;
     const celulaDataForm = request.body as CelulaData;
-    console.log("celulaDataForm ID:", celulaDataForm);
+    console.log("celulaDataForm ID:", id);
     console.log("celulaDataForm:", celulaDataForm);
     const celula = await CelulaRepositorie.updateCelula(id, {
       ...celulaDataForm,
