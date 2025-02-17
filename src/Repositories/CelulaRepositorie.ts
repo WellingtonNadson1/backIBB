@@ -1,5 +1,5 @@
 import { Prisma } from "@prisma/client";
-import { CelulaData } from "../Controllers/CelulaController";
+import { CelulaData, CelulaDataForm } from "../Controllers/CelulaController";
 import { createPrismaInstance, disconnectPrisma } from "../services/prisma";
 import { CultoIndividualRepositorie } from "./Culto";
 
@@ -16,17 +16,31 @@ function getEndOfDay(date: Date): Date {
 }
 
 function getEndOfDayUTC(date: Date): Date {
-  const endOfDay = new Date(Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), date.getUTCDate(), 23, 59, 59, 999));
+  const endOfDay = new Date(
+    Date.UTC(
+      date.getUTCFullYear(),
+      date.getUTCMonth(),
+      date.getUTCDate(),
+      23,
+      59,
+      59,
+      999
+    )
+  );
   return endOfDay;
 }
 
 function getStartOfMonth(date: Date): Date {
-  const startOfMonth = new Date(Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), 1));
+  const startOfMonth = new Date(
+    Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), 1)
+  );
   return startOfMonth;
 }
 
 function getEndOfMonth(date: Date): Date {
-  const endOfMonth = new Date(Date.UTC(date.getUTCFullYear(), date.getUTCMonth() + 1, 0, 23, 59, 59, 999));
+  const endOfMonth = new Date(
+    Date.UTC(date.getUTCFullYear(), date.getUTCMonth() + 1, 0, 23, 59, 59, 999)
+  );
   return endOfMonth;
 }
 
@@ -102,7 +116,7 @@ class CelulaRepositorie {
             presencas_cultos: {
               where: {
                 cultoIndividualId: {
-                  in: idsCultos
+                  in: idsCultos,
                 },
               },
             },
@@ -178,8 +192,8 @@ class CelulaRepositorie {
                 membro: {
                   select: {
                     id: true,
-                    first_name: true
-                  }
+                    first_name: true,
+                  },
                 },
                 status: true,
               },
@@ -208,12 +222,12 @@ class CelulaRepositorie {
     const cultosIndividuaisPerPeriod =
       await CultoIndividualRepositorie.findPerPeriodDetails(
         startOfMonth,
-        endOfDay,
+        endOfDay
       );
-    console.log('todayDate', todayDate)
-    console.log('startOfMonth', startOfMonth)
-    console.log('endOfDay', endOfDay)
-    console.log('cultosIndividuaisPerPeriod', cultosIndividuaisPerPeriod)
+    console.log("todayDate", todayDate);
+    console.log("startOfMonth", startOfMonth);
+    console.log("endOfDay", endOfDay);
+    console.log("cultosIndividuaisPerPeriod", cultosIndividuaisPerPeriod);
 
     const result = await prisma?.celula.findUnique({
       where: {
@@ -227,7 +241,7 @@ class CelulaRepositorie {
             data_reuniao: {
               gte: startOfMonth,
               lte: endOfMonth,
-            }
+            },
           },
           select: {
             id: true,
@@ -266,7 +280,7 @@ class CelulaRepositorie {
                   gte: startOfMonth,
                   lte: endOfMonth,
                 },
-                status: true
+                status: true,
               },
             },
             discipulador: {
@@ -294,13 +308,12 @@ class CelulaRepositorie {
                         data_ocorreu: {
                           gte: startOfMonth,
                           lte: endOfMonth,
-                        }
-                      }
+                        },
+                      },
                     },
-                  }
-                }
+                  },
+                },
               },
-
             },
             cargo_de_lideranca: {
               select: {
@@ -340,7 +353,7 @@ class CelulaRepositorie {
     await disconnectPrisma();
 
     // Preparando o resultado
-    const membrosComCultos = result?.membros.map(membro => ({
+    const membrosComCultos = result?.membros.map((membro) => ({
       id: membro.id,
       first_name: membro.first_name,
       possui_disciopulador: membro.discipulador.length > 0,
@@ -348,9 +361,13 @@ class CelulaRepositorie {
       cargo_de_lideranca: membro.cargo_de_lideranca?.nome,
       situacao_no_reino: membro.situacao_no_reino?.nome,
       total_cultos: cultosIndividuaisPerPeriod.length,
-      cultos_status_true: membro.presencas_cultos.filter(culto => culto.status).length,
+      cultos_status_true: membro.presencas_cultos.filter(
+        (culto) => culto.status
+      ).length,
       total_celulas: result.reunioes_celula.length,
-      celulas_status_true: membro.presencas_reuniao_celula.filter(celula => celula.status).length,
+      celulas_status_true: membro.presencas_reuniao_celula.filter(
+        (celula) => celula.status
+      ).length,
     }));
 
     return { membrosComCultos };
@@ -460,8 +477,8 @@ class CelulaRepositorie {
                 membro: {
                   select: {
                     id: true,
-                    first_name: true
-                  }
+                    first_name: true,
+                  },
                 },
                 status: true,
               },
@@ -511,7 +528,7 @@ class CelulaRepositorie {
     return result;
   }
 
-  async updateCelula(id: string, newData: CelulaData) {
+  async updateCelula(id: string, newData: CelulaDataForm) {
     const prisma = createPrismaInstance();
 
     if (!prisma) {
@@ -537,20 +554,24 @@ class CelulaRepositorie {
     const newMemberIds = newData.membros?.map((m) => m) || [];
 
     // Identificar membros para adicionar e remover
-    const membersToAdd = newMemberIds.filter((id) => !currentMemberIds.includes(id));
-    const membersToRemove = currentMemberIds.filter((id) => !newMemberIds.includes(id));
+    const membersToAdd = newMemberIds.filter(
+      (id) => !currentMemberIds.includes(id)
+    );
+    const membersToRemove = currentMemberIds.filter(
+      (id) => !newMemberIds.includes(id)
+    );
 
     // Atualize apenas os campos que foram passados
     const updateData: Prisma.CelulaUpdateInput = {
       ...(newData.nome && { nome: newData.nome }),
       ...(newData.lider && {
         lider: {
-          connect: { id: newData.lider },
+          connect: { id: newData.lider.id },
         },
       }),
       ...(newData.supervisao && {
         supervisao: {
-          connect: { id: newData.supervisao },
+          connect: { id: newData.supervisao.id },
         },
       }),
       ...(newData.cep && { cep: newData.cep }),
@@ -560,8 +581,12 @@ class CelulaRepositorie {
       ...(newData.endereco && { endereco: newData.endereco }),
       ...(newData.numero_casa && { numero_casa: newData.numero_casa }),
       ...(newData.date_inicio && { date_inicio: newData.date_inicio }),
-      ...(newData.date_multipicar && { date_multipicar: newData.date_multipicar }),
-      ...(newData.date_que_ocorre && { date_que_ocorre: newData.date_que_ocorre }),
+      ...(newData.date_multipicar && {
+        date_multipicar: newData.date_multipicar,
+      }),
+      ...(newData.date_que_ocorre && {
+        date_que_ocorre: newData.date_que_ocorre,
+      }),
 
       membros: {
         connect: membersToAdd.map((id) => ({ id })),

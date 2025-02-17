@@ -2,6 +2,41 @@ import { FastifyReply, FastifyRequest } from "fastify";
 import { Input, array, date, object, string } from "valibot";
 import CelulaRepositorie from "../Repositories/CelulaRepositorie";
 
+import { z } from "zod";
+
+export const CelulaDataFormSchema = z.object({
+  id: z.string().uuid(),
+  nome: z.string(),
+  membros: z.array(z.string().uuid()),
+  lider: z.object({
+    id: z.string().uuid(),
+    first_name: z.string(),
+  }),
+  supervisao: z.object({
+    id: z.string().uuid(),
+    nome: z.string(),
+  }),
+  cep: z.string().length(8),
+  cidade: z.string(),
+  estado: z.string().length(2),
+  bairro: z.string(),
+  endereco: z.string(),
+  numero_casa: z.string(),
+  date_que_ocorre: z.string(),
+  date_inicio: z.string().datetime(),
+  date_multipicar: z.string().datetime(),
+  reunioes_celula: z.array(
+    z.object({
+      id: z.string().uuid(),
+      data_reuniao: z.string().datetime(),
+      status: z.string(),
+      presencas_membros_reuniao_celula: z.array(z.string().uuid()),
+    })
+  ),
+});
+
+export type CelulaDataForm = z.infer<typeof CelulaDataFormSchema>;
+
 const CelulaDataSchema = object({
   nome: string(),
   lider: string(),
@@ -124,7 +159,7 @@ class CelulaController {
     reply: FastifyReply
   ) {
     const id = request.params.id;
-    const celulaDataForm = request.body as CelulaData;
+    const celulaDataForm = request.body as CelulaDataForm;
     console.log("celulaDataForm ID:", id);
     console.log("celulaDataForm:", celulaDataForm);
     const celula = await CelulaRepositorie.updateCelula(id, {
