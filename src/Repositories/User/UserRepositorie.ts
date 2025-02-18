@@ -1676,6 +1676,36 @@ class UserRepositorie {
     });
   }
 
+  async patchStatusMembro({
+    idMembro,
+    statusMembro,
+  }: {
+    idMembro: string;
+    statusMembro: string;
+  }) {
+    const membro = await prisma?.user.findUnique({
+      where: {
+        id: idMembro,
+      },
+    });
+
+    if (!membro) {
+      throw new Error("Evento not found.");
+    }
+
+    const result = await prisma?.user.update({
+      where: {
+        id: idMembro,
+      },
+      data: {
+        situacaoNoReinoId: statusMembro,
+      },
+    });
+
+    await disconnectPrisma();
+    return result;
+  }
+
   async updateDiscipuladorId(userId: string, discipuladorId: string) {
     const prisma = createPrismaInstance();
 

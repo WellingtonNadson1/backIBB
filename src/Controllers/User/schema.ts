@@ -60,4 +60,21 @@ const UserDataSchema = z.object({
   TurmaEscola: z.string().optional(),
 });
 
-export type UserData = z.infer<typeof UserDataSchema>
+export type UserData = z.infer<typeof UserDataSchema>;
+
+const statusUpdateSchema = z.object({
+  id: z.string(),
+  status: z.string(),
+  title: z.string(),
+  description: z.string().min(1, { message: "A comment is required." }),
+  date: z
+    .object({
+      from: z.date().optional(),
+      to: z.date().optional(),
+    })
+    .refine((date) => {
+      return !!date.from;
+    }),
+});
+
+export type TStatusUpdate = z.infer<typeof statusUpdateSchema>;

@@ -1,7 +1,7 @@
 import bcrypt from "bcrypt";
 import { FastifyReply, FastifyRequest } from "fastify";
 import UserRepositorie from "../../Repositories/User/UserRepositorie";
-import { UserData } from "./schema";
+import { TStatusUpdate, UserData } from "./schema";
 
 export interface UserParams {
   id: string;
@@ -207,6 +207,22 @@ class UserController {
     } catch (error) {
       return reply.code(500).send({ error: "Failed to update user." });
     }
+  }
+
+  // Patch Status Membro
+  async updateStatusMembro(request: FastifyRequest, reply: FastifyReply) {
+    console.log("request.body", request.body);
+    const { id: idMembro, status: statusMembro } =
+      request.body as TStatusUpdate;
+
+    if (!statusMembro && !idMembro) {
+      return reply.send({ message: "STATUS and ID is required" }).code(400);
+    }
+    const membroUpdate = await UserRepositorie.patchStatusMembro({
+      statusMembro,
+      idMembro,
+    });
+    return reply.code(202).send(membroUpdate);
   }
 
   // Update discipulador ID
