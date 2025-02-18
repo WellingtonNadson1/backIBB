@@ -1693,7 +1693,7 @@ class UserRepositorie {
       throw new Error("Evento not found.");
     }
 
-    const result = await prisma?.user.update({
+    await prisma?.user.update({
       where: {
         id: idMembro,
       },
@@ -1703,7 +1703,7 @@ class UserRepositorie {
     });
 
     await disconnectPrisma();
-    return result;
+    return { message: "Satus Atualizado com Sucesso!" };
   }
 
   async updateDiscipuladorId(userId: string, discipuladorId: string) {
