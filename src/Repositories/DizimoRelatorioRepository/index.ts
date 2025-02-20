@@ -22,39 +22,45 @@ export class DizimoRelatorioRepository {
   async findAllRelatorioCards() {
     // Obtendo as datas relevantes
     const primeiroDiaMesPassado = startOfMonth(subMonths(new Date(), 1));
-    const ultimoDiaMesPassado = endOfMonth(subMonths(new Date(), 1));
-    const primeiroDiaMesAtual = startOfMonth(new Date());
+  const ultimoDiaMesPassado = endOfMonth(subMonths(new Date(), 1));
+  const primeiroDiaMesAtual = startOfMonth(new Date());
+  const primeiroDiaTresMesesAtras = startOfMonth(subMonths(new Date(), 3));
 
     // Total de membros da igreja
     const totalMembros = await prisma.user.count();
 
     // Membros que dizimaram no mês passado e no mês atual (até agora)
-    const [usuariosUltimoMes, usuariosMesAtual] = await Promise.all([
-      prisma.dizimo.groupBy({
-        by: ["userId"],
-        where: {
-           data_dizimou:{
-            gte: primeiroDiaMesPassado,
-            lte: ultimoDiaMesPassado,
-          },
+  const [usuariosUltimoMes, usuariosMesAtual, totalDizimosTresMeses] = await Promise.all([
+    prisma.dizimo.groupBy({
+      by: ["userId"],
+      where: {
+        data_dizimou: {
+          gte: primeiroDiaMesPassado,
+          lte: ultimoDiaMesPassado,
         },
-        _count: {
-          _all: true, // Conta os registros de dizimo para cada usuário
+      },
+      _count: { _all: true },
+    }),
+    prisma.dizimo.groupBy({
+      by: ["userId"],
+      where: {
+        data_dizimou: {
+          gte: primeiroDiaMesAtual,
+          lte: new Date(),
         },
-      }),
-      prisma.dizimo.groupBy({
-        by: ["userId"],
-        where: {
-          data_dizimou: {
-            gte: primeiroDiaMesAtual,
-            lte: new Date(),
-          },
+      },
+      _count: { _all: true },
+    }),
+    prisma.dizimo.aggregate({
+      _sum: { valor: true },
+      where: {
+        data_dizimou: {
+          gte: primeiroDiaTresMesesAtras,
+          lte: new Date(),
         },
-        _count: {
-          _all: true,
-        },
-      }),
-    ]);
+      },
+    }),
+  ]);
 
     console.log(`Usuários que dizimaram no último mês: ${usuariosUltimoMes.length}`);
     console.log(`Usuários que dizimaram no mês atual até hoje: ${usuariosMesAtual.length}`);
@@ -93,6 +99,7 @@ export class DizimoRelatorioRepository {
       totalDizimistasUnicosMesPassado,
       percentualDizimistasMesPassado: percentualDizimistas.toFixed(2),
       totalDizimosMesPassado: totalDizimosMesPassado._sum.valor || 0,
+      totalDizimosUltimosTresMeses: totalDizimosTresMeses._sum.valor || 0,
     };
   }
 
