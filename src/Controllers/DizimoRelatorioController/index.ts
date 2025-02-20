@@ -56,6 +56,19 @@ export class DizimoRelatorioController {
     }
   }
 
+  async findAllRelatorioCardsController(
+    request: FastifyRequest,
+    reply: FastifyReply
+  ) {
+    try {
+      const relatorio = await dizimoRepository.findAllRelatorioCards();
+      return reply.send(relatorio);
+    } catch (error) {
+      console.error("Erro ao buscar relatório de dízimos:", error);
+      return reply.status(500).send({ error: "Erro ao listar os dízimos." });
+    }
+  }
+
   async findAll(request: FastifyRequest, reply: FastifyReply) {
     try {
       const { page, limit } = request.query as {
