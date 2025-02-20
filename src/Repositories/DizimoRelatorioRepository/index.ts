@@ -91,7 +91,7 @@ export class DizimoRelatorioRepository {
     return {
       totalMembros,
       totalDizimistasUnicosMesPassado,
-      percentualDizimistasMesPassado: percentualDizimistas.toFixed(2) + "%",
+      percentualDizimistasMesPassado: percentualDizimistas.toFixed(2),
       totalDizimosMesPassado: totalDizimosMesPassado._sum.valor || 0,
     };
   }
