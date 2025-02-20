@@ -27,6 +27,8 @@ import routerLicoesCelula from "./Routers/upLoads/LicoesCelula";
 import { requestResetPassword } from "./auth/request-reset-password";
 import { ResetPassword } from "./auth/reset-password";
 import { createPrismaInstance, disconnectPrisma } from "./services/prisma";
+import { ofertaRoutes } from "./Routers/ofertaRoutes";
+import { ofertaRelatorioRoutes } from "./Routers/ofertaRelatorioRoutes";
 // import routerLicoesCelula from "./Routers/upLoads/LicoesCelula";
 
 declare module "fastify" {
@@ -62,6 +64,8 @@ const start = async () => {
     await app.register(routerLogin);
     await app.register(dizimoRoutes);
     await app.register(dizimoRelatorioRoutes);
+    await app.register(ofertaRoutes);
+    await app.register(ofertaRelatorioRoutes);
     // await app.register(routerEvento)
     await registerEscolaRoutes(app);
     await registerCultoRoutes(app);

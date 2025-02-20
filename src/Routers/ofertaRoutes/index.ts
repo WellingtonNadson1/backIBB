@@ -1,13 +1,13 @@
 import { FastifyInstance } from "fastify";
-import { DizimoController } from "../../Controllers/DizimoController";
+import { OfertaController } from "../../Controllers/OfertaController";
 
-const dizimoController = new DizimoController();
+const ofertaController = new OfertaController();
 
-export async function dizimoRoutes(app: FastifyInstance) {
-  app.post("/ofertas/multiple", dizimoController.createMany);
-  app.post("/ofertas", dizimoController.create);
-  app.get("/ofertas", dizimoController.findAll);
-  app.get("/ofertas/:id", dizimoController.findById);
-  app.put("/ofertas/:id", dizimoController.update);
-  app.delete("/ofertas/:id", dizimoController.delete);
+export async function ofertaRoutes(app: FastifyInstance) {
+  app.post("/ofertas/multiple", ofertaController.createMany);
+  app.post("/ofertas", ofertaController.create);
+  app.get("/ofertas", ofertaController.findAll);
+  app.get("/ofertas/:id", ofertaController.findById);
+  app.put("/ofertas/:id", ofertaController.update);
+  app.delete("/ofertas/:id", ofertaController.delete);
 }

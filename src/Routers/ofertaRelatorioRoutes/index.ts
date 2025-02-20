@@ -3,7 +3,7 @@ import { OfertaRelatorioController } from "../../Controllers/OfertaRelatorioCont
 
 const ofertaRelatoriosController = new OfertaRelatorioController();
 
-export async function dizimoRelatorioRoutes(app: FastifyInstance) {
+export async function ofertaRelatorioRoutes(app: FastifyInstance) {
   // app.post("/ofertas/multiple", ofertaRelatoriosController.createMany);
   // app.post("/ofertas", ofertaRelatoriosController.create);
   app.get("/ofertas/relatorio/cards", ofertaRelatoriosController.findAllRelatorioCardsController);
