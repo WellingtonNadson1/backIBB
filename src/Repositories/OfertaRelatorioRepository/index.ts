@@ -105,8 +105,8 @@ export class OfertaRelatorioRepository {
       totalMembros,
       totalOfertantesUnicosMesPassado,
       percentualOfertantesMesPassado: percentualOfertantes.toFixed(2),
-      totalofertasMesPassado: totalOfertasMesPassado._sum.valor || 0,
-      totalofertasUltimosTresMeses: totalofertasTresMeses._sum.valor || 0,
+      totalOfertasMesPassado: totalOfertasMesPassado._sum.valor || 0,
+      totalOfertasUltimosTresMeses: totalofertasTresMeses._sum.valor || 0,
     };
   }
 
