@@ -15,21 +15,6 @@ function getEndOfDay(date: Date): Date {
   return endOfDay;
 }
 
-function getEndOfDayUTC(date: Date): Date {
-  const endOfDay = new Date(
-    Date.UTC(
-      date.getUTCFullYear(),
-      date.getUTCMonth(),
-      date.getUTCDate(),
-      23,
-      59,
-      59,
-      999
-    )
-  );
-  return endOfDay;
-}
-
 function getStartOfMonth(date: Date): Date {
   const startOfMonth = new Date(
     Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), 1)
@@ -181,25 +166,25 @@ class CelulaRepositorie {
         date_que_ocorre: true,
         date_inicio: true,
         date_multipicar: true,
-        reunioes_celula: {
-          select: {
-            id: true,
-            data_reuniao: true,
-            status: true,
-            presencas_membros_reuniao_celula: {
-              select: {
-                id: true,
-                membro: {
-                  select: {
-                    id: true,
-                    first_name: true,
-                  },
-                },
-                status: true,
-              },
-            },
-          },
-        },
+        // reunioes_celula: {
+        //   select: {
+        //     id: true,
+        //     data_reuniao: true,
+        //     status: true,
+        //     presencas_membros_reuniao_celula: {
+        //       select: {
+        //         id: true,
+        //         membro: {
+        //           select: {
+        //             id: true,
+        //             first_name: true,
+        //           },
+        //         },
+        //         status: true,
+        //       },
+        //     },
+        //   },
+        // },
       },
     });
 
