@@ -551,12 +551,12 @@ class CelulaRepositorie {
       ...(newData.nome && { nome: newData.nome }),
       ...(newData.lider && {
         lider: {
-          connect: { id: newData.lider.id },
+          connect: { id: newData.lider },
         },
       }),
       ...(newData.supervisao && {
         supervisao: {
-          connect: { id: newData.supervisao.id },
+          connect: { id: newData.supervisao },
         },
       }),
       ...(newData.cep && { cep: newData.cep }),

@@ -8,14 +8,8 @@ export const CelulaDataFormSchema = z.object({
   id: z.string().uuid(),
   nome: z.string(),
   membros: z.array(z.string().uuid()),
-  lider: z.object({
-    id: z.string().uuid(),
-    first_name: z.string(),
-  }),
-  supervisao: z.object({
-    id: z.string().uuid(),
-    nome: z.string(),
-  }),
+  lider: z.string().uuid(),
+  supervisao: z.string().uuid(),
   cep: z.string().length(8),
   cidade: z.string(),
   estado: z.string().length(2),
