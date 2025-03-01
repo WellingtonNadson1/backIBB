@@ -47,13 +47,14 @@ class UserRepositorie {
   async getCombinedData() {
     const prisma = createPrismaInstance();
 
-    //DEFINE O INICIO DO CORRENTE ANO
+    // DEFINE O INÍCIO DO CORRENTE ANO
     const startOfYear = new Date(new Date().getFullYear(), 0, 1);
 
-    //DEFINE O FIM DO DIA DE HOJE
+    // DEFINE O FIM DO DIA DE HOJE
     const endOfToday = new Date();
     endOfToday.setHours(23, 59, 59, 999);
 
+    // BUSCA ALMAS GANHAS NO ANO ATUAL
     const almasGanhasAno = await prisma.$transaction([
       prisma.reuniaoCelula.findMany({
         where: {
@@ -71,24 +72,53 @@ class UserRepositorie {
       (total, reuniao) => total + (reuniao.almas_ganhas ?? 0),
       0
     );
-    console.log("almasGanhasNoAno", almasGanhasNoAno);
 
-    //DEFINE O INICIO DO CORRENTE MES
+    // DEFINE O INÍCIO DO ANO PASSADO
+    const startOfLastYear = new Date(new Date().getFullYear() - 1, 0, 1);
+
+    // DEFINE O FIM DO ANO PASSADO
+    const endOfLastYear = new Date(
+      new Date().getFullYear() - 1,
+      11,
+      31,
+      23,
+      59,
+      59,
+      999
+    );
+
+    // BUSCA ALMAS GANHAS NO ANO PASSADO
+    const almasGanhasAnoPassado = await prisma.$transaction([
+      prisma.reuniaoCelula.findMany({
+        where: {
+          data_reuniao: {
+            gte: startOfLastYear,
+            lt: endOfLastYear,
+          },
+        },
+        select: {
+          almas_ganhas: true,
+        },
+      }),
+    ]);
+
+    const almasGanhasNoAnoPassado = almasGanhasAnoPassado[0].reduce(
+      (total, reuniao) => total + (reuniao.almas_ganhas ?? 0),
+      0
+    );
+
+    // DEFINE O INÍCIO E FIM DO MÊS ATUAL
     const startOfMonth = new Date(
       new Date().getFullYear(),
       new Date().getMonth(),
       1
     );
-    //DEFINE O FIM DO CORRENTE MES
     const endOfMonth = new Date(
       new Date().getFullYear(),
       new Date().getMonth() + 1,
       0
     );
 
-    if (!prisma) {
-      throw new Error("Prisma instance is null");
-    }
     const almasGanhasMes = await prisma?.$transaction([
       prisma.reuniaoCelula.findMany({
         where: {
@@ -107,67 +137,17 @@ class UserRepositorie {
       }),
     ]);
 
-    const combinedData = await prisma?.$transaction([
-      prisma?.supervisao.findMany({
-        select: {
-          id: true,
-          nome: true,
-          cor: true,
-          supervisor: {
-            select: {
-              id: true,
-              first_name: true,
-              discipulos: {
-                select: {
-                  user_discipulos: {
-                    select: {
-                      id: true,
-                      first_name: true,
-                      cargo_de_lideranca: {
-                        select: {
-                          id: true,
-                          nome: true,
-                        },
-                      },
-                    },
-                  },
-                },
-              },
-            },
-          },
-          celulas: {
-            select: {
-              id: true,
-              nome: true,
-              lider: {
-                select: {
-                  id: true,
-                  first_name: true,
-                },
-              },
-            },
-          },
-        },
-      }),
-      prisma?.escola.findMany(),
-      prisma?.encontros.findMany(),
-      prisma?.situacaoNoReino.findMany(),
-      prisma?.cargoDeLideranca.findMany(),
-    ]);
-    // Calcula a quantidade de almas ganhas no presente mês
     const almasGanhasNoMes = almasGanhasMes[0].reduce(
       (total, reuniao) => total + (reuniao.almas_ganhas ?? 0),
       0
     );
 
-    //DEFINE O INICIO DO MES PASSADO
+    // DEFINE O INÍCIO E FIM DO MÊS PASSADO
     const startOfLastMonth = new Date(
       new Date().getFullYear(),
       new Date().getMonth() - 1,
       1
     );
-
-    //DEFINE O FIM DO MES PASSADO
     const endOfLastMonth = new Date(
       new Date().getFullYear(),
       new Date().getMonth(),
@@ -197,12 +177,22 @@ class UserRepositorie {
       0
     );
 
+    const combinedData = await prisma?.$transaction([
+      prisma?.supervisao.findMany(),
+      prisma?.escola.findMany(),
+      prisma?.encontros.findMany(),
+      prisma?.situacaoNoReino.findMany(),
+      prisma?.cargoDeLideranca.findMany(),
+    ]);
+
     await disconnectPrisma();
+
     return {
       combinedData,
       almasGanhasNoMes,
       almasGanhasNoMesPassado,
       almasGanhasNoAno,
+      almasGanhasNoAnoPassado, // 👈 Aqui está o valor retornado do ano passado
     };
   }
 
