@@ -178,7 +178,48 @@ class UserRepositorie {
     );
 
     const combinedData = await prisma?.$transaction([
-      prisma?.supervisao.findMany(),
+      prisma?.supervisao.findMany({
+        select: {
+          id: true,
+          nome: true,
+          cor: true,
+          userId: true,
+          supervisor: {
+            select: {
+              id: true,
+              first_name: true,
+              discipulos: {
+                select: {
+                  user_discipulos: {
+                    select: {
+                      id: true,
+                      first_name: true,
+                      cargo_de_lideranca: {
+                        select: {
+                          id: true,
+                          nome: true,
+                        },
+                      },
+                    },
+                  },
+                },
+              },
+            },
+          },
+          celulas: {
+            select: {
+              id: true,
+              nome: true,
+              lider: {
+                select: {
+                  id: true,
+                  first_name: true,
+                },
+              },
+            },
+          },
+        },
+      }),
       prisma?.escola.findMany(),
       prisma?.encontros.findMany(),
       prisma?.situacaoNoReino.findMany(),
