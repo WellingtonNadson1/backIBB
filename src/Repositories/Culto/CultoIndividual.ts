@@ -39,11 +39,17 @@ class CultoIndividualRepositorie {
     try {
       // Definir intervalo de datas padrão se não fornecido
       const defaultStart = startDate || dayjs().subtract(30, "day").toDate();
-      const defaultEnd = endDate || dayjs().toDate();
+      const defaultEnd = endDate || dayjs().endOf("day").toDate();
 
-      const capacidadePadrao = await prisma?.user.count();
+      // Contar a capacidade (total de membros esperados)
+      const capacidadePadrao = await prisma!.user.count({
+        where: superVisionId
+          ? { supervisaoId: superVisionId } // Filtra por supervisão, se fornecida
+          : {}, // Caso contrário, total geral
+      });
 
-      const cultos = await prisma?.cultoIndividual.findMany({
+      // Buscar cultos com presenças filtradas por status: true
+      const cultos = await prisma!.cultoIndividual.findMany({
         where: {
           data_inicio_culto: {
             gte: defaultStart,
@@ -65,6 +71,9 @@ class CultoIndividualRepositorie {
           id: true,
           data_inicio_culto: true,
           presencas_culto: {
+            where: {
+              status: true, // Apenas presenças confirmadas
+            },
             select: {
               id: true,
             },
@@ -94,7 +103,7 @@ class CultoIndividualRepositorie {
       };
 
       cultos.forEach((culto) => {
-        const presentes = culto.presencas_culto.length;
+        const presentes = culto.presencas_culto.length; // Apenas status: true
         const dataFormatada = dayjs(culto.data_inicio_culto).format(
           "DD/MM/YYYY"
         );
@@ -102,8 +111,8 @@ class CultoIndividualRepositorie {
           nome: culto.culto_semana?.nome || "Culto Sem Nome",
           data: dataFormatada,
           presentes,
-          capacidade: capacidadePadrao,
-          comparativo: 0, // Lógica de comparativo pode ser implementada aqui
+          capacidade: capacidadePadrao, // Total de membros esperados
+          comparativo: 0, // Será calculado depois
         };
 
         // Mapeamento baseado no ID do culto_semana (ajuste conforme seus IDs reais)
@@ -121,20 +130,20 @@ class CultoIndividualRepositorie {
             attendanceData["celebracao-tarde"].push(cultoData);
             break;
           default:
-            // Caso não mapeado, pode adicionar em uma categoria padrão ou ignorar
+            // Caso não mapeado, adiciona em uma categoria padrão
             attendanceData.edificacao.push(cultoData);
             break;
         }
       });
 
-      // Ordenar os dados por data (opcional)
+      // Ordenar os dados por data
       Object.keys(attendanceData).forEach((key) => {
         attendanceData[key as CultoTipo].sort((a, b) =>
           dayjs(b.data, "DD/MM/YYYY").diff(dayjs(a.data, "DD/MM/YYYY"))
         );
       });
 
-      // Calcular comparativo (exemplo simples: diferença em relação ao culto anterior)
+      // Calcular comparativo (diferença de presenças em relação ao culto anterior)
       Object.keys(attendanceData).forEach((key) => {
         const cultos = attendanceData[key as CultoTipo];
         for (let i = 0; i < cultos.length; i++) {
