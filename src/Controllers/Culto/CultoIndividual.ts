@@ -196,7 +196,6 @@ class CultoIndividualController {
         {
           startDate: startDate ? new Date(startDate) : undefined,
           endDate: endDate ? new Date(endDate) : undefined,
-          superVisionId,
         }
       );
 
