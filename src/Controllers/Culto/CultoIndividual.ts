@@ -40,7 +40,7 @@ class CultoIndividualController {
     request: FastifyRequest<{
       Params: CultoIndividualForDate;
     }>,
-    reply: FastifyReply,
+    reply: FastifyReply
   ) {
     const { startDate, endDate, superVisionId } =
       request.body as CultoIndividualForDate;
@@ -55,7 +55,7 @@ class CultoIndividualController {
       await CultoIndividualRepositorie.findAllIntervall(
         startDate,
         endDate,
-        superVisionId,
+        superVisionId
       );
     if (!cultosIndividuaisForDate) {
       return reply.code(500).send({ error: "Internal Server Error" });
@@ -102,14 +102,14 @@ class CultoIndividualController {
     request: FastifyRequest<{
       Params: CultoIndividualParamsPerPeriod;
     }>,
-    reply: FastifyReply,
+    reply: FastifyReply
   ) {
     const { firstDayOfMonth, lastDayOfMonth } =
       request.body as CultoIndividualParamsPerPeriod;
     const cultosIndividuaisPerPeriod =
       await CultoIndividualRepositorie.findPerPeriod(
         firstDayOfMonth,
-        lastDayOfMonth,
+        lastDayOfMonth
       );
     if (!cultosIndividuaisPerPeriod) {
       return reply.code(500).send({ error: "Internal Server Error" });
@@ -121,7 +121,7 @@ class CultoIndividualController {
     request: FastifyRequest<{
       Params: CultoIndividualParams;
     }>,
-    reply: FastifyReply,
+    reply: FastifyReply
   ) {
     const id = request.params.id;
     const cultoIndividual = await CultoIndividualRepositorie.findById(id);
@@ -136,16 +136,16 @@ class CultoIndividualController {
       const cultoIndividualDataForm = request.body as CultoIndividualData;
       console.log(
         "Dados recebidos do frontend - Controller",
-        cultoIndividualDataForm,
+        cultoIndividualDataForm
       );
 
       console.log(
         "Data Início (antes de criar) Controller",
-        cultoIndividualDataForm.data.data_inicio_culto,
+        cultoIndividualDataForm.data.data_inicio_culto
       );
       console.log(
         "Data Término (antes de criar) Controller",
-        cultoIndividualDataForm.data.data_termino_culto,
+        cultoIndividualDataForm.data.data_termino_culto
       );
 
       const cultoIndividual =
@@ -162,7 +162,7 @@ class CultoIndividualController {
     request: FastifyRequest<{
       Params: CultoIndividualParams;
     }>,
-    reply: FastifyReply,
+    reply: FastifyReply
   ) {
     const id = request.params.id;
     const cultoIndividualDataForm = request.body as CultoIndividualData;
@@ -177,11 +177,39 @@ class CultoIndividualController {
     request: FastifyRequest<{
       Params: CultoIndividualParams;
     }>,
-    reply: FastifyReply,
+    reply: FastifyReply
   ) {
     const id = request.params.id;
     await CultoIndividualRepositorie.deleteCultoIndividual(id);
     return reply.code(204).send();
+  }
+
+  async getAttendanceData(request: FastifyRequest, reply: FastifyReply) {
+    const { startDate, endDate, superVisionId } = request.query as {
+      startDate?: string;
+      endDate?: string;
+      superVisionId?: string;
+    };
+
+    try {
+      const attendanceData = await CultoIndividualRepositorie.getAttendanceData(
+        {
+          startDate: startDate ? new Date(startDate) : undefined,
+          endDate: endDate ? new Date(endDate) : undefined,
+          superVisionId,
+        }
+      );
+
+      if (!attendanceData) {
+        return reply
+          .code(500)
+          .send({ error: "Erro ao buscar dados de atendimento" });
+      }
+
+      return reply.code(200).send(attendanceData);
+    } catch (error) {
+      return reply.code(500).send({ error: "Erro interno do servidor" });
+    }
   }
 }
 

@@ -11,11 +11,150 @@ interface CultoIndividualConnect {
   connect: { id: string };
 }
 
+// Tipo esperado pelo frontend
+type CultoData = {
+  nome: string;
+  data: string;
+  presentes: number;
+  capacidade: number;
+  comparativo: number;
+};
+
+type CultoTipo = "edificacao" | "cpd" | "celebracao-manha" | "celebracao-tarde";
+
+type AttendanceData = Record<CultoTipo, CultoData[]>;
+
 class CultoIndividualRepositorie {
+  async getAttendanceData({
+    startDate,
+    endDate,
+    superVisionId,
+  }: {
+    startDate?: Date;
+    endDate?: Date;
+    superVisionId?: string;
+  }): Promise<AttendanceData> {
+    const prisma = createPrismaInstance();
+
+    try {
+      // Definir intervalo de datas padrão se não fornecido
+      const defaultStart = startDate || dayjs().subtract(30, "day").toDate();
+      const defaultEnd = endDate || dayjs().toDate();
+
+      const capacidadePadrao = await prisma?.user.count();
+
+      const cultos = await prisma?.cultoIndividual.findMany({
+        where: {
+          data_inicio_culto: {
+            gte: defaultStart,
+            lte: defaultEnd,
+          },
+          ...(superVisionId && {
+            presencas_culto: {
+              some: {
+                membro: {
+                  supervisao_pertence: {
+                    id: { equals: superVisionId },
+                  },
+                },
+              },
+            },
+          }),
+        },
+        select: {
+          id: true,
+          data_inicio_culto: true,
+          presencas_culto: {
+            select: {
+              id: true,
+            },
+          },
+          culto_semana: {
+            select: {
+              id: true,
+              nome: true,
+            },
+          },
+        },
+        orderBy: {
+          data_inicio_culto: "desc",
+        },
+      });
+
+      if (!cultos) {
+        throw new Error("Nenhum culto encontrado");
+      }
+
+      // Mapeamento dos cultos para o formato esperado
+      const attendanceData: AttendanceData = {
+        edificacao: [],
+        cpd: [],
+        "celebracao-manha": [],
+        "celebracao-tarde": [],
+      };
+
+      cultos.forEach((culto) => {
+        const presentes = culto.presencas_culto.length;
+        const dataFormatada = dayjs(culto.data_inicio_culto).format(
+          "DD/MM/YYYY"
+        );
+        const cultoData: CultoData = {
+          nome: culto.culto_semana?.nome || "Culto Sem Nome",
+          data: dataFormatada,
+          presentes,
+          capacidade: capacidadePadrao,
+          comparativo: 0, // Lógica de comparativo pode ser implementada aqui
+        };
+
+        // Mapeamento baseado no ID do culto_semana (ajuste conforme seus IDs reais)
+        switch (culto.culto_semana?.id) {
+          case "4064be1d-bf55-4851-9f76-99c4554a6265": // Culto de Quarta (exemplo para Edificação)
+            attendanceData.edificacao.push(cultoData);
+            break;
+          case "84acfbe4-c7e0-4841-813c-04731ffa9c67": // Culto de Sábado (exemplo para CPD)
+            attendanceData.cpd.push(cultoData);
+            break;
+          case "cab02f30-cade-46ca-b118-930461013d53": // Culto de Domingo Manhã
+            attendanceData["celebracao-manha"].push(cultoData);
+            break;
+          case "ea08ec9b-3d1b-42f3-818a-ec53ef99b78f": // Culto de Domingo Tarde
+            attendanceData["celebracao-tarde"].push(cultoData);
+            break;
+          default:
+            // Caso não mapeado, pode adicionar em uma categoria padrão ou ignorar
+            attendanceData.edificacao.push(cultoData);
+            break;
+        }
+      });
+
+      // Ordenar os dados por data (opcional)
+      Object.keys(attendanceData).forEach((key) => {
+        attendanceData[key as CultoTipo].sort((a, b) =>
+          dayjs(b.data, "DD/MM/YYYY").diff(dayjs(a.data, "DD/MM/YYYY"))
+        );
+      });
+
+      // Calcular comparativo (exemplo simples: diferença em relação ao culto anterior)
+      Object.keys(attendanceData).forEach((key) => {
+        const cultos = attendanceData[key as CultoTipo];
+        for (let i = 0; i < cultos.length; i++) {
+          if (i > 0) {
+            cultos[i].comparativo =
+              cultos[i].presentes - cultos[i - 1].presentes;
+          }
+        }
+      });
+
+      return attendanceData;
+    } finally {
+      await disconnectPrisma();
+    }
+  }
+
   async findAllIntervall(
     startDate: Date,
     endDate: Date,
-    superVisionId: string,
+    superVisionId: string
   ) {
     const dataFim = dayjs(endDate).endOf("day").toISOString();
     const prisma = createPrismaInstance();
@@ -98,7 +237,7 @@ class CultoIndividualRepositorie {
         return (
           total +
           (sacrificio.culto_semana?.id ===
-            "e7bc72d1-8faa-4bbe-9c24-475b64f956cf"
+          "e7bc72d1-8faa-4bbe-9c24-475b64f956cf"
             ? 1
             : 0)
         );
@@ -126,7 +265,7 @@ class CultoIndividualRepositorie {
         return (
           total +
           (domingoManha.culto_semana?.id ===
-            "cab02f30-cade-46ca-b118-930461013d53"
+          "cab02f30-cade-46ca-b118-930461013d53"
             ? 1
             : 0)
         );
@@ -136,7 +275,7 @@ class CultoIndividualRepositorie {
         return (
           total +
           (domingoTarde.culto_semana?.id ===
-            "ea08ec9b-3d1b-42f3-818a-ec53ef99b78f"
+          "ea08ec9b-3d1b-42f3-818a-ec53ef99b78f"
             ? 1
             : 0)
         );
@@ -363,7 +502,7 @@ class CultoIndividualRepositorie {
 
   async updateCultoIndividual(
     id: string,
-    cultoIndividualDataForm: CultoIndividualData,
+    cultoIndividualDataForm: CultoIndividualData
   ) {
     const prisma = createPrismaInstance();
     try {
@@ -390,7 +529,7 @@ class CultoIndividualRepositorie {
             connect: {
               id: presencaCultoId,
             },
-          }),
+          })
         ) as CultoIndividualConnect[];
       }
       const result = await prisma?.cultoIndividual.update({
