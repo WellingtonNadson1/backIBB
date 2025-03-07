@@ -795,6 +795,48 @@ class UserRepositorie {
     return result;
   }
 
+  async findAllSimple() {
+    const prisma = createPrismaInstance();
+
+    if (!prisma) {
+      throw new Error("Prisma instance is null");
+    }
+    const result = await prisma?.user.findMany({
+      select: {
+        id: true,
+        image_url: true,
+        first_name: true,
+        last_name: true,
+        supervisao_pertence: {
+          select: {
+            id: true,
+            nome: true,
+          },
+        },
+        celula: {
+          select: {
+            id: true,
+            nome: true,
+          },
+        },
+        situacao_no_reino: {
+          select: {
+            id: true,
+            nome: true,
+          },
+        },
+        cargo_de_lideranca: {
+          select: {
+            id: true,
+            nome: true,
+          },
+        },
+      },
+    });
+    await disconnectPrisma();
+    return result;
+  }
+
   async findAll() {
     const prisma = createPrismaInstance();
 

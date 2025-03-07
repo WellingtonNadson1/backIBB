@@ -78,6 +78,16 @@ class UserController {
   }
 
   // Get all users
+  async simple(request: FastifyRequest, reply: FastifyReply) {
+    try {
+      const users = await UserRepositorie.findAllSimple();
+      return reply.code(200).send(users);
+    } catch (error) {
+      return reply.code(500).send({ error: "Internal Server Error" });
+    }
+  }
+
+  // Get all users
   async index(request: FastifyRequest, reply: FastifyReply) {
     try {
       const users = await UserRepositorie.findAll();
