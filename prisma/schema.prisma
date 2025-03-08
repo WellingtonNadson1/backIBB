@@ -267,24 +267,24 @@ model Supervisao {
 
 model Dizimo {
   id           String   @id @default(uuid())
-  user         User?    @relation(fields: [userId], references: [id])
   valor        Decimal?
   data_dizimou DateTime
   date_create  DateTime @default(now())
   date_update  DateTime @updatedAt
   userId       String?
+  user         User?    @relation(fields: [userId], references: [id])
 
   @@map("dizimo")
 }
 
 model Oferta {
   id           String   @id @default(uuid())
-  user         User?    @relation(fields: [userId], references: [id])
   valor        Decimal?
   data_ofertou DateTime
   date_create  DateTime @default(now())
   date_update  DateTime @updatedAt
   userId       String?
+  user         User?    @relation(fields: [userId], references: [id])
 
   @@map("oferta")
 }
@@ -350,18 +350,18 @@ model User {
   image_url                String?
   email                    String                  @unique
   first_name               String
-  last_name                String?
+  last_name                String
   cpf                      String?
   date_nascimento          DateTime?
-  sexo                     String?
-  telefone                 String?
+  sexo                     String
+  telefone                 String
   escolaridade             String?
   profissao                String?
-  estado_civil             String?
+  estado_civil             String
   nome_conjuge             String?
-  has_filho                Boolean
-  batizado                 Boolean
-  is_discipulado           Boolean
+  has_filho                Boolean?
+  batizado                 Boolean?
+  is_discipulado           Boolean?
   discipuladorId           String?
   date_casamento           DateTime?
   date_batizado            DateTime?
@@ -376,10 +376,10 @@ model User {
   estado                   String?
   numero_casa              String?
   bairro                   String?
-  cargoDeLiderancaId       String?
+  cargoDeLiderancaId       String
   celulaId                 String?
-  situacaoNoReinoId        String?
-  supervisaoId             String?
+  situacaoNoReinoId        String
+  supervisaoId             String
   quantidade_de_filho      Int?
   role                     Role                    @default(MEMBER)
   userIdRefresh            String?
@@ -390,23 +390,23 @@ model User {
   celula_lidera            Celula[]                @relation("LiderCelula")
   discipulos               discipulador_usuario[]  @relation("discipulos")
   discipulador             discipulador_usuario[]  @relation("discipulador")
+  Dizimo                   Dizimo[]
   escola_lidera            Escola[]                @relation("LiderEscola")
+  Oferta                   Oferta[]
   refreshTokens            RefreshToken?
   sessions                 Session[]
   supervisoes_lidera       Supervisao[]            @relation("Supervisor")
   tokens                   Token[]
-  cargo_de_lideranca       CargoDeLideranca?       @relation(fields: [cargoDeLiderancaId], references: [id])
+  cargo_de_lideranca       CargoDeLideranca        @relation(fields: [cargoDeLiderancaId], references: [id], onDelete: Restrict)
   celula                   Celula?                 @relation(fields: [celulaId], references: [id])
   user                     User?                   @relation("userTouser", fields: [discipuladorId], references: [id], map: "user_discipuladorid_fkey")
   other_user               User[]                  @relation("userTouser")
-  situacao_no_reino        SituacaoNoReino?        @relation(fields: [situacaoNoReinoId], references: [id])
-  supervisao_pertence      Supervisao?             @relation(fields: [supervisaoId], references: [id])
+  situacao_no_reino        SituacaoNoReino         @relation(fields: [situacaoNoReinoId], references: [id], onDelete: Restrict)
+  supervisao_pertence      Supervisao              @relation(fields: [supervisaoId], references: [id], onDelete: Restrict)
   TurmaEscola              TurmaEscola?            @relation(fields: [turmaEscolaId], references: [id])
   user_roles               user_roles[]
   encontros                Encontros[]             @relation("EncontrosToUser")
   escolas                  Escola[]                @relation("EscolaToUser")
-  Dizimo                   Dizimo[]
-  Oferta                   Oferta[]
 
   @@map("user")
 }

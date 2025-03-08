@@ -1,7 +1,13 @@
 import bcrypt from "bcrypt";
 import { FastifyReply, FastifyRequest } from "fastify";
 import UserRepositorie from "../../Repositories/User/UserRepositorie";
-import { TStatusUpdate, UserData } from "./schema";
+import {
+  TStatusUpdate,
+  UserData,
+  UserDataSchema,
+  UserDataUpdate,
+} from "./schema";
+import { z } from "zod";
 
 export interface UserParams {
   id: string;
@@ -144,12 +150,14 @@ class UserController {
   // Create a new user
   async store(request: FastifyRequest, reply: FastifyReply) {
     try {
-      const userDataForm = request.body as UserData;
+      // Valida os dados recebidos com o schema Zod
+      const userDataForm = UserDataSchema.parse(request.body);
+
       const { email } = userDataForm;
       let { date_nascimento, date_batizado, date_casamento, date_decisao } =
         userDataForm;
 
-      // Check if user already exists
+      // Verifica se o usuário já existe
       const userExist = await UserRepositorie.findByEmail(email);
       if (userExist) {
         return reply
@@ -157,19 +165,19 @@ class UserController {
           .send({ message: "User already exists. Please try another email!" });
       }
 
-      // Format dates
+      // Formata as datas, se presentes
       if (date_nascimento)
         date_nascimento = formatDateToISO8601(date_nascimento);
       if (date_batizado) date_batizado = formatDateToISO8601(date_batizado);
       if (date_casamento) date_casamento = formatDateToISO8601(date_casamento);
       if (date_decisao) date_decisao = formatDateToISO8601(date_decisao);
 
-      // Hash password
+      // Hash da senha
       const { password } = userDataForm;
       const saltRounds = 10;
       const hashPassword = bcrypt.hashSync(password, saltRounds);
 
-      // Create user
+      // Cria o usuário
       const user = await UserRepositorie.createUser({
         ...userDataForm,
         date_nascimento,
@@ -182,6 +190,10 @@ class UserController {
       const { password: _, ...newUser } = user;
       return reply.code(201).send(newUser);
     } catch (error) {
+      console.log("error ao criar user:", error);
+      if (error instanceof z.ZodError) {
+        return reply.code(400).send({ errors: error.errors });
+      }
       return reply.code(500).send({ error: "Failed to create user." });
     }
   }
@@ -193,11 +205,15 @@ class UserController {
   ) {
     try {
       const id = request.params.id;
-      const userDataForm = request.body as UserData;
+      const userDataForm = request.body as UserDataUpdate;
+
+      // Extrair apenas os IDs de escolas e encontros
+      const escolasIds = userDataForm.escolas?.map((escola) => escola);
+      const encontrosIds = userDataForm.encontros?.map((encontro) => encontro);
+
+      // Format dates (já estão em ISO 8601 do frontend, mas garantimos aqui)
       let { date_nascimento, date_batizado, date_casamento, date_decisao } =
         userDataForm;
-
-      // Format dates
       if (date_nascimento)
         date_nascimento = formatDateToISO8601(date_nascimento);
       if (date_batizado) date_batizado = formatDateToISO8601(date_batizado);
@@ -207,6 +223,8 @@ class UserController {
       // Update user
       const user = await UserRepositorie.updateUser(id, {
         ...userDataForm,
+        escolas: escolasIds, // Substituímos os objetos pelos IDs
+        encontros: encontrosIds, // Substituímos os objetos pelos IDs
         date_nascimento,
         date_batizado,
         date_casamento,
@@ -215,6 +233,7 @@ class UserController {
 
       return reply.code(202).send(user);
     } catch (error) {
+      console.error(error);
       return reply.code(500).send({ error: "Failed to update user." });
     }
   }
