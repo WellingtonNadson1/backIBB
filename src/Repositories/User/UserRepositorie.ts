@@ -1526,60 +1526,80 @@ class UserRepositorie {
       }
 
       if (discipuladorId !== undefined) {
+        console.log("discipuladorId fornecido:", discipuladorId);
+        console.log("usuario_id:", id);
+
+        // Validar se o discipulador existe (se discipuladorId não for null)
+        if (discipuladorId) {
+          const discipuladorExists = await prisma.user.findUnique({
+            where: { id: discipuladorId },
+          });
+          console.log("discipuladorExists:", discipuladorExists);
+          if (!discipuladorExists) {
+            throw new Error(
+              `Discipulador com ID ${discipuladorId} não encontrado`
+            );
+          }
+        }
+
+        // Validar se o usuário existe
+        const userExists = await prisma.user.findUnique({
+          where: { id },
+        });
+        console.log("userExists:", userExists);
+        if (!userExists) {
+          throw new Error(`Usuário com ID ${id} não encontrado`);
+        }
+
         // Verificar se a relação já existe
         const existingRelation = await prisma.discipulador_usuario.findFirst({
           where: { usuario_id: id },
         });
+        console.log("existingRelation:", existingRelation);
 
-        console.log("existingRelation com Disicipulo: ", existingRelation);
-
-        if (existingRelation) {
-          // Deletar a relação existente
-          const discipuladoAtualizadoOrCriado =
-            await prisma.discipulador_usuario.update({
+        if (discipuladorId) {
+          if (existingRelation) {
+            console.log("Deletando relação existente:", existingRelation);
+            await prisma.discipulador_usuario.delete({
               where: {
                 usuario_id_discipulador_id: {
-                  discipulador_id: existingRelation.discipulador_id,
                   usuario_id: id,
+                  discipulador_id: existingRelation.discipulador_id,
                 },
               },
-              data: {
-                discipulador_id: discipuladorId,
+            });
+          }
+
+          console.log(
+            "Criando nova relação com discipuladorId:",
+            discipuladorId
+          );
+          await prisma.discipulador_usuario.create({
+            data: {
+              usuario_id: id,
+              discipulador_id: discipuladorId,
+            },
+          });
+        } else if (existingRelation) {
+          console.log("Removendo relação existente:", existingRelation);
+          await prisma.discipulador_usuario.delete({
+            where: {
+              usuario_id_discipulador_id: {
+                usuario_id: id,
+                discipulador_id: existingRelation.discipulador_id,
               },
-            });
-
-          await prisma.user.update({
-            where: {
-              id: id,
-            },
-            data: {
-              discipuladorId: discipuladorId,
             },
           });
-          console.log(
-            "Atualizado o Disicipulador no If: ",
-            discipuladoAtualizadoOrCriado
-          );
-        } else {
-          // Criar nova relação
-          const discipuladoAtualizadoOrCriado =
-            await prisma.discipulador_usuario.create({
-              data: { usuario_id: id, discipulador_id: discipuladorId },
-            });
-
-          await prisma.user.update({
-            where: {
-              id: id,
-            },
-            data: {
-              discipuladorId: discipuladorId,
-            },
-          });
-          console.log(
-            "Atualizado o Disicipulador no Else: ",
-            discipuladoAtualizadoOrCriado
-          );
         }
+
+        console.log(
+          "Atualizando discipuladorId na tabela User:",
+          discipuladorId || null
+        );
+        await prisma.user.update({
+          where: { id },
+          data: { discipuladorId: discipuladorId || null },
+        });
       }
 
       if (TurmaEscola !== undefined) {
