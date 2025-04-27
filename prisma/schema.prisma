@@ -397,12 +397,12 @@ model User {
   sessions                 Session[]
   supervisoes_lidera       Supervisao[]            @relation("Supervisor")
   tokens                   Token[]
-  cargo_de_lideranca       CargoDeLideranca        @relation(fields: [cargoDeLiderancaId], references: [id], onDelete: Restrict)
+  cargo_de_lideranca       CargoDeLideranca        @relation(fields: [cargoDeLiderancaId], references: [id])
   celula                   Celula?                 @relation(fields: [celulaId], references: [id])
   user                     User?                   @relation("userTouser", fields: [discipuladorId], references: [id], map: "user_discipuladorid_fkey")
   other_user               User[]                  @relation("userTouser")
-  situacao_no_reino        SituacaoNoReino         @relation(fields: [situacaoNoReinoId], references: [id], onDelete: Restrict)
-  supervisao_pertence      Supervisao              @relation(fields: [supervisaoId], references: [id], onDelete: Restrict)
+  situacao_no_reino        SituacaoNoReino         @relation(fields: [situacaoNoReinoId], references: [id])
+  supervisao_pertence      Supervisao              @relation(fields: [supervisaoId], references: [id])
   TurmaEscola              TurmaEscola?            @relation(fields: [turmaEscolaId], references: [id])
   user_roles               user_roles[]
   encontros                Encontros[]             @relation("EncontrosToUser")
