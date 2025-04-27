@@ -106,6 +106,7 @@ class CelulaController {
     }
     return reply.code(200).send(celula);
   }
+
   async showDetails(
     request: FastifyRequest<{
       Params: CelulaParams;
