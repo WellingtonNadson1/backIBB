@@ -201,7 +201,7 @@ class RegisterDiscipuladoRepositorie {
     startDate: Date,
     endDate: Date,
     superVisionId: string,
-    cargoLiderancaId: string[],
+    cargoLiderancaId: string[]
   ) {
     const dataFim = dayjs(endDate).endOf("day").toISOString();
 
@@ -249,8 +249,7 @@ class RegisterDiscipuladoRepositorie {
                   user_discipulos: {
                     select: {
                       first_name: true,
-                      discipulos:
-                      {
+                      discipulos: {
                         select: {
                           user_discipulos: {
                             select: {
@@ -575,6 +574,7 @@ class RegisterDiscipuladoRepositorie {
                 select: {
                   id: true,
                   first_name: true,
+                  image_url: true,
                 },
               },
               _count: {
@@ -609,6 +609,7 @@ class RegisterDiscipuladoRepositorie {
                 select: {
                   id: true,
                   first_name: true,
+                  image_url: true,
                 },
               },
               _count: {
@@ -784,7 +785,7 @@ class RegisterDiscipuladoRepositorie {
   }
 
   async createRegisterDiscipulado(
-    RegisterDiscipuladoDataForm: dataSchemaCreateDiscipulado,
+    RegisterDiscipuladoDataForm: dataSchemaCreateDiscipulado
   ) {
     const prisma = createPrismaInstance();
 
@@ -807,7 +808,7 @@ class RegisterDiscipuladoRepositorie {
 
   async updatePresencaCulto(
     id: string,
-    presencaCultoDataForm: PresencaCultoData,
+    presencaCultoDataForm: PresencaCultoData
   ) {
     const prisma = createPrismaInstance();
 
