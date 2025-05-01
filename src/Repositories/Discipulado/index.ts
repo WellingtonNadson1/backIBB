@@ -691,6 +691,7 @@ class RegisterDiscipuladoRepositorie {
             select: {
               id: true,
               first_name: true,
+              image_url: true,
               cargo_de_lideranca: {
                 select: {
                   id: true,
@@ -703,6 +704,7 @@ class RegisterDiscipuladoRepositorie {
                     select: {
                       id: true,
                       first_name: true,
+                      image_url: true,
                     },
                   },
                   _count: {
