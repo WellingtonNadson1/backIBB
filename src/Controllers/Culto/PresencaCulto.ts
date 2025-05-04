@@ -194,8 +194,6 @@ class PresencaCultoController {
   async store(request: FastifyRequest, reply: FastifyReply) {
     logger.info(
       {
-        //@ts-ignore
-        userId: request.user.id,
         body: request.body,
         endpoint: "/presencacultos",
       },
