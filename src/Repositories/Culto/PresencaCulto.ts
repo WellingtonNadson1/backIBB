@@ -553,22 +553,37 @@ class PresencaCultoRepositorie {
     const dataBrasilDate = new Date(date_create);
     const date_update = dataBrasilDate;
 
-    const result = await prisma.presencaCulto.create({
-      data: {
-        membro: {
-          connect: {
-            id: membro,
-          },
+    const result = await prisma.$transaction(async (tx) => {
+      // Verifica se o registro já existe
+      const existingPresence = await tx.presencaCulto.findFirst({
+        where: {
+          userId: membro,
+          cultoIndividualId: presenca_culto,
         },
-        presenca_culto: {
-          connect: {
-            id: presenca_culto,
+      });
+
+      if (existingPresence) {
+        throw new Error("Presença já registrada para este culto");
+      }
+
+      // Cria o novo registro
+      return tx.presencaCulto.create({
+        data: {
+          membro: {
+            connect: {
+              id: membro,
+            },
           },
+          presenca_culto: {
+            connect: {
+              id: presenca_culto,
+            },
+          },
+          status,
+          date_create: dataBrasilDate,
+          date_update,
         },
-        status: status,
-        date_create: dataBrasilDate,
-        date_update: date_update,
-      },
+      });
     });
     await disconnectPrisma();
     return result;
