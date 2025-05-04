@@ -2,7 +2,6 @@ import dayjs from "dayjs";
 import { FastifyReply, FastifyRequest } from "fastify";
 import { Input, array, boolean, object, string } from "valibot";
 import { PresencaCultoRepositorie } from "../../Repositories/Culto";
-import pino from "pino";
 
 type CultoIndividual = {
   startDate: Date;
@@ -42,8 +41,6 @@ interface RelatorioCultosParams {
   startOfInterval: string;
   endOfInterval: string;
 }
-
-const logger = pino();
 
 class PresencaCultoController {
   // Fazendo uso do Fastify
@@ -192,13 +189,6 @@ class PresencaCultoController {
   }
 
   async store(request: FastifyRequest, reply: FastifyReply) {
-    logger.info(
-      {
-        body: request.body,
-        endpoint: "/presencacultos",
-      },
-      "Recebendo requisição para registrar presença"
-    );
     try {
       const presencaCultoDataForm = request.body as PresencaCultoData;
 
