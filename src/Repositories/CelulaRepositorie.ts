@@ -44,6 +44,7 @@ class CelulaRepositorie {
           select: {
             id: true,
             first_name: true,
+            image_url: true,
           },
         },
         supervisao: {
@@ -56,23 +57,10 @@ class CelulaRepositorie {
           select: {
             id: true,
             first_name: true,
+            image_url: true,
           },
         },
         date_que_ocorre: true,
-        // reunioes_celula: {
-        //   select: {
-        //     id: true,
-        //     data_reuniao: true,
-        //     status: true,
-        //     presencas_membros_reuniao_celula: {
-        //       select: {
-        //         id: true,
-        //         membro: true,
-        //         status: true,
-        //       },
-        //     },
-        //   },
-        // },
       },
     });
     await disconnectPrisma();
