@@ -52,6 +52,7 @@ class SupervisiaoRepositorie {
               select: {
                 id: true,
                 first_name: true,
+                image_url: true,
               },
             },
           },
