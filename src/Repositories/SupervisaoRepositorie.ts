@@ -15,6 +15,7 @@ class SupervisiaoRepositorie {
             id: true,
             first_name: true,
             image_url: true,
+            cargo_de_lideranca: true,
           },
         },
         celulas: {
