@@ -14,18 +14,43 @@ class SupervisiaoRepositorie {
           select: {
             id: true,
             first_name: true,
+            image_url: true,
           },
         },
         celulas: {
           select: {
             id: true,
             nome: true,
+            _count: {
+              select: {
+                membros: true,
+              },
+            },
           },
         },
       },
     });
+
+    // Calcula a quantidade total de membros e células por supervisão
+    const formatted = result.map((supervisao) => {
+      const quantidadeCelulas = supervisao.celulas.length;
+      const quantidadeMembros = supervisao.celulas.reduce(
+        (total, celula) => total + celula._count.membros,
+        0
+      );
+
+      return {
+        id: supervisao.id,
+        nome: supervisao.nome,
+        cor: supervisao.cor,
+        supervisor: supervisao.supervisor,
+        quantidadeCelulas,
+        quantidadeMembros,
+      };
+    });
+
     await disconnectPrisma();
-    return result;
+    return formatted;
   }
 
   async findById(id: string) {
