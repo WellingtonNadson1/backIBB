@@ -177,6 +177,33 @@ class UserRepositorie {
       0
     );
 
+    // Busca todas as reuniões do ano com data e almas ganhas
+    const reunioesAno = await prisma.reuniaoCelula.findMany({
+      where: {
+        data_reuniao: {
+          gte: startOfYear,
+          lt: endOfToday,
+        },
+      },
+      select: {
+        data_reuniao: true,
+        almas_ganhas: true,
+      },
+    });
+
+    // Agrupa por mês
+    const almasPorMesNoAno: Record<string, number> = {};
+
+    reunioesAno.forEach((reuniao) => {
+      if (reuniao.data_reuniao) {
+        const mes = reuniao.data_reuniao.toLocaleString("pt-BR", {
+          month: "long",
+        });
+        almasPorMesNoAno[mes] =
+          (almasPorMesNoAno[mes] ?? 0) + (reuniao.almas_ganhas ?? 0);
+      }
+    });
+
     const combinedData = await prisma?.$transaction([
       prisma?.supervisao.findMany({
         select: {
@@ -234,6 +261,7 @@ class UserRepositorie {
       almasGanhasNoMesPassado,
       almasGanhasNoAno,
       almasGanhasNoAnoPassado, // 👈 Aqui está o valor retornado do ano passado
+      almasPorMesNoAno,
     };
   }
 
