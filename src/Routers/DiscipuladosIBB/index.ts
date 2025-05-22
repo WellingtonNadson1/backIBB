@@ -2,7 +2,10 @@ import { FastifyInstance } from "fastify";
 import { RegisterDiscipuladoController } from "../../Controllers/Discipulado";
 
 const routerRegisterDiscipulado = async (fastify: FastifyInstance) => {
-  fastify.get("/metrics", RegisterDiscipuladoController.getDiscipleMetrics);
+  fastify.get(
+    "/discipuladosibb/metrics",
+    RegisterDiscipuladoController.getDiscipleMetrics
+  );
   // fastify.get('/discipuladosibb/relatorios', RegisterDiscipuladoController.cultosRelatorios);
   fastify.post(
     "/discipuladosibb/supervisao/relatorio",
