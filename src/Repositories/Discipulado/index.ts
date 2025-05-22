@@ -292,6 +292,30 @@ class RegisterDiscipuladoRepositorie {
     }
   }
 
+  async getMemberMetrics() {
+    const prisma = createPrismaInstance();
+    const totalMembros = await prisma.user.count();
+    const totalAtivos = await prisma.user.count({
+      where: { situacao_no_reino: { nome: { equals: "Ativo" } } },
+    });
+    const totalNormais = await prisma.user.count({
+      where: { situacao_no_reino: { nome: { equals: "Normal" } } },
+    });
+    const totalInativos = await prisma.user.count({
+      where: { situacao_no_reino: { nome: { equals: "Afastado" } } },
+    });
+
+    const totalDiscipulados = await prisma.discipulado.count();
+
+    return {
+      totalMembros,
+      totalAtivos,
+      totalNormais,
+      totalInativos,
+      totalDiscipulados,
+    };
+  }
+
   async discipuladosRelatorioSupervisao(params: {
     superVisionId: string;
     startDate: Date;

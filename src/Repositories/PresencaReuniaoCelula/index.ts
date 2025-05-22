@@ -14,15 +14,50 @@ const PresencaNewReuniaoCelulaSchema = z.object({
     z.object({
       id: z.string(),
       status: z.boolean(), //Pode ter um status (presente, ausente, justificado, etc.)
-    }),
+    })
   ),
 });
 
-export type PresencaNewReuniaoCelula = z.infer<typeof PresencaNewReuniaoCelulaSchema>;
+export type PresencaNewReuniaoCelula = z.infer<
+  typeof PresencaNewReuniaoCelulaSchema
+>;
 
-const prisma = createPrismaInstance()
+const prisma = createPrismaInstance();
 
 class PresencaReuniaoCelulaRepositorie {
+  async getCellMetrics() {
+    const totalCelulasAtivas = await prisma.celula.count();
+
+    const presencas = await prisma.presencaReuniaoCelula.findMany({
+      select: { status: true, reuniaoCelulaId: true },
+    });
+
+    const totalPresencas = presencas.length;
+    const presencasConfirmadas = presencas.filter((p) => p.status).length;
+    const mediaPresenca = totalPresencas
+      ? (presencasConfirmadas / totalPresencas) * 100
+      : 0;
+
+    const reunioes = await prisma.reuniaoCelula.findMany({
+      select: { visitantes: true },
+    });
+
+    const totalReunioes = reunioes.length;
+    const totalVisitantes = reunioes.reduce(
+      (sum, r) => sum + (r.visitantes ?? 0),
+      0
+    );
+    const mediaVisitantes = totalReunioes ? totalVisitantes / totalReunioes : 0;
+    console.log("totalCelulasAtivas: ", totalCelulasAtivas);
+
+    return {
+      totalCelulasAtivas,
+      totalVisitantes,
+      mediaPresenca: Number(mediaPresenca.toFixed(2)),
+      mediaVisitantes: Number(mediaVisitantes.toFixed(2)),
+    };
+  }
+
   async findAll() {
     const result = await prisma?.presencaReuniaoCelula.findMany({
       select: {
@@ -35,19 +70,18 @@ class PresencaReuniaoCelulaRepositorie {
             celula: {
               select: {
                 nome: true,
-              }
-            }
-          }
+              },
+            },
+          },
         },
         which_reuniao_celula: true,
       },
     });
-    await disconnectPrisma()
+    await disconnectPrisma();
     return result;
   }
 
-  async findPresenceRegistered(
-    id: string) {
+  async findPresenceRegistered(id: string) {
     const result = await prisma?.presencaReuniaoCelula.findFirst({
       where: {
         which_reuniao_celula: { id: id },
@@ -62,14 +96,14 @@ class PresencaReuniaoCelulaRepositorie {
             celula: {
               select: {
                 nome: true,
-              }
-            }
-          }
+              },
+            },
+          },
         },
         which_reuniao_celula: true,
       },
     });
-    await disconnectPrisma()
+    await disconnectPrisma();
     return result;
   }
 
@@ -95,17 +129,16 @@ class PresencaReuniaoCelulaRepositorie {
             celula: {
               select: {
                 nome: true,
-              }
-            }
-          }
+              },
+            },
+          },
         },
         which_reuniao_celula: true,
       },
     });
-    await disconnectPrisma()
+    await disconnectPrisma();
     return result;
   }
-
 
   async findById(id: string) {
     const result = await prisma?.presencaReuniaoCelula.findUnique({
@@ -122,45 +155,49 @@ class PresencaReuniaoCelulaRepositorie {
             celula: {
               select: {
                 nome: true,
-              }
-            }
-          }
+              },
+            },
+          },
         },
         which_reuniao_celula: true,
       },
     });
-    await disconnectPrisma()
+    await disconnectPrisma();
     return result;
   }
 
-  async createPresencaReuniaCelula(presencaCultoDataForm: PresencaReuniaoCelulaData) {
+  async createPresencaReuniaCelula(
+    presencaCultoDataForm: PresencaReuniaoCelulaData
+  ) {
     const { membro, which_reuniao_celula, status } = presencaCultoDataForm;
-    const dataBrasil = dayjs().tz('America/Sao_Paulo');
-    const date_create = dataBrasil.format('YYYY-MM-DDTHH:mm:ss.SSS[Z]')
+    const dataBrasil = dayjs().tz("America/Sao_Paulo");
+    const date_create = dataBrasil.format("YYYY-MM-DDTHH:mm:ss.SSS[Z]");
     const dataBrasilDate = new Date(date_create);
     const date_update = dataBrasilDate;
     const result = await prisma?.presencaReuniaoCelula.create({
       data: {
         membro: {
           connect: {
-            id: membro
-          }
+            id: membro,
+          },
         },
         which_reuniao_celula: {
           connect: {
-            id: which_reuniao_celula
-          }
+            id: which_reuniao_celula,
+          },
         },
         status: status,
         date_create: dataBrasilDate,
         date_update: date_update,
       },
     });
-    await disconnectPrisma()
+    await disconnectPrisma();
     return result;
   }
 
-  async createNewPresencaReuniaCelula(presencaNewReuniaoDataForm: PresencaNewReuniaoCelula) {
+  async createNewPresencaReuniaCelula(
+    presencaNewReuniaoDataForm: PresencaNewReuniaoCelula
+  ) {
     const prisma = createPrismaInstance();
 
     const { membro, which_reuniao_celula } = presencaNewReuniaoDataForm;
@@ -187,16 +224,19 @@ class PresencaReuniaoCelulaRepositorie {
             date_create: dataBrasilDate,
             date_update: date_update,
           },
-        }),
-      ),
+        })
+      )
     );
     await disconnectPrisma();
     return result;
   }
 
-
-  async updatePresencaReuniaoCelula(id: string, presencaReuniaoCelulaDataForm: PresencaReuniaoCelulaData) {
-    const { membro, ...presencaReuniaoCelulaData } = presencaReuniaoCelulaDataForm;
+  async updatePresencaReuniaoCelula(
+    id: string,
+    presencaReuniaoCelulaDataForm: PresencaReuniaoCelulaData
+  ) {
+    const { membro, ...presencaReuniaoCelulaData } =
+      presencaReuniaoCelulaDataForm;
     const result = await prisma?.presencaReuniaoCelula.update({
       where: {
         id: id,
@@ -205,17 +245,17 @@ class PresencaReuniaoCelulaRepositorie {
         ...presencaReuniaoCelulaData,
         membro: {
           connect: {
-            id: membro
-          }
+            id: membro,
+          },
         },
         which_reuniao_celula: {
           connect: {
-            id: presencaReuniaoCelulaData.which_reuniao_celula
-          }
-        }
+            id: presencaReuniaoCelulaData.which_reuniao_celula,
+          },
+        },
       },
     });
-    await disconnectPrisma()
+    await disconnectPrisma();
     return result;
   }
 
@@ -225,7 +265,7 @@ class PresencaReuniaoCelulaRepositorie {
         id: id,
       },
     });
-    await disconnectPrisma()
+    await disconnectPrisma();
     return result;
   }
 }

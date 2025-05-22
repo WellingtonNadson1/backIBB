@@ -1,7 +1,15 @@
 import { FastifyReply, FastifyRequest } from "fastify";
 import RegisterDiscipuladoRepositorie from "../../Repositories/Discipulado";
 import dayjs from "dayjs";
-import { CultoIndividual, PresencaCultoData, PresencaCultoParams, PresencaDiscipuladoParams, dataSchemaCreateDiscipulado, dataSchemaCreateDiscipuladoCell, dataSchemaCreateDiscipuladoSupervisor } from "./schema";
+import {
+  CultoIndividual,
+  PresencaCultoData,
+  PresencaCultoParams,
+  PresencaDiscipuladoParams,
+  dataSchemaCreateDiscipulado,
+  dataSchemaCreateDiscipuladoCell,
+  dataSchemaCreateDiscipuladoSupervisor,
+} from "./schema";
 
 class RegisterDiscipuladoController {
   // Fazendo uso do Fastify
@@ -9,6 +17,18 @@ class RegisterDiscipuladoController {
     const presencasCultos = RegisterDiscipuladoRepositorie.findLog();
     return reply.send(presencasCultos);
   }
+
+  getDiscipleMetrics = async (request: FastifyRequest, reply: FastifyReply) => {
+    try {
+      const result = await RegisterDiscipuladoRepositorie.getMemberMetrics();
+      return reply.status(200).send(result);
+    } catch (error) {
+      console.error(error);
+      return reply
+        .status(500)
+        .send({ error: "Erro ao obter as métricas de discipulado." });
+    }
+  };
 
   async index(request: FastifyRequest, reply: FastifyReply) {
     const presencasCultos = await RegisterDiscipuladoRepositorie.findAll();
@@ -37,53 +57,54 @@ class RegisterDiscipuladoController {
     request: FastifyRequest,
     reply: FastifyReply
   ) {
-    const { startDate, endDate, superVisionId, cargoLiderancaId } = request.body as CultoIndividual
+    const { startDate, endDate, superVisionId, cargoLiderancaId } =
+      request.body as CultoIndividual;
 
-
-    const resultRelatorioCultos = await RegisterDiscipuladoRepositorie.cultosRelatoriosSupervisor(
-      startDate, endDate, superVisionId, cargoLiderancaId
-    );
+    const resultRelatorioCultos =
+      await RegisterDiscipuladoRepositorie.cultosRelatoriosSupervisor(
+        startDate,
+        endDate,
+        superVisionId,
+        cargoLiderancaId
+      );
 
     if (!resultRelatorioCultos) {
       return reply.code(404).send({ message: "Relatorio Cultos Error!" });
     }
 
     return reply.code(200).send(resultRelatorioCultos);
-
   }
 
   // Relatorio de presenca nos cultos
-  async cultosRelatorios(
-    request: FastifyRequest,
-    reply: FastifyReply
-  ) {
+  async cultosRelatorios(request: FastifyRequest, reply: FastifyReply) {
     const params = {
-      startOfInterval: dayjs('2023-10-01').toISOString(),
-      endOfInterval: dayjs('2023-10-28').toISOString(),
-      supervisaoId: '5e392d1b-f425-4865-a730-5191bc0821cd'
+      startOfInterval: dayjs("2023-10-01").toISOString(),
+      endOfInterval: dayjs("2023-10-28").toISOString(),
+      supervisaoId: "5e392d1b-f425-4865-a730-5191bc0821cd",
     };
 
-    const resultRelatorioCultos = await RegisterDiscipuladoRepositorie.cultosRelatorios(params);
+    const resultRelatorioCultos =
+      await RegisterDiscipuladoRepositorie.cultosRelatorios(params);
 
     if (!resultRelatorioCultos) {
       return reply.code(404).send({ message: "Relatorio Cultos Error!" });
     }
 
-    const groupedForSupervision = resultRelatorioCultos
-      .flatMap(culto =>
-        culto.presencas_culto
-          .filter(presenca => presenca.membro?.supervisao_pertence?.id === params.supervisaoId)
-          .map(presenca => ({
-            culto,
-            membro: presenca.membro
-          }))
-      );
+    const groupedForSupervision = resultRelatorioCultos.flatMap((culto) =>
+      culto.presencas_culto
+        .filter(
+          (presenca) =>
+            presenca.membro?.supervisao_pertence?.id === params.supervisaoId
+        )
+        .map((presenca) => ({
+          culto,
+          membro: presenca.membro,
+        }))
+    );
 
     console.log(resultRelatorioCultos);
 
     return reply.code(200).send(resultRelatorioCultos);
-
-
   }
 
   // Relatorio de presenca nos discipulados
@@ -94,30 +115,34 @@ class RegisterDiscipuladoController {
     reply: FastifyReply
   ) {
     try {
-      const { startDate, endDate, superVisionId } = await request.body as PresencaDiscipuladoParams
+      const { startDate, endDate, superVisionId } =
+        (await request.body) as PresencaDiscipuladoParams;
       const params = {
-        startDate, endDate, superVisionId
+        startDate,
+        endDate,
+        superVisionId,
       };
 
-      const resultRelatorioCultos = await RegisterDiscipuladoRepositorie.discipuladosRelatorioSupervisao(params);
+      const resultRelatorioCultos =
+        await RegisterDiscipuladoRepositorie.discipuladosRelatorioSupervisao(
+          params
+        );
 
       if (!resultRelatorioCultos) {
-        return reply.code(404).send({ message: "Relatorio Discipulado Error!" });
+        return reply
+          .code(404)
+          .send({ message: "Relatorio Discipulado Error!" });
       }
 
       return reply.code(200).send(resultRelatorioCultos);
-
     } catch (error) {
-      console.error('error no Controller Discip.: ', error)
+      console.error("error no Controller Discip.: ", error);
     }
   }
 
-  async searchByIdCulto(
-    request: FastifyRequest,
-    reply: FastifyReply
-  ) {
+  async searchByIdCulto(request: FastifyRequest, reply: FastifyReply) {
     const { culto, lider } = request.params as PresencaCultoParams;
-    console.log('culto: ', culto)
+    console.log("culto: ", culto);
 
     const presencaCultoIsRegister =
       await RegisterDiscipuladoRepositorie.findByIdCulto(culto, lider);
@@ -127,107 +152,164 @@ class RegisterDiscipuladoController {
     return reply.code(200).send(presencaCultoIsRegister);
   }
 
-  async isMembersDiscipuladoSupervisorRegister(request: FastifyRequest, reply: FastifyReply) {
+  async isMembersDiscipuladoSupervisorRegister(
+    request: FastifyRequest,
+    reply: FastifyReply
+  ) {
     // console.log('request', request.body)
     try {
-      const registerDiscipuladoDataSupervisorForm = request.body as dataSchemaCreateDiscipuladoSupervisor;
+      const registerDiscipuladoDataSupervisorForm =
+        request.body as dataSchemaCreateDiscipuladoSupervisor;
 
-      const { supervisor_id, data_ocorreu } = registerDiscipuladoDataSupervisorForm;
-      const dataOcorreu = new Date(data_ocorreu)
-      const firstDayOfMonth = new Date(dataOcorreu.getFullYear(), dataOcorreu.getMonth(), 1);
-      const lastDayOfMonth = new Date(dataOcorreu.getFullYear(), dataOcorreu.getMonth() + 1, 0);
+      const { supervisor_id, data_ocorreu } =
+        registerDiscipuladoDataSupervisorForm;
+      const dataOcorreu = new Date(data_ocorreu);
+      const firstDayOfMonth = new Date(
+        dataOcorreu.getFullYear(),
+        dataOcorreu.getMonth(),
+        1
+      );
+      const lastDayOfMonth = new Date(
+        dataOcorreu.getFullYear(),
+        dataOcorreu.getMonth() + 1,
+        0
+      );
 
       // Verifique se já existe discipulados registrados para o membro
-      const existingTwoRegister = await RegisterDiscipuladoRepositorie.findAllMembersSupervisorForPeriod({
-        supervisor_id, firstDayOfMonth, lastDayOfMonth
-      });
+      const existingTwoRegister =
+        await RegisterDiscipuladoRepositorie.findAllMembersSupervisorForPeriod({
+          supervisor_id,
+          firstDayOfMonth,
+          lastDayOfMonth,
+        });
       // console.log('existingTwoRegister', existingTwoRegister)
 
       return reply.code(200).send(existingTwoRegister);
     } catch (error: any) {
       console.error(error); // Log o erro no console para depuração
-      return reply.code(400).send(error.message || 'Erro interno do servidor');
+      return reply.code(400).send(error.message || "Erro interno do servidor");
     }
   }
 
   async isMembersCellRegister(request: FastifyRequest, reply: FastifyReply) {
     // console.log('request', request.body)
     try {
-      const registerDiscipuladoDataCellForm = request.body as dataSchemaCreateDiscipuladoCell;
+      const registerDiscipuladoDataCellForm =
+        request.body as dataSchemaCreateDiscipuladoCell;
 
       const { cell_id, data_ocorreu } = registerDiscipuladoDataCellForm;
-      const dataOcorreu = new Date(data_ocorreu)
-      const firstDayOfMonth = new Date(dataOcorreu.getFullYear(), dataOcorreu.getMonth(), 1);
-      const lastDayOfMonth = new Date(dataOcorreu.getFullYear(), dataOcorreu.getMonth() + 1, 0);
+      const dataOcorreu = new Date(data_ocorreu);
+      const firstDayOfMonth = new Date(
+        dataOcorreu.getFullYear(),
+        dataOcorreu.getMonth(),
+        1
+      );
+      const lastDayOfMonth = new Date(
+        dataOcorreu.getFullYear(),
+        dataOcorreu.getMonth() + 1,
+        0
+      );
 
       // Verifique se já existe discipulados registrados para o membro
-      const existingTwoRegister = await RegisterDiscipuladoRepositorie.findAllMembersCellForPeriod({
-        cell_id, firstDayOfMonth, lastDayOfMonth
-      });
-      console.log('existingTwoRegister', existingTwoRegister)
+      const existingTwoRegister =
+        await RegisterDiscipuladoRepositorie.findAllMembersCellForPeriod({
+          cell_id,
+          firstDayOfMonth,
+          lastDayOfMonth,
+        });
+      console.log("existingTwoRegister", existingTwoRegister);
 
       return reply.code(200).send(existingTwoRegister);
     } catch (error: any) {
       console.error(error); // Log o erro no console para depuração
-      return reply.code(400).send(error.message || 'Erro interno do servidor');
+      return reply.code(400).send(error.message || "Erro interno do servidor");
     }
   }
 
   async isregister(request: FastifyRequest, reply: FastifyReply) {
     try {
-      const registerDiscipuladoDataForm = request.body as dataSchemaCreateDiscipulado;
+      const registerDiscipuladoDataForm =
+        request.body as dataSchemaCreateDiscipulado;
 
-      const { usuario_id, discipulador_id, data_ocorreu } = registerDiscipuladoDataForm;
-      const dataOcorreu = new Date(data_ocorreu)
-      const firstDayOfMonth = new Date(dataOcorreu.getFullYear(), dataOcorreu.getMonth(), 1);
-      const lastDayOfMonth = new Date(dataOcorreu.getFullYear(), dataOcorreu.getMonth() + 1, 0);
+      const { usuario_id, discipulador_id, data_ocorreu } =
+        registerDiscipuladoDataForm;
+      const dataOcorreu = new Date(data_ocorreu);
+      const firstDayOfMonth = new Date(
+        dataOcorreu.getFullYear(),
+        dataOcorreu.getMonth(),
+        1
+      );
+      const lastDayOfMonth = new Date(
+        dataOcorreu.getFullYear(),
+        dataOcorreu.getMonth() + 1,
+        0
+      );
 
       // Verifique se já existe discipulados registrados para o membro
-      const existingTwoRegister = await RegisterDiscipuladoRepositorie.findAllForPeriod({
-        usuario_id, discipulador_id, firstDayOfMonth, lastDayOfMonth
-      });
+      const existingTwoRegister =
+        await RegisterDiscipuladoRepositorie.findAllForPeriod({
+          usuario_id,
+          discipulador_id,
+          firstDayOfMonth,
+          lastDayOfMonth,
+        });
 
       return reply.code(200).send(existingTwoRegister);
     } catch (error: any) {
       console.error(error); // Log o erro no console para depuração
-      return reply.code(400).send(error.message || 'Erro interno do servidor');
+      return reply.code(400).send(error.message || "Erro interno do servidor");
     }
   }
 
   async store(request: FastifyRequest, reply: FastifyReply) {
     try {
-      const registerDiscipuladoDataForm = request.body as dataSchemaCreateDiscipulado;
+      const registerDiscipuladoDataForm =
+        request.body as dataSchemaCreateDiscipulado;
 
-      const { usuario_id, discipulador_id, data_ocorreu } = registerDiscipuladoDataForm;
-      const dataOcorreu = new Date(data_ocorreu)
-      const firstDayOfMonth = new Date(dataOcorreu.getFullYear(), dataOcorreu.getMonth(), 1);
-      const lastDayOfMonth = new Date(dataOcorreu.getFullYear(), dataOcorreu.getMonth() + 1, 0);
+      const { usuario_id, discipulador_id, data_ocorreu } =
+        registerDiscipuladoDataForm;
+      const dataOcorreu = new Date(data_ocorreu);
+      const firstDayOfMonth = new Date(
+        dataOcorreu.getFullYear(),
+        dataOcorreu.getMonth(),
+        1
+      );
+      const lastDayOfMonth = new Date(
+        dataOcorreu.getFullYear(),
+        dataOcorreu.getMonth() + 1,
+        0
+      );
 
       // Verifique se já existe discipulados registrados para o membro
-      const existingTwoRegister = await RegisterDiscipuladoRepositorie.findAllForPeriod({
-        usuario_id, discipulador_id, firstDayOfMonth, lastDayOfMonth
-      });
-      console.log('firstDayOfMonth', firstDayOfMonth)
-      console.log('lastDayOfMonth', lastDayOfMonth)
-      console.log('existingTwoRegister', existingTwoRegister)
+      const existingTwoRegister =
+        await RegisterDiscipuladoRepositorie.findAllForPeriod({
+          usuario_id,
+          discipulador_id,
+          firstDayOfMonth,
+          lastDayOfMonth,
+        });
+      console.log("firstDayOfMonth", firstDayOfMonth);
+      console.log("lastDayOfMonth", lastDayOfMonth);
+      console.log("existingTwoRegister", existingTwoRegister);
 
       if (existingTwoRegister.quantidadeDiscipuladoRealizado >= 2) {
-        return reply
-          .code(409)
-          .send({ message: "Já exitem os dois discipulados do mês cadastrados!" });
+        return reply.code(409).send({
+          message: "Já exitem os dois discipulados do mês cadastrados!",
+        });
       }
 
-
-
       // Se não, crie o registro
-      const registerDiscipulado = await RegisterDiscipuladoRepositorie.createRegisterDiscipulado({
-        usuario_id, discipulador_id, data_ocorreu,
-      });
+      const registerDiscipulado =
+        await RegisterDiscipuladoRepositorie.createRegisterDiscipulado({
+          usuario_id,
+          discipulador_id,
+          data_ocorreu,
+        });
 
       return reply.code(201).send(registerDiscipulado);
     } catch (error: any) {
       console.error(error); // Log o erro no console para depuração
-      return reply.code(400).send(error.message || 'Erro interno do servidor');
+      return reply.code(400).send(error.message || "Erro interno do servidor");
     }
   }
 
@@ -239,12 +321,10 @@ class RegisterDiscipuladoController {
   ) {
     const id = request.params.id;
     const presencaCultoDataForm = request.body as PresencaCultoData;
-    const presencaCulto = await RegisterDiscipuladoRepositorie.updatePresencaCulto(
-      id,
-      {
+    const presencaCulto =
+      await RegisterDiscipuladoRepositorie.updatePresencaCulto(id, {
         ...presencaCultoDataForm,
-      }
-    );
+      });
     return reply.code(202).send(presencaCulto);
   }
 
