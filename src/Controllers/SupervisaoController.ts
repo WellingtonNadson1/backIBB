@@ -18,6 +18,22 @@ interface SupervisaoParams {
 
 class SupervisaoController {
   // Fazendo uso do Fastify
+  async getSupervisionMetrics(request: FastifyRequest, reply: FastifyReply) {
+    const metrics = await SupervisaoRepositorie.getSupervisionMetrics();
+    if (!metrics) {
+      return reply.code(500).send({ error: "Internal Server Error" });
+    }
+    return reply.code(200).send(metrics);
+  }
+
+  async leadershipDistribution(request: FastifyRequest, reply: FastifyReply) {
+    const distribution = await SupervisaoRepositorie.leadershipDistribution();
+    if (!distribution) {
+      return reply.code(500).send({ error: "Internal Server Error" });
+    }
+    return reply.code(200).send(distribution);
+  }
+
   async indexAll(request: FastifyRequest, reply: FastifyReply) {
     const supervisoes = await SupervisaoRepositorie.findAll();
     if (!supervisoes) {

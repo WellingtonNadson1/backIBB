@@ -4,6 +4,60 @@ import { createPrismaInstance, disconnectPrisma } from "../services/prisma";
 const prisma = createPrismaInstance();
 
 class SupervisiaoRepositorie {
+  async getSupervisionMetrics() {
+    const totalSupervisoes = await prisma.supervisao.count();
+
+    const supervisoes = await prisma.supervisao.findMany({
+      select: {
+        id: true,
+        nome: true,
+        membros: true,
+      },
+    });
+
+    const membrosPorSupervisao = supervisoes.map((s) => ({
+      supervisao: s.nome,
+      totalMembros: s.membros.length,
+    }));
+
+    const totalMembros = membrosPorSupervisao.reduce(
+      (acc, s) => acc + s.totalMembros,
+      0
+    );
+    const mediaMembrosPorSupervisao = membrosPorSupervisao.length
+      ? totalMembros / membrosPorSupervisao.length
+      : 0;
+
+    const niveis = await prisma.nivelSupervisao.findMany({
+      include: { supervisao: true },
+    });
+
+    const lideresPorNivel = niveis.map((n) => ({
+      nivel: n.nome,
+      totalSupervisoes: n.supervisao.length,
+    }));
+
+    return {
+      totalSupervisoes,
+      mediaMembrosPorSupervisao: Number(mediaMembrosPorSupervisao.toFixed(2)),
+      lideresPorNivel,
+    };
+  }
+
+  async leadershipDistribution() {
+    const cargos = await prisma.cargoDeLideranca.findMany({
+      include: { membros: true },
+    });
+
+    const result = cargos.map((c) => ({
+      cargo: c.nome,
+      quantidade: c.membros.length,
+    }));
+
+    await disconnectPrisma();
+    return result;
+  }
+
   async findAll() {
     const result = await prisma.supervisao.findMany({
       select: {
