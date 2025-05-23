@@ -444,6 +444,72 @@ class CultoIndividualRepositorie {
     }
   }
 
+  async getCultosPresencaPorTipoEAno(tipos: string[]) {
+    const prisma = createPrismaInstance();
+    const inicioDoAno = new Date(new Date().getFullYear(), 0, 1);
+    const hoje = new Date();
+
+    try {
+      const cultos = await prisma.cultoIndividual.findMany({
+        where: {
+          data_inicio_culto: {
+            gte: inicioDoAno,
+            lte: hoje,
+          },
+          culto_semana: {
+            nome: {
+              in: tipos,
+            },
+          },
+        },
+        select: {
+          id: true,
+          data_inicio_culto: true,
+          culto_semana: {
+            select: {
+              nome: true,
+            },
+          },
+          presencas_culto: {
+            select: {
+              status: true,
+            },
+          },
+        },
+      });
+
+      console.log("cultos: ", cultos);
+
+      // Agrupamento dos dados
+      const resultado = tipos.map((tipo) => {
+        const cultosDoTipo = cultos.filter(
+          (c) => c.culto_semana?.nome === tipo
+        );
+        return {
+          tipo,
+          cultos: cultosDoTipo.map((culto) => {
+            const presentes = culto.presencas_culto.filter(
+              (p) => p.status
+            ).length;
+            const ausentes = culto.presencas_culto.filter(
+              (p) => !p.status
+            ).length;
+
+            return {
+              data: culto.data_inicio_culto,
+              presentes,
+              ausentes,
+            };
+          }),
+        };
+      });
+      console.log("resultado: ", resultado);
+      return resultado;
+    } finally {
+      await disconnectPrisma();
+    }
+  }
+
   async findAll({
     startDate,
     endDate,

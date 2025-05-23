@@ -4,6 +4,10 @@ import { CultoIndividualController } from "../../Controllers/Culto";
 const routerCultoIndividual = async (fastify: FastifyInstance) => {
   // TURMA ESCOLA
   fastify.post("/cultosindividuais/fordate", CultoIndividualController.forDate);
+  fastify.get(
+    "/cultosindividuais/presenca-por-tipo",
+    CultoIndividualController.getPresencaPorTipo
+  );
   fastify.get("/cultosindividuais", CultoIndividualController.index);
   fastify.post(
     "/cultosindividuais/perperiodo",

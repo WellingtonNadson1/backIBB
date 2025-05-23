@@ -63,6 +63,35 @@ class CultoIndividualController {
     return reply.send(cultosIndividuaisForDate);
   }
 
+  async getPresencaPorTipo(
+    request: FastifyRequest<{
+      Params: CultoIndividualForDate;
+    }>,
+    reply: FastifyReply
+  ) {
+    try {
+      const tiposPermitidos = [
+        "Culto de Ceia",
+        "Culto de Edificação",
+        "Capacitação Para Discípulos - CPD",
+        "Culto de Primícias",
+        "Culto de Celebração - Manhã",
+        "Culto de Celebração - Tarde",
+        "Domingo de Sacrifício",
+      ];
+      const dados =
+        await CultoIndividualRepositorie.getCultosPresencaPorTipoEAno(
+          tiposPermitidos
+        );
+      return reply.status(200).send(dados);
+    } catch (error) {
+      console.error("Erro ao buscar dados de presença:", error);
+      return reply
+        .status(500)
+        .send({ error: "Erro ao buscar dados de presença." });
+    }
+  }
+
   async index(request: FastifyRequest, reply: FastifyReply) {
     const {
       year,
