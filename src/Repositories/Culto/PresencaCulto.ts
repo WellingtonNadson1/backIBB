@@ -380,6 +380,23 @@ class PresencaCultoRepositorie {
     }
   }
 
+  async findPresencasRegistradas(presence_culto: string, membrosIds: string[]) {
+    const prisma = createPrismaInstance();
+
+    const result = await prisma.presencaCulto.findMany({
+      where: {
+        cultoIndividualId: presence_culto,
+        userId: { in: membrosIds },
+      },
+      select: {
+        userId: true,
+      },
+    });
+
+    await disconnectPrisma();
+    return result.map((r) => r.userId);
+  }
+
   async findFirstPresenceAllMembers({
     presence_culto,
     membro,
@@ -513,35 +530,39 @@ class PresencaCultoRepositorie {
   async createPresencaCultoNew(presencaCultoDataForm: PresencaCultoDataNew) {
     const prisma = createPrismaInstance();
 
-    const { membro, presence_culto } = presencaCultoDataForm;
-    const dataBrasil = dayjs().tz("America/Sao_Paulo");
-    const date_create = dataBrasil.format("YYYY-MM-DDTHH:mm:ss.SSS[Z]");
-    const dataBrasilDate = new Date(date_create);
-    const date_update = dataBrasilDate;
+    try {
+      const { membro, presence_culto } = presencaCultoDataForm;
 
-    const result = await prisma.$transaction(
-      membro.map(({ id, status }) =>
-        prisma.presencaCulto.create({
-          data: {
-            presenca_culto: {
-              connect: {
-                id: presence_culto,
-              },
+      if (!membro || membro.length === 0) {
+        // Não há nada para registrar
+        return [];
+      }
+
+      const dataBrasil = dayjs().tz("America/Sao_Paulo");
+      const date_create = dataBrasil.format("YYYY-MM-DDTHH:mm:ss.SSS[Z]");
+      const dataBrasilDate = new Date(date_create);
+
+      const result = await prisma.$transaction(
+        membro.map(({ id, status }) =>
+          prisma.presencaCulto.create({
+            data: {
+              presenca_culto: { connect: { id: presence_culto } },
+              membro: { connect: { id } },
+              status: Boolean(status),
+              date_create: dataBrasilDate,
+              date_update: dataBrasilDate,
             },
-            membro: {
-              connect: {
-                id: id,
-              },
-            },
-            status: Boolean(status),
-            date_create: dataBrasilDate,
-            date_update: date_update,
-          },
-        })
-      )
-    );
-    await disconnectPrisma();
-    return result;
+          })
+        )
+      );
+
+      return result;
+    } catch (error) {
+      console.error("Erro ao criar presenças:", error);
+      throw error;
+    } finally {
+      await disconnectPrisma();
+    }
   }
 
   async createPresencaCulto(presencaCultoDataForm: PresencaCultoData) {

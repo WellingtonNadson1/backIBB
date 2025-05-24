@@ -153,37 +153,44 @@ class PresencaCultoController {
   async storeRefactored(request: FastifyRequest, reply: FastifyReply) {
     try {
       const presencaCultoDataForm = request.body as PresencaCultoDataNew;
-
       const { presence_culto, membro } = presencaCultoDataForm;
 
-      // Verifique se já existe uma presença registrada para o membro no culto
-      const existingPresenca =
-        await PresencaCultoRepositorie.findFirstPresenceAllMembers({
+      const membrosIds = membro.map((m) => m.id);
+
+      // Consulta em lote
+      const membrosJaRegistrados =
+        await PresencaCultoRepositorie.findPresencasRegistradas(
           presence_culto,
-          membro,
+          membrosIds
+        );
+
+      // Filtra quem ainda não está registrado
+      const membrosParaRegistrar = membro.filter(
+        (m) => !membrosJaRegistrados.includes(m.id)
+      );
+
+      // Registra em lote quem não estava
+      if (membrosParaRegistrar.length > 0) {
+        await PresencaCultoRepositorie.createPresencaCultoNew({
+          presence_culto,
+          membro: membrosParaRegistrar,
         });
-
-      console.log("existingPresenca", JSON.stringify(existingPresenca.result));
-
-      if (existingPresenca.result.length !== 0) {
-        console.log({ existingPresenca });
-        return reply
-          .code(409)
-          .send({ message: "Presença de Culto já Registrada para hoje!" });
       }
 
-      // Se não existir, crie a presença
-      const presencaCulto =
-        await PresencaCultoRepositorie.createPresencaCultoNew({
-          ...presencaCultoDataForm,
-        });
+      // Monta resultado de todos
+      const resultados = membro.map((m) => ({
+        membro: m.id,
+        status: membrosJaRegistrados.includes(m.id)
+          ? "já registrado"
+          : "registrado",
+      }));
 
       return reply.code(201).send({
-        presencaCulto,
-        message: "Presença Registrada!",
+        resultados,
+        message: "Processamento concluído.",
       });
     } catch (error: any) {
-      console.error(error); // Log o erro no console para depuração
+      console.error(error);
       return reply.code(400).send(error.message || "Erro interno do servidor");
     }
   }
