@@ -61,6 +61,12 @@ class CelulaRepositorie {
           },
         },
         date_que_ocorre: true,
+        endereco: true,
+        numero_casa: true,
+        cep: true,
+        cidade: true,
+        estado: true,
+        bairro: true,
       },
     });
     await disconnectPrisma();
