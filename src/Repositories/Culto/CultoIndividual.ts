@@ -346,6 +346,7 @@ class CultoIndividualRepositorie {
                 select: {
                   id: true,
                   first_name: true,
+                  image_url: true,
                   presencas_cultos: false,
                   supervisao_pertence: {
                     select: {

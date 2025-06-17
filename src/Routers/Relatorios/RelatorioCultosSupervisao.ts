@@ -27,6 +27,7 @@ const routerRelatorioPresencaCulto = async (fastify: FastifyInstance) => {
             id: true, // Inclua os campos que você deseja
             first_name: true,
             last_name: true,
+            image_url: true,
             // Adicione outros campos necessários
             presencas_cultos: {
               where: {
@@ -73,7 +74,7 @@ const routerRelatorioPresencaCulto = async (fastify: FastifyInstance) => {
           await CultoIndividualRepositorie.findAllIntervall(
             startDate,
             endDate,
-            superVisionId,
+            superVisionId
           );
 
         const totalCultosPeriodo = cultosIndividuaisForDate.totalCultosPeriodo;
@@ -97,14 +98,14 @@ const routerRelatorioPresencaCulto = async (fastify: FastifyInstance) => {
                   dataPresenca.isAfter(dayjs(dataInicio).utcOffset(0)) &&
                   dataPresenca.isBefore(dayjs(dataFim).utcOffset(0))
                 );
-              },
+              }
             );
 
             const quantidadeCultosPresentes = presencasFiltradas.reduce(
               (total, presente) => {
                 return total + (presente.status === true ? 1 : 0);
               },
-              0,
+              0
             );
 
             const quantidadeCultosPresentePrimicia = presencasFiltradas.reduce(
@@ -118,7 +119,7 @@ const routerRelatorioPresencaCulto = async (fastify: FastifyInstance) => {
                     : 0)
                 );
               },
-              0,
+              0
             );
 
             const quantidadeCultosPresenteDomingoSacrificio =
@@ -144,7 +145,7 @@ const routerRelatorioPresencaCulto = async (fastify: FastifyInstance) => {
                     : 0)
                 );
               },
-              0,
+              0
             );
 
             const quantidadeCultosPresenteSabado = presencasFiltradas.reduce(
@@ -158,7 +159,7 @@ const routerRelatorioPresencaCulto = async (fastify: FastifyInstance) => {
                     : 0)
                 );
               },
-              0,
+              0
             );
 
             const quantidadeCultosPresenteDomingoManha =
@@ -271,7 +272,7 @@ const routerRelatorioPresencaCulto = async (fastify: FastifyInstance) => {
       } finally {
         await disconnectPrisma();
       }
-    },
+    }
   );
 };
 
