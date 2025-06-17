@@ -21,7 +21,7 @@ const routerRelatorioPresencaCelula = async (fastify: FastifyInstance) => {
           },
           select: {
             nome: true,
-            supervisor: { select: { first_name: true } },
+            supervisor: { select: { first_name: true, image_url: true } },
             celulas: {
               select: {
                 id: true,
@@ -29,7 +29,7 @@ const routerRelatorioPresencaCelula = async (fastify: FastifyInstance) => {
                 membros: {
                   select: { id: true, first_name: true, image_url: true },
                 },
-                lider: { select: { first_name: true } },
+                lider: { select: { first_name: true, image_url: true } },
                 _count: { select: { membros: true } },
                 reunioes_celula: {
                   where: {
