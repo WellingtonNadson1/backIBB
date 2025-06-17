@@ -44,6 +44,7 @@ class PresencaCultoRepositorie {
           id: true, // Inclua os campos que você deseja
           first_name: true,
           last_name: true,
+          image_url: true,
           // Adicione outros campos necessários
           presencas_cultos: {
             where: {
