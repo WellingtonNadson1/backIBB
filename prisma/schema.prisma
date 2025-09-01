@@ -9,7 +9,7 @@ datasource db {
 }
 
 model AulaEscola {
-  id            String           @id @default(uuid())
+  id            String           @id @default(uuid()) @db.Uuid
   data_aula     DateTime
   status        String
   turmaEscolaId String?
@@ -20,7 +20,7 @@ model AulaEscola {
 }
 
 model PresencaCulto {
-  id                String           @id @default(uuid())
+  id                String           @id @default(uuid()) @db.Uuid
   status            Boolean
   userId            String?
   cultoIndividualId String?
@@ -31,7 +31,7 @@ model PresencaCulto {
 }
 
 model PresencaEscola {
-  id                        String      @id @default(uuid())
+  id                        String      @id @default(uuid()) @db.Uuid
   status                    String
   userId                    String?
   aulaEscolaId              String?
@@ -42,7 +42,7 @@ model PresencaEscola {
 }
 
 model PresencaReuniaoCelula {
-  id                   String         @id @default(uuid())
+  id                   String         @id @default(uuid()) @db.Uuid
   status               Boolean
   userId               String?
   reuniaoCelulaId      String?
@@ -58,7 +58,7 @@ model RoleNew {
 }
 
 model CargoDeLideranca {
-  id          String   @id @default(uuid())
+  id          String   @id @default(uuid()) @db.Uuid
   nome        String
   date_create DateTime @default(now())
   date_update DateTime @updatedAt
@@ -68,7 +68,7 @@ model CargoDeLideranca {
 }
 
 model Celula {
-  id              String          @id @default(uuid())
+  id              String          @id @default(uuid()) @db.Uuid
   nome            String
   cep             String?
   cidade          String?
@@ -92,7 +92,7 @@ model Celula {
 }
 
 model CultoGeral {
-  id                    String         @id @default(uuid())
+  id                    String         @id @default(uuid()) @db.Uuid
   nome                  String
   descricao             String?
   date_create           DateTime       @default(now())
@@ -103,7 +103,7 @@ model CultoGeral {
 }
 
 model CultoIndividual {
-  id                 String          @id @default(uuid())
+  id                 String          @id @default(uuid()) @db.Uuid
   data_inicio_culto  DateTime
   data_termino_culto DateTime
   status             String
@@ -117,7 +117,7 @@ model CultoIndividual {
 }
 
 model CultoSemanal {
-  id           String            @id @default(uuid())
+  id           String            @id @default(uuid()) @db.Uuid
   nome         String
   descricao    String?
   cultoGeralId String?
@@ -148,7 +148,7 @@ model discipulador_usuario {
 }
 
 model Encontros {
-  id            String   @id @default(uuid())
+  id            String   @id @default(uuid()) @db.Uuid
   nome          String
   descricao     String?
   date_create   DateTime @default(now())
@@ -159,7 +159,7 @@ model Encontros {
 }
 
 model Escola {
-  id          String        @id @default(uuid())
+  id          String        @id @default(uuid()) @db.Uuid
   nome        String
   descricao   String?
   userId      String?
@@ -173,7 +173,7 @@ model Escola {
 }
 
 model LicaoCelula {
-  id                   String           @id @default(uuid())
+  id                   String           @id @default(uuid()) @db.Uuid
   titulo               String
   versiculo_chave      String
   link_objeto_aws      String?
@@ -189,7 +189,7 @@ model LicaoCelula {
 }
 
 model NivelSupervisao {
-  id          String       @id @default(uuid())
+  id          String       @id @default(uuid()) @db.Uuid
   nome        String
   descricao   String?
   date_create DateTime     @default(now())
@@ -200,7 +200,7 @@ model NivelSupervisao {
 }
 
 model RefreshToken {
-  id            String @id @default(uuid())
+  id            String @id @default(uuid()) @db.Uuid
   expiresIn     Int
   userIdRefresh String @unique
   user          User   @relation(fields: [userIdRefresh], references: [id])
@@ -209,7 +209,7 @@ model RefreshToken {
 }
 
 model ReuniaoCelula {
-  id                               String                  @id @default(uuid())
+  id                               String                  @id @default(uuid()) @db.Uuid
   data_reuniao                     DateTime?
   status                           String
   celulaId                         String?
@@ -230,7 +230,7 @@ model rolenew {
 }
 
 model Session {
-  id           String   @id @default(uuid())
+  id           String   @id @default(uuid()) @db.Uuid
   sessionToken String   @unique
   userId       String
   expires      DateTime
@@ -240,7 +240,7 @@ model Session {
 }
 
 model SituacaoNoReino {
-  id          String   @id @default(uuid())
+  id          String   @id @default(uuid()) @db.Uuid
   nome        String
   date_create DateTime @default(now())
   date_update DateTime @updatedAt
@@ -250,7 +250,7 @@ model SituacaoNoReino {
 }
 
 model Supervisao {
-  id                String           @id @default(uuid())
+  id                String           @id @default(uuid()) @db.Uuid
   nome              String
   cor               String
   date_create       DateTime         @default(now())
@@ -266,7 +266,7 @@ model Supervisao {
 }
 
 model Dizimo {
-  id           String   @id @default(uuid())
+  id           String   @id @default(uuid()) @db.Uuid
   valor        Decimal?
   data_dizimou DateTime
   date_create  DateTime @default(now())
@@ -278,7 +278,7 @@ model Dizimo {
 }
 
 model Oferta {
-  id           String   @id @default(uuid())
+  id           String   @id @default(uuid()) @db.Uuid
   valor        Decimal?
   data_ofertou DateTime
   date_create  DateTime @default(now())
@@ -291,7 +291,7 @@ model Oferta {
 
 model Agenda {
   status       Boolean  @default(false)
-  id           String   @id @default(uuid())
+  id           String   @id @default(uuid()) @db.Uuid
   title        String?
   description  String?
   data_inicio  DateTime
@@ -303,7 +303,7 @@ model Agenda {
 }
 
 model TemaLicaoCelula {
-  id              String        @id @default(uuid())
+  id              String        @id @default(uuid()) @db.Uuid
   tema            String
   link_folder_aws String?
   data_inicio     DateTime
@@ -319,7 +319,7 @@ model TemaLicaoCelula {
 }
 
 model Token {
-  id          String    @id @default(uuid())
+  id          String    @id @default(uuid()) @db.Uuid
   type        TokenType
   date_create DateTime  @default(now())
   userId      String
@@ -329,7 +329,7 @@ model Token {
 }
 
 model TurmaEscola {
-  id             String       @id @default(uuid())
+  id             String       @id @default(uuid()) @db.Uuid
   nome           String
   descricao      String?
   date_inicio    DateTime?
