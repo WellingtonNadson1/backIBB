@@ -22,7 +22,7 @@ type DizimoWithUser = Prisma.DizimoGetPayload<{
 
 export class DizimoRepository {
   async createMany(
-    data: Omit<Dizimo, "id" | "date_create" | "date_update">[]
+    data: Prisma.DizimoCreateManyInput[]
   ): Promise<Prisma.BatchPayload> {
     return await prisma.dizimo.createMany({
       data,
@@ -30,9 +30,7 @@ export class DizimoRepository {
     });
   }
 
-  async create(
-    data: Omit<Dizimo, "id" | "date_create" | "date_update">
-  ): Promise<Dizimo> {
+  async create(data: Prisma.DizimoUncheckedCreateInput): Promise<Dizimo> {
     return await prisma.dizimo.create({ data });
   }
 
@@ -54,7 +52,7 @@ export class DizimoRepository {
       prisma.dizimo.findMany({
         take: limit,
         skip,
-        orderBy: { data_dizimou: "desc" }, // opcional, só p/ manter ordem consistente
+        orderBy: { data_dizimou: "desc" },
         include: {
           user: {
             select: {
@@ -91,7 +89,12 @@ export class DizimoRepository {
     });
   }
 
-  async update(id: string, data: Partial<Dizimo>): Promise<Dizimo | null> {
+  async update(
+    id: string,
+    data: Prisma.DizimoUncheckedUpdateInput
+  ): Promise<Dizimo | null> {
+    // OBS: prisma.dizimo.update lança erro se não encontrar.
+    // Se você realmente quiser null quando não encontrar, tem que tratar isso no controller.
     return await prisma.dizimo.update({ where: { id }, data });
   }
 
