@@ -1,6 +1,24 @@
+// DizimoRepository.ts
 import { Dizimo, Prisma, PrismaClient } from "@prisma/client";
 
 const prisma = new PrismaClient();
+
+type DizimoWithUser = Prisma.DizimoGetPayload<{
+  include: {
+    user: {
+      select: {
+        id: true;
+        first_name: true;
+        last_name: true;
+        email: true;
+        supervisao_pertence: { select: { nome: true } };
+        celula: { select: { nome: true } };
+        cargo_de_lideranca: { select: { nome: true } };
+        situacao_no_reino: { select: { nome: true } };
+      };
+    };
+  };
+}>;
 
 export class DizimoRepository {
   async createMany(
@@ -8,7 +26,7 @@ export class DizimoRepository {
   ): Promise<Prisma.BatchPayload> {
     return await prisma.dizimo.createMany({
       data,
-      skipDuplicates: true, // ✅ Evita duplicações caso já existam registros iguais
+      skipDuplicates: true,
     });
   }
 
@@ -18,34 +36,52 @@ export class DizimoRepository {
     return await prisma.dizimo.create({ data });
   }
 
-  async findAll(page: number = 1, limit: number = 20): Promise<Dizimo[]> {
+  async findAll(
+    page: number = 1,
+    limit: number = 20
+  ): Promise<{
+    data: DizimoWithUser[];
+    meta: {
+      page: number;
+      limit: number;
+      total: number;
+      totalPages: number;
+    };
+  }> {
     const skip = (page - 1) * limit;
-    return await prisma.dizimo.findMany({
-      take: limit, // Define o número de registros por página
-      skip: skip, // Pula os registros anteriores conforme a página
-      include: {
-        user: {
-          select: {
-            id: true,
-            first_name: true,
-            last_name: true,
-            email: true,
-            supervisao_pertence: {
-              select: { nome: true },
-            },
-            celula: {
-              select: { nome: true },
-            },
-            cargo_de_lideranca: {
-              select: { nome: true },
-            },
-            situacao_no_reino: {
-              select: { nome: true },
+
+    const [data, total] = await prisma.$transaction([
+      prisma.dizimo.findMany({
+        take: limit,
+        skip,
+        orderBy: { data_dizimou: "desc" }, // opcional, só p/ manter ordem consistente
+        include: {
+          user: {
+            select: {
+              id: true,
+              first_name: true,
+              last_name: true,
+              email: true,
+              supervisao_pertence: { select: { nome: true } },
+              celula: { select: { nome: true } },
+              cargo_de_lideranca: { select: { nome: true } },
+              situacao_no_reino: { select: { nome: true } },
             },
           },
         },
+      }),
+      prisma.dizimo.count(),
+    ]);
+
+    return {
+      data,
+      meta: {
+        page,
+        limit,
+        total,
+        totalPages: Math.ceil(total / limit),
       },
-    });
+    };
   }
 
   async findById(id: string): Promise<Dizimo | null> {
