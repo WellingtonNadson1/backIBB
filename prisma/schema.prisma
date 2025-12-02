@@ -268,14 +268,22 @@ model Supervisao {
   @@map("supervisao")
 }
 
-enum OrigemContribuicao {
+enum EventoContribuicao {
   CULTO
+  CELULA
+  CAMPANHA_PROJETO
+  SECRETARIA
+  PRIMICIA
+  OUTRO
+}
+
+enum TipoPagamento {
+  DINHEIRO
   PIX
   TRANSFERENCIA
-  CARTAO
-  SECRETARIA
-  CELULA
-  PRIMICIA
+  CARTAO_CREDITO
+  CARTAO_DEBITO
+  BOLETO
   OUTRO
 }
 
@@ -289,11 +297,13 @@ model Dizimo {
   userId String?
   user   User?   @relation(fields: [userId], references: [id])
 
-  // 🔽 novos campos
   cultoIndividualId String?
   cultoIndividual   CultoIndividual? @relation(fields: [cultoIndividualId], references: [id])
 
-  origem    OrigemContribuicao @default(PIX)
+  // 🔽 NOVO
+  evento        EventoContribuicao @default(CULTO)
+  tipoPagamento TipoPagamento      @default(PIX)
+
   descricao String?
 
   @@map("dizimo")
@@ -309,14 +319,16 @@ model Oferta {
   userId String?
   user   User?   @relation(fields: [userId], references: [id])
 
-  // 🔽 novos campos
   cultoIndividualId String?
   cultoIndividual   CultoIndividual? @relation(fields: [cultoIndividualId], references: [id])
 
   celulaId String?
   celula   Celula? @relation(fields: [celulaId], references: [id])
 
-  origem    OrigemContribuicao @default(PIX)
+  // 🔽 NOVO
+  evento        EventoContribuicao @default(CELULA) // se quiser default pra oferta
+  tipoPagamento TipoPagamento      @default(PIX)
+
   descricao String?
 
   @@map("oferta")

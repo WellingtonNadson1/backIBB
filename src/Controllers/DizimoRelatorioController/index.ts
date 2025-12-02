@@ -1,22 +1,22 @@
-import { Prisma } from "@prisma/client";
+import { EventoContribuicao, Prisma, TipoPagamento } from "@prisma/client";
 import { FastifyReply, FastifyRequest } from "fastify";
 import { DizimoRelatorioRepository } from "../../Repositories/DizimoRelatorioRepository";
 
 type RegistroDizimoBody = {
   userId: string;
   valor: number | string;
-  data_dizimou: string;
-  origem:
-    | "CULTO"
-    | "PIX"
-    | "TRANSFERENCIA"
-    | "CARTAO"
-    | "SECRETARIA"
-    | "CELULA"
-    | "OUTRO";
+  data_dizimou: string; // "YYYY-MM-DD" vindo do front
+  evento?: EventoContribuicao; // novo
+  tipoPagamento?: TipoPagamento; // novo
   cultoIndividualId?: string | null;
   descricao?: string | null;
 };
+
+function parseDateOnlyToLocal(dateString: string): Date {
+  // espera "YYYY-MM-DD"
+  const [year, month, day] = dateString.split("-").map(Number);
+  return new Date(year, month - 1, day); // Date local, sem UTC implícito
+}
 
 const dizimoRepository = new DizimoRelatorioRepository();
 
@@ -35,8 +35,11 @@ export class DizimoRelatorioController {
         (registro) => ({
           userId: registro.userId,
           valor: new Prisma.Decimal(registro.valor),
-          data_dizimou: new Date(registro.data_dizimou),
-          origem: registro.origem ?? "PIX", // default seguro
+          data_dizimou: parseDateOnlyToLocal(registro.data_dizimou),
+
+          evento: registro.evento ?? EventoContribuicao.CULTO,
+          tipoPagamento: registro.tipoPagamento ?? TipoPagamento.PIX,
+
           cultoIndividualId: registro.cultoIndividualId ?? null,
           descricao: registro.descricao ?? null,
         })
@@ -61,7 +64,8 @@ export class DizimoRelatorioController {
         userId,
         valor,
         data_dizimou,
-        origem,
+        evento,
+        tipoPagamento,
         cultoIndividualId,
         descricao,
       } = request.body as RegistroDizimoBody;
@@ -69,8 +73,11 @@ export class DizimoRelatorioController {
       const newDizimo = await dizimoRepository.create({
         userId,
         valor: new Prisma.Decimal(valor),
-        data_dizimou: new Date(data_dizimou),
-        origem: origem ?? "PIX",
+        data_dizimou: parseDateOnlyToLocal(data_dizimou),
+
+        evento: evento ?? EventoContribuicao.CULTO,
+        tipoPagamento: tipoPagamento ?? TipoPagamento.PIX,
+
         cultoIndividualId: cultoIndividualId ?? null,
         descricao: descricao ?? null,
       });

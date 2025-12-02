@@ -1,24 +1,23 @@
-import { Prisma } from "@prisma/client";
+import { EventoContribuicao, Prisma, TipoPagamento } from "@prisma/client";
 import { FastifyReply, FastifyRequest } from "fastify";
 import { OfertaRepository } from "../../Repositories/OfertaRepository";
 
 type CreateManyOfertaDTO = {
-  userId: string;
+  userId?: string | null;
   valor: string | number;
-  data_ofertou: string;
-  origem?:
-    | "CULTO"
-    | "PIX"
-    | "TRANSFERENCIA"
-    | "CARTAO"
-    | "SECRETARIA"
-    | "CELULA"
-    | "OUTRO";
+  data_ofertou: string; // "YYYY-MM-DD"
+  evento?: EventoContribuicao;
+  tipoPagamento?: TipoPagamento;
   cultoIndividualId?: string | null;
   celulaId?: string | null;
   descricao?: string | null;
-  // membroNome vem do front só pra UI, não vai pro DB
 };
+
+function parseDateOnlyToLocal(dateString: string): Date {
+  // espera "YYYY-MM-DD"
+  const [year, month, day] = dateString.split("-").map(Number);
+  return new Date(year, month - 1, day); // Date local, sem UTC implícito
+}
 
 const ofertaRepository = new OfertaRepository();
 
@@ -35,19 +34,16 @@ export class OfertaController {
 
       const dadosFormatados: Prisma.OfertaCreateManyInput[] = registros.map(
         (registro) => ({
-          userId: registro.userId,
-          valor: new Prisma.Decimal(registro.valor), // aceita string ou number
-          data_ofertou: new Date(registro.data_ofertou),
+          userId: registro.userId ?? null,
+          valor: new Prisma.Decimal(registro.valor),
+          data_ofertou: parseDateOnlyToLocal(registro.data_ofertou),
 
-          // 🔹 CAMPOS QUE ESTAVAM SENDO PERDIDOS:
-          origem: registro.origem ?? "PIX", // se não vier, cai no default
+          evento: registro.evento ?? EventoContribuicao.CELULA,
+          tipoPagamento: registro.tipoPagamento ?? TipoPagamento.PIX,
+
           cultoIndividualId: registro.cultoIndividualId ?? null,
           celulaId: registro.celulaId ?? null,
           descricao: registro.descricao ?? null,
-
-          // opcional: já setar datas de criação/atualização aqui
-          date_create: new Date(),
-          date_update: new Date(),
         })
       );
 
@@ -57,9 +53,10 @@ export class OfertaController {
         .status(201)
         .send({ message: "Registros criados com sucesso!", data: newOferta });
     } catch (error) {
+      console.error(error);
       return reply
         .status(500)
-        .send({ error: "Erro ao criar registros de dízimo." });
+        .send({ error: "Erro ao criar registros de oferta." });
     }
   }
 
@@ -68,15 +65,16 @@ export class OfertaController {
       const body = request.body as CreateManyOfertaDTO;
 
       const newOferta = await ofertaRepository.create({
-        userId: body.userId,
+        userId: body.userId ?? null,
         valor: new Prisma.Decimal(body.valor),
-        data_ofertou: new Date(body.data_ofertou),
-        origem: body.origem ?? "PIX",
+        data_ofertou: parseDateOnlyToLocal(body.data_ofertou),
+
+        evento: body.evento ?? EventoContribuicao.CELULA,
+        tipoPagamento: body.tipoPagamento ?? TipoPagamento.PIX,
+
         cultoIndividualId: body.cultoIndividualId ?? null,
         celulaId: body.celulaId ?? null,
         descricao: body.descricao ?? null,
-        date_create: new Date(),
-        date_update: new Date(),
       });
 
       return reply.status(201).send(newOferta);
