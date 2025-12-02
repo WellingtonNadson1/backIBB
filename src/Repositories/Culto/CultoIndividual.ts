@@ -774,6 +774,41 @@ class CultoIndividualRepositorie {
       await disconnectPrisma();
     }
   }
+
+  async findByDate(date: Date) {
+    const prisma = createPrismaInstance();
+
+    try {
+      const startOfDay = dayjs(date).startOf("day").toDate();
+      const endOfDay = dayjs(date).endOf("day").toDate();
+
+      const cultos = await prisma.cultoIndividual.findMany({
+        where: {
+          data_inicio_culto: {
+            gte: startOfDay,
+            lte: endOfDay,
+          },
+        },
+        select: {
+          id: true,
+          data_inicio_culto: true,
+          data_termino_culto: true,
+          culto_semana: {
+            select: {
+              nome: true,
+            },
+          },
+        },
+        orderBy: {
+          data_inicio_culto: "asc",
+        },
+      });
+
+      return cultos;
+    } finally {
+      await disconnectPrisma();
+    }
+  }
 }
 
 export default new CultoIndividualRepositorie();

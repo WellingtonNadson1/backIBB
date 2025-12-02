@@ -23,6 +23,12 @@ const routerCultoIndividual = async (fastify: FastifyInstance) => {
     "/cultosindividuais/attendance",
     CultoIndividualController.getAttendanceData
   );
+
+  // 🆕 nova rota para o formulário de ofertas
+  fastify.get(
+    "/cultosindividuais/by-date",
+    CultoIndividualController.getByDate
+  );
 };
 
 export default routerCultoIndividual;

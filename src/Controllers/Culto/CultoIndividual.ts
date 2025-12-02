@@ -1,6 +1,7 @@
 import { FastifyReply, FastifyRequest } from "fastify";
 import { Input, array, date, object, string } from "valibot";
 import { CultoIndividualRepositorie } from "../../Repositories/Culto";
+import dayjs from "dayjs";
 
 const CultoIndividualDataSchema = object({
   data: object({
@@ -238,6 +239,29 @@ class CultoIndividualController {
     } catch (error) {
       return reply.code(500).send({ error: "Erro interno do servidor" });
     }
+  }
+
+  async getByDate(
+    request: FastifyRequest<{ Querystring: { date?: string } }>,
+    reply: FastifyReply
+  ) {
+    const { date } = request.query;
+
+    if (!date) {
+      return reply
+        .status(400)
+        .send({ error: "Parâmetro 'date' é obrigatório (YYYY-MM-DD)" });
+    }
+
+    const parsed = dayjs(date, "YYYY-MM-DD", true);
+    if (!parsed.isValid()) {
+      return reply
+        .status(400)
+        .send({ error: "Formato de data inválido. Use YYYY-MM-DD." });
+    }
+
+    const cultos = await CultoIndividualRepositorie.findByDate(parsed.toDate());
+    return reply.status(200).send(cultos);
   }
 }
 
