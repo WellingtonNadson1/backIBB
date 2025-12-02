@@ -3,7 +3,7 @@ import { Oferta, Prisma, PrismaClient } from "@prisma/client";
 
 const prisma = new PrismaClient();
 
-type OfertaWithUser = Prisma.OfertaGetPayload<{
+type OfertaWithUserAndCelula = Prisma.OfertaGetPayload<{
   include: {
     user: {
       select: {
@@ -15,6 +15,18 @@ type OfertaWithUser = Prisma.OfertaGetPayload<{
         celula: { select: { nome: true } };
         cargo_de_lideranca: { select: { nome: true } };
         situacao_no_reino: { select: { nome: true } };
+      };
+    };
+    celula: {
+      select: {
+        id: true;
+        nome: true;
+        supervisao: {
+          select: {
+            id: true;
+            nome: true;
+          };
+        };
       };
     };
   };
@@ -37,7 +49,7 @@ export class OfertaRepository {
   async findAll(
     page: number = 1,
     limit: number = 20
-  ): Promise<OfertaWithUser[]> {
+  ): Promise<OfertaWithUserAndCelula[]> {
     const skip = (page - 1) * limit;
     return await prisma.oferta.findMany({
       take: limit,
@@ -55,10 +67,21 @@ export class OfertaRepository {
             situacao_no_reino: { select: { nome: true } },
           },
         },
+        celula: {
+          select: {
+            id: true,
+            nome: true,
+            supervisao: {
+              select: {
+                id: true,
+                nome: true,
+              },
+            },
+          },
+        },
       },
     });
   }
-
   async findById(id: string): Promise<Oferta | null> {
     return await prisma.oferta.findUnique({
       where: { id },
