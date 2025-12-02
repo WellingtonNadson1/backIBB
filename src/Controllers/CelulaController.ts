@@ -61,8 +61,28 @@ interface CelulaParams {
   id: string;
 }
 
+interface CelulaBySupervisaoQuery {
+  supervisaoId?: string;
+}
+
 class CelulaController {
   // Fazendo uso do Fastify
+  async listBySupervisao(
+    request: FastifyRequest<{ Querystring: CelulaBySupervisaoQuery }>,
+    reply: FastifyReply
+  ) {
+    const { supervisaoId } = request.query;
+
+    if (!supervisaoId) {
+      return reply.status(400).send({
+        error: "Parâmetro 'supervisaoId' é obrigatório",
+      });
+    }
+
+    const celulas = await CelulaRepositorie.findBySupervisaoId(supervisaoId);
+
+    return reply.status(200).send(celulas);
+  }
   async index(request: FastifyRequest, reply: FastifyReply) {
     const celulas = await CelulaRepositorie.findAll();
     if (!celulas) {

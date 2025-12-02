@@ -30,6 +30,24 @@ function getEndOfMonth(date: Date): Date {
 }
 
 class CelulaRepositorie {
+  async findBySupervisaoId(supervisaoId: string) {
+    const prisma = createPrismaInstance();
+
+    if (!prisma) {
+      throw new Error("Prisma instance is null");
+    }
+    const celulas = await prisma.celula.findMany({
+      where: { supervisaoId },
+      select: {
+        id: true,
+        nome: true,
+      },
+    });
+
+    await disconnectPrisma();
+    return celulas;
+  }
+
   async findAll() {
     const prisma = createPrismaInstance();
 
