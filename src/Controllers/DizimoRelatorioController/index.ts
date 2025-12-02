@@ -160,6 +160,22 @@ export class DizimoRelatorioController {
     }
   }
 
+  async findRelatorioMensal(request: FastifyRequest, reply: FastifyReply) {
+    try {
+      // opcional: permitir override via query ?meses=6
+      const { meses } = request.query as { meses?: string };
+      const qtdMeses = meses ? parseInt(meses, 10) : 12;
+
+      const relatorio = await dizimoRepository.findRelatorioMensal(qtdMeses);
+      return reply.send(relatorio);
+    } catch (error) {
+      console.error("Erro ao buscar relatório mensal de dízimos:", error);
+      return reply
+        .status(500)
+        .send({ error: "Erro ao listar os dízimos mensais." });
+    }
+  }
+
   async update(request: FastifyRequest, reply: FastifyReply) {
     try {
       const { id } = request.params as { id: string };

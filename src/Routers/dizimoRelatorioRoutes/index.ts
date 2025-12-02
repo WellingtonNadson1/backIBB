@@ -18,6 +18,8 @@ export async function dizimoRelatorioRoutes(app: FastifyInstance) {
     "/dizimos/relatorio/:idSupervisao/:idCelula",
     dizimoRelatoriosController.findById
   );
-  // app.put("/dizimos/:id", dizimoRelatoriosController.update);
-  // app.delete("/dizimos/:id", dizimoRelatoriosController.delete);
+  app.get(
+    "/dizimos/relatorio/mensal",
+    dizimoRelatoriosController.findRelatorioMensal
+  );
 }

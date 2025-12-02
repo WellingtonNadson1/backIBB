@@ -195,4 +195,105 @@ export class DizimoRelatorioRepository {
   async delete(id: string): Promise<Dizimo | null> {
     return await prisma.dizimo.delete({ where: { id } });
   }
+
+  async findRelatorioMensal(qtdMeses: number = 12): Promise<
+    {
+      year: number;
+      month: number; // 1–12
+      totalDizimistasUnicos: number;
+      totalMembros: number;
+      percentualDizimistas: number;
+    }[]
+  > {
+    const hoje = new Date();
+
+    // início da janela: primeiro dia do mês (qtdMeses - 1) meses atrás
+    const inicioJanela = startOfMonth(subMonths(hoje, qtdMeses - 1));
+
+    // total de membros da igreja (fixo para todos os meses)
+    const totalMembros = await prisma.user.count();
+
+    // pega todos os dízimos da janela com userId
+    const dizimos = await prisma.dizimo.findMany({
+      where: {
+        data_dizimou: {
+          gte: inicioJanela,
+          lte: hoje,
+        },
+      },
+      select: {
+        data_dizimou: true,
+        userId: true,
+      },
+    });
+
+    type Key = string; // "YYYY-M"
+
+    const mapaMeses = new Map<
+      Key,
+      {
+        year: number;
+        month: number;
+        userIds: Set<string>;
+      }
+    >();
+
+    for (const d of dizimos) {
+      if (!d.userId) continue; // ignora registros sem membro vinculado
+
+      const data = d.data_dizimou;
+      const year = data.getFullYear();
+      const month = data.getMonth() + 1; // 0–11 → 1–12
+      const key = `${year}-${month}`;
+
+      if (!mapaMeses.has(key)) {
+        mapaMeses.set(key, {
+          year,
+          month,
+          userIds: new Set<string>(),
+        });
+      }
+
+      mapaMeses.get(key)!.userIds.add(d.userId);
+    }
+
+    // garantir que todos os meses da janela apareçam, mesmo sem dízimos
+    for (let i = 0; i < qtdMeses; i++) {
+      const dataRef = subMonths(hoje, qtdMeses - 1 - i);
+      const year = dataRef.getFullYear();
+      const month = dataRef.getMonth() + 1;
+      const key = `${year}-${month}`;
+
+      if (!mapaMeses.has(key)) {
+        mapaMeses.set(key, {
+          year,
+          month,
+          userIds: new Set<string>(),
+        });
+      }
+    }
+
+    // transforma em array e calcula percentuais
+    const resultado = Array.from(mapaMeses.values())
+      .map((item) => {
+        const totalDizimistasUnicos = item.userIds.size;
+        const percentualDizimistas =
+          totalMembros > 0 ? (totalDizimistasUnicos / totalMembros) * 100 : 0;
+
+        return {
+          year: item.year,
+          month: item.month,
+          totalDizimistasUnicos,
+          totalMembros,
+          percentualDizimistas: Number(percentualDizimistas.toFixed(2)),
+        };
+      })
+      // ordena por ano/mês (ascendente)
+      .sort((a, b) => {
+        if (a.year !== b.year) return a.year - b.year;
+        return a.month - b.month;
+      });
+
+    return resultado;
+  }
 }
