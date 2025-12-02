@@ -87,6 +87,7 @@ model Celula {
   lider           User?           @relation("LiderCelula", fields: [userId], references: [id])
   reunioes_celula ReuniaoCelula[]
   membros         User[]
+  ofertas         Oferta[]
 
   @@map("celula")
 }
@@ -269,9 +270,12 @@ model Supervisao {
 
 enum OrigemContribuicao {
   CULTO
-  ONLINE
+  PIX
+  TRANSFERENCIA
+  CARTAO
   SECRETARIA
   CELULA
+  PRIMICIA
   OUTRO
 }
 
@@ -289,7 +293,7 @@ model Dizimo {
   cultoIndividualId String?
   cultoIndividual   CultoIndividual? @relation(fields: [cultoIndividualId], references: [id])
 
-  origem    OrigemContribuicao @default(ONLINE)
+  origem    OrigemContribuicao @default(PIX)
   descricao String?
 
   @@map("dizimo")
@@ -309,7 +313,10 @@ model Oferta {
   cultoIndividualId String?
   cultoIndividual   CultoIndividual? @relation(fields: [cultoIndividualId], references: [id])
 
-  origem    OrigemContribuicao @default(ONLINE)
+  celulaId String?
+  celula   Celula? @relation(fields: [celulaId], references: [id])
+
+  origem    OrigemContribuicao @default(PIX)
   descricao String?
 
   @@map("oferta")
