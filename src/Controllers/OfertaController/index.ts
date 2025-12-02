@@ -2,16 +2,30 @@ import { Prisma } from "@prisma/client";
 import { FastifyReply, FastifyRequest } from "fastify";
 import { OfertaRepository } from "../../Repositories/OfertaRepository";
 
+type CreateManyOfertaDTO = {
+  userId: string;
+  valor: string | number;
+  data_ofertou: string;
+  origem?:
+    | "CULTO"
+    | "PIX"
+    | "TRANSFERENCIA"
+    | "CARTAO"
+    | "SECRETARIA"
+    | "CELULA"
+    | "OUTRO";
+  cultoIndividualId?: string | null;
+  celulaId?: string | null;
+  descricao?: string | null;
+  // membroNome vem do front só pra UI, não vai pro DB
+};
+
 const ofertaRepository = new OfertaRepository();
 
 export class OfertaController {
   async createMany(request: FastifyRequest, reply: FastifyReply) {
     try {
-      const registros = request.body as Array<{
-        userId: string;
-        valor: number;
-        data_ofertou: string;
-      }>;
+      const registros = request.body as CreateManyOfertaDTO[];
 
       if (!Array.isArray(registros) || registros.length === 0) {
         return reply
@@ -19,12 +33,23 @@ export class OfertaController {
           .send({ error: "Nenhum registro foi enviado." });
       }
 
-      // Convertendo os valores para os tipos corretos
-      const dadosFormatados = registros.map((registro) => ({
-        userId: registro.userId,
-        valor: new Prisma.Decimal(registro.valor), // ✅ Convertendo para Decimal
-        data_ofertou: new Date(registro.data_ofertou), // ✅ Convertendo para Date
-      }));
+      const dadosFormatados: Prisma.OfertaCreateManyInput[] = registros.map(
+        (registro) => ({
+          userId: registro.userId,
+          valor: new Prisma.Decimal(registro.valor), // aceita string ou number
+          data_ofertou: new Date(registro.data_ofertou),
+
+          // 🔹 CAMPOS QUE ESTAVAM SENDO PERDIDOS:
+          origem: registro.origem ?? "PIX", // se não vier, cai no default
+          cultoIndividualId: registro.cultoIndividualId ?? null,
+          celulaId: registro.celulaId ?? null,
+          descricao: registro.descricao ?? null,
+
+          // opcional: já setar datas de criação/atualização aqui
+          date_create: new Date(),
+          date_update: new Date(),
+        })
+      );
 
       const newOferta = await ofertaRepository.createMany(dadosFormatados);
 
@@ -40,19 +65,24 @@ export class OfertaController {
 
   async create(request: FastifyRequest, reply: FastifyReply) {
     try {
-      const { userId, valor, data_ofertou } = request.body as {
-        userId: string;
-        valor: number;
-        data_ofertou: string;
-      };
+      const body = request.body as CreateManyOfertaDTO;
+
       const newOferta = await ofertaRepository.create({
-        userId,
-        valor: new Prisma.Decimal(valor),
-        data_ofertou: new Date(data_ofertou),
+        userId: body.userId,
+        valor: new Prisma.Decimal(body.valor),
+        data_ofertou: new Date(body.data_ofertou),
+        origem: body.origem ?? "PIX",
+        cultoIndividualId: body.cultoIndividualId ?? null,
+        celulaId: body.celulaId ?? null,
+        descricao: body.descricao ?? null,
+        date_create: new Date(),
+        date_update: new Date(),
       });
+
       return reply.status(201).send(newOferta);
     } catch (error) {
-      return reply.status(500).send({ error: "Erro ao criar dízimo." });
+      console.error(error);
+      return reply.status(500).send({ error: "Erro ao criar oferta." });
     }
   }
 
