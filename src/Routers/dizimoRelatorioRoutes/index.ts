@@ -6,7 +6,10 @@ const dizimoRelatoriosController = new DizimoRelatorioController();
 export async function dizimoRelatorioRoutes(app: FastifyInstance) {
   // app.post("/dizimos/multiple", dizimoRelatoriosController.createMany);
   // app.post("/dizimos", dizimoRelatoriosController.create);
-  app.get("/dizimos/relatorio/cards", dizimoRelatoriosController.findAllRelatorioCardsController);
+  app.get(
+    "/dizimos/relatorio/cards",
+    dizimoRelatoriosController.findAllRelatorioCardsController
+  );
   app.get(
     "/dizimos/relatorio/:idSupervisao",
     dizimoRelatoriosController.findByIdSupervisao

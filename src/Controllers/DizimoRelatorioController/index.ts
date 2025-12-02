@@ -2,16 +2,28 @@ import { Prisma } from "@prisma/client";
 import { FastifyReply, FastifyRequest } from "fastify";
 import { DizimoRelatorioRepository } from "../../Repositories/DizimoRelatorioRepository";
 
+type RegistroDizimoBody = {
+  userId: string;
+  valor: number | string;
+  data_dizimou: string;
+  origem:
+    | "CULTO"
+    | "PIX"
+    | "TRANSFERENCIA"
+    | "CARTAO"
+    | "SECRETARIA"
+    | "CELULA"
+    | "OUTRO";
+  cultoIndividualId?: string | null;
+  descricao?: string | null;
+};
+
 const dizimoRepository = new DizimoRelatorioRepository();
 
 export class DizimoRelatorioController {
   async createMany(request: FastifyRequest, reply: FastifyReply) {
     try {
-      const registros = request.body as Array<{
-        userId: string;
-        valor: number;
-        data_dizimou: string;
-      }>;
+      const registros = request.body as RegistroDizimoBody[];
 
       if (!Array.isArray(registros) || registros.length === 0) {
         return reply
@@ -19,12 +31,16 @@ export class DizimoRelatorioController {
           .send({ error: "Nenhum registro foi enviado." });
       }
 
-      // Convertendo os valores para os tipos corretos
-      const dadosFormatados = registros.map((registro) => ({
-        userId: registro.userId,
-        valor: new Prisma.Decimal(registro.valor), // ✅ Convertendo para Decimal
-        data_dizimou: new Date(registro.data_dizimou), // ✅ Convertendo para Date
-      }));
+      const dadosFormatados: Prisma.DizimoCreateManyInput[] = registros.map(
+        (registro) => ({
+          userId: registro.userId,
+          valor: new Prisma.Decimal(registro.valor),
+          data_dizimou: new Date(registro.data_dizimou),
+          origem: registro.origem ?? "PIX", // default seguro
+          cultoIndividualId: registro.cultoIndividualId ?? null,
+          descricao: registro.descricao ?? null,
+        })
+      );
 
       const newDizimos = await dizimoRepository.createMany(dadosFormatados);
 
@@ -32,6 +48,7 @@ export class DizimoRelatorioController {
         .status(201)
         .send({ message: "Registros criados com sucesso!", data: newDizimos });
     } catch (error) {
+      console.error(error);
       return reply
         .status(500)
         .send({ error: "Erro ao criar registros de dízimo." });
@@ -40,18 +57,27 @@ export class DizimoRelatorioController {
 
   async create(request: FastifyRequest, reply: FastifyReply) {
     try {
-      const { userId, valor, data_dizimou } = request.body as {
-        userId: string;
-        valor: number;
-        data_dizimou: string;
-      };
+      const {
+        userId,
+        valor,
+        data_dizimou,
+        origem,
+        cultoIndividualId,
+        descricao,
+      } = request.body as RegistroDizimoBody;
+
       const newDizimo = await dizimoRepository.create({
         userId,
         valor: new Prisma.Decimal(valor),
         data_dizimou: new Date(data_dizimou),
+        origem: origem ?? "PIX",
+        cultoIndividualId: cultoIndividualId ?? null,
+        descricao: descricao ?? null,
       });
+
       return reply.status(201).send(newDizimo);
     } catch (error) {
+      console.error(error);
       return reply.status(500).send({ error: "Erro ao criar dízimo." });
     }
   }

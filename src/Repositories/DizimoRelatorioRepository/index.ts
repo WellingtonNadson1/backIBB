@@ -5,101 +5,120 @@ const prisma = new PrismaClient();
 
 export class DizimoRelatorioRepository {
   async createMany(
-    data: Omit<Dizimo, "id" | "date_create" | "date_update">[]
+    data: Prisma.DizimoCreateManyInput[]
   ): Promise<Prisma.BatchPayload> {
     return await prisma.dizimo.createMany({
       data,
-      skipDuplicates: true, // ✅ Evita duplicações caso já existam registros iguais
+      skipDuplicates: true,
     });
   }
 
   async create(
-    data: Omit<Dizimo, "id" | "date_create" | "date_update">
+    data: Prisma.DizimoCreateInput | Prisma.DizimoUncheckedCreateInput
   ): Promise<Dizimo> {
     return await prisma.dizimo.create({ data });
   }
 
   async findAllRelatorioCards() {
-    // Obtendo as datas relevantes
     const primeiroDiaMesPassado = startOfMonth(subMonths(new Date(), 1));
-  const ultimoDiaMesPassado = endOfMonth(subMonths(new Date(), 1));
-  const primeiroDiaMesAtual = startOfMonth(new Date());
-  const primeiroDiaTresMesesAtras = startOfMonth(subMonths(new Date(), 3));
+    const ultimoDiaMesPassado = endOfMonth(subMonths(new Date(), 1));
+    const primeiroDiaMesAtual = startOfMonth(new Date());
+    const primeiroDiaTresMesesAtras = startOfMonth(subMonths(new Date(), 3));
+    const hoje = new Date();
 
-    // Total de membros da igreja
     const totalMembros = await prisma.user.count();
 
-    // Membros que dizimaram no mês passado e no mês atual (até agora)
-  const [usuariosUltimoMes, usuariosMesAtual, totalDizimosTresMeses] = await Promise.all([
-    prisma.dizimo.groupBy({
-      by: ["userId"],
-      where: {
-        data_dizimou: {
-          gte: primeiroDiaMesPassado,
-          lte: ultimoDiaMesPassado,
+    const [
+      usuariosUltimoMes,
+      usuariosMesAtual,
+      totalDizimosTresMeses,
+      totalDizimosMesAtualAgg,
+      totalDizimosMesPassadoAgg,
+    ] = await Promise.all([
+      prisma.dizimo.groupBy({
+        by: ["userId"],
+        where: {
+          data_dizimou: {
+            gte: primeiroDiaMesPassado,
+            lte: ultimoDiaMesPassado,
+          },
         },
-      },
-      _count: { _all: true },
-    }),
-    prisma.dizimo.groupBy({
-      by: ["userId"],
-      where: {
-        data_dizimou: {
-          gte: primeiroDiaMesAtual,
-          lte: new Date(),
+        _count: { _all: true },
+      }),
+      prisma.dizimo.groupBy({
+        by: ["userId"],
+        where: {
+          data_dizimou: {
+            gte: primeiroDiaMesAtual,
+            lte: hoje,
+          },
         },
-      },
-      _count: { _all: true },
-    }),
-    prisma.dizimo.aggregate({
-      _sum: { valor: true },
-      where: {
-        data_dizimou: {
-          gte: primeiroDiaTresMesesAtras,
-          lte: new Date(),
+        _count: { _all: true },
+      }),
+      prisma.dizimo.aggregate({
+        _sum: { valor: true },
+        where: {
+          data_dizimou: {
+            gte: primeiroDiaTresMesesAtras,
+            lte: hoje,
+          },
         },
-      },
-    }),
-  ]);
+      }),
+      prisma.dizimo.aggregate({
+        _sum: { valor: true },
+        where: {
+          data_dizimou: {
+            gte: primeiroDiaMesAtual,
+            lte: hoje,
+          },
+        },
+      }),
+      prisma.dizimo.aggregate({
+        _sum: { valor: true },
+        where: {
+          data_dizimou: {
+            gte: primeiroDiaMesPassado,
+            lte: ultimoDiaMesPassado,
+          },
+        },
+      }),
+    ]);
 
-    console.log(`Usuários que dizimaram no último mês: ${usuariosUltimoMes.length}`);
-    console.log(`Usuários que dizimaram no mês atual até hoje: ${usuariosMesAtual.length}`);
-    // const dizimistasUltimoMes = await prisma.dizimo.groupBy({
-    //   by: ["userId"],
-    //   where: {
-    //     data_dizimou: {
-    //       gte: primeiroDiaMesPassado,
-    //       lte: new Date(), // Até o momento da requisição
-    //     },
-    //   },
-    //   having: {
-    //     _count: { equals: 1 },
-    //   },
-    //   _count: true,
-    // });
-
-    // Calculando percentual de dizimistas
     const totalDizimistasUnicosMesPassado = usuariosUltimoMes.length;
-    const percentualDizimistas =
-      totalMembros > 0 ? (totalDizimistasUnicosMesPassado / totalMembros) * 100 : 0;
+    const percentualDizimistasMesPassado =
+      totalMembros > 0
+        ? (totalDizimistasUnicosMesPassado / totalMembros) * 100
+        : 0;
 
-    // Valor total dos dízimos do mês passado
-    const totalDizimosMesPassado = await prisma.dizimo.aggregate({
-      _sum: { valor: true },
-      where: {
-        data_dizimou: {
-          gte: primeiroDiaMesPassado,
-          lte: ultimoDiaMesPassado,
-        },
-      },
-    });
+    const totalDizimosMesPassado = totalDizimosMesPassadoAgg._sum.valor || 0;
+    const totalDizimosMesAtual = totalDizimosMesAtualAgg._sum.valor || 0;
+    const totalDizimosUltimosTresMeses = totalDizimosTresMeses._sum.valor || 0;
+
+    const totalDizimistasMesAtual = usuariosMesAtual.length;
+    const ticketMedioMesAtual =
+      totalDizimistasMesAtual > 0
+        ? Number(totalDizimosMesAtual) / totalDizimistasMesAtual
+        : 0;
+
+    const variacaoMesAtualVsAnterior =
+      Number(totalDizimosMesPassado) > 0
+        ? ((Number(totalDizimosMesAtual) - Number(totalDizimosMesPassado)) /
+            Number(totalDizimosMesPassado)) *
+          100
+        : 0;
 
     return {
       totalMembros,
       totalDizimistasUnicosMesPassado,
-      percentualDizimistasMesPassado: percentualDizimistas.toFixed(2),
-      totalDizimosMesPassado: totalDizimosMesPassado._sum.valor || 0,
-      totalDizimosUltimosTresMeses: totalDizimosTresMeses._sum.valor || 0,
+      percentualDizimistasMesPassado: percentualDizimistasMesPassado.toFixed(2),
+
+      totalDizimosMesPassado,
+      totalDizimosMesAtual,
+      totalDizimosUltimosTresMeses,
+
+      totalDizimistasMesAtual,
+      ticketMedioMesAtual: ticketMedioMesAtual.toFixed(2),
+      variacaoMesAtualVsAnterior: Number(variacaoMesAtualVsAnterior.toFixed(2)),
     };
   }
 
