@@ -20,7 +20,58 @@ function parseDateOnlyToLocal(dateString: string): Date {
 
 const dizimoRepository = new DizimoRelatorioRepository();
 
+type TipoRelatorio = "SUPERVISAO" | "CELULA" | "FUNCAO" | "STATUS";
+
 export class DizimoRelatorioController {
+  async findRelatorioDetalhado(request: FastifyRequest, reply: FastifyReply) {
+    try {
+      const { tipoRelatorio, dataInicio, dataFim, supervisaoId, celulaId } =
+        request.query as {
+          tipoRelatorio?: string;
+          dataInicio?: string;
+          dataFim?: string;
+          supervisaoId?: string;
+          celulaId?: string;
+        };
+
+      if (!tipoRelatorio) {
+        return reply
+          .status(400)
+          .send({ error: "tipoRelatorio é obrigatório." });
+      }
+
+      if (
+        !["SUPERVISAO", "CELULA", "FUNCAO", "STATUS"].includes(tipoRelatorio)
+      ) {
+        return reply.status(400).send({
+          error:
+            "tipoRelatorio inválido. Use SUPERVISAO, CELULA, FUNCAO ou STATUS.",
+        });
+      }
+
+      if (!dataInicio || !dataFim) {
+        return reply.status(400).send({
+          error: "dataInicio e dataFim são obrigatórios.",
+        });
+      }
+
+      const relatorio = await dizimoRepository.findRelatorioDetalhado({
+        tipoRelatorio: tipoRelatorio as TipoRelatorio,
+        dataInicio,
+        dataFim,
+        supervisaoId,
+        celulaId,
+      });
+
+      return reply.send(relatorio);
+    } catch (error) {
+      console.error("Erro ao gerar relatório detalhado de dízimos:", error);
+      return reply
+        .status(500)
+        .send({ error: "Erro ao gerar relatório detalhado de dízimos." });
+    }
+  }
+
   async createMany(request: FastifyRequest, reply: FastifyReply) {
     try {
       const registros = request.body as RegistroDizimoBody[];

@@ -10,6 +10,11 @@ export async function dizimoRelatorioRoutes(app: FastifyInstance) {
     "/dizimos/relatorio/cards",
     dizimoRelatoriosController.findAllRelatorioCardsController
   );
+  // 🔹 NOVO: relatório detalhado (para sua tela de filtros)
+  app.get(
+    "/dizimos/relatorio/detalhado",
+    dizimoRelatoriosController.findRelatorioDetalhado
+  );
   app.get(
     "/dizimos/relatorio/:idSupervisao",
     dizimoRelatoriosController.findByIdSupervisao

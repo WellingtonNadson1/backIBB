@@ -1,9 +1,140 @@
-import { Dizimo, Prisma, PrismaClient } from "@prisma/client";
+import {
+  Dizimo,
+  EventoContribuicao,
+  Prisma,
+  PrismaClient,
+  TipoPagamento,
+} from "@prisma/client";
 import { endOfMonth, startOfMonth, subMonths } from "date-fns";
+
+type DizimoReportItem = {
+  id: string;
+  data: string; // ISO string
+  valor: number;
+  evento: EventoContribuicao;
+  tipoPagamento: TipoPagamento;
+
+  membroId: string | null;
+  membroNome: string | null;
+
+  supervisaoId: string | null;
+  supervisaoNome: string | null;
+
+  celulaId: string | null;
+  celulaNome: string | null;
+};
+
+type DizimoRelatorioDetalhadoResponse = {
+  items: DizimoReportItem[];
+  totalGeral: number;
+  totalRegistros: number;
+};
+
+type TipoRelatorio = "SUPERVISAO" | "CELULA" | "FUNCAO" | "STATUS";
 
 const prisma = new PrismaClient();
 
 export class DizimoRelatorioRepository {
+  async findRelatorioDetalhado(params: {
+    tipoRelatorio: TipoRelatorio;
+    dataInicio: string; // "YYYY-MM-DD"
+    dataFim: string; // "YYYY-MM-DD"
+    supervisaoId?: string;
+    celulaId?: string;
+  }): Promise<DizimoRelatorioDetalhadoResponse> {
+    const { tipoRelatorio, dataInicio, dataFim, supervisaoId, celulaId } =
+      params;
+
+    // monta datas (incluindo fim do dia para dataFim)
+    const [yIni, mIni, dIni] = dataInicio.split("-").map(Number);
+    const [yFim, mFim, dFim] = dataFim.split("-").map(Number);
+
+    const inicio = new Date(yIni, mIni - 1, dIni, 0, 0, 0, 0);
+    const fim = new Date(yFim, mFim - 1, dFim, 23, 59, 59, 999);
+
+    const where: Prisma.DizimoWhereInput = {
+      data_dizimou: {
+        gte: inicio,
+        lte: fim,
+      },
+    };
+
+    // 🔹 filtro por tipo de relatório
+    switch (tipoRelatorio) {
+      case "SUPERVISAO":
+        if (supervisaoId) {
+          where.user = { supervisaoId };
+        }
+        break;
+
+      case "CELULA":
+        if (celulaId) {
+          // filtra pela célula específica
+          where.user = { celulaId };
+        } else if (supervisaoId) {
+          // ou por supervisão, se não tiver célula
+          where.user = { supervisaoId };
+        }
+        break;
+
+      case "FUNCAO":
+        // aqui depois você pode filtrar por cargo_de_liderancaId
+        // ex: where.user = { cargoDeLiderancaId: algumId }
+        break;
+
+      case "STATUS":
+        // aqui depois dá pra filtrar por situacaoNoReinoId
+        // ex: where.user = { situacaoNoReinoId: algumId }
+        break;
+    }
+
+    const registros = await prisma.dizimo.findMany({
+      where,
+      include: {
+        user: {
+          select: {
+            id: true,
+            first_name: true,
+            last_name: true,
+            supervisao_pertence: { select: { id: true, nome: true } },
+            celula: { select: { id: true, nome: true } },
+          },
+        },
+      },
+      orderBy: {
+        data_dizimou: "asc",
+      },
+    });
+
+    const items: DizimoReportItem[] = registros.map((r) => ({
+      id: r.id,
+      data: r.data_dizimou.toISOString(),
+      valor: Number(r.valor ?? 0),
+
+      evento: r.evento,
+      tipoPagamento: r.tipoPagamento,
+
+      membroId: r.user?.id ?? null,
+      membroNome: r.user
+        ? `${r.user.first_name} ${r.user.last_name}`.trim()
+        : null,
+
+      supervisaoId: r.user?.supervisao_pertence?.id ?? null,
+      supervisaoNome: r.user?.supervisao_pertence?.nome ?? null,
+
+      celulaId: r.user?.celula?.id ?? null,
+      celulaNome: r.user?.celula?.nome ?? null,
+    }));
+
+    const totalGeral = items.reduce((acc, curr) => acc + curr.valor, 0);
+
+    return {
+      items,
+      totalGeral,
+      totalRegistros: items.length,
+    };
+  }
+
   async createMany(
     data: Prisma.DizimoCreateManyInput[]
   ): Promise<Prisma.BatchPayload> {
