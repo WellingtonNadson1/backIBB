@@ -71,8 +71,6 @@ export class DizimoRelatorioRepository {
     const inicio = new Date(yIni, mIni - 1, dIni, 0, 0, 0, 0);
     const fim = new Date(yFim, mFim - 1, dFim, 23, 59, 59, 999);
 
-    // 1) Busca a supervisão com TODAS as células e TODOS os membros,
-    //    já trazendo os dízimos desses membros no período.
     const supervisao = await prisma.supervisao.findUnique({
       where: { id: supervisaoId },
       select: {
@@ -100,7 +98,7 @@ export class DizimoRelatorioRepository {
                   select: {
                     id: true,
                     valor: true,
-                    data_dizimou: true,
+                    data_dizimou: true, // 👈 importante
                   },
                 },
               },
@@ -128,7 +126,6 @@ export class DizimoRelatorioRepository {
 
     const celulas: CelulaRelatorioDTO[] = supervisao.celulas.map((celula) => {
       const membros: MembroCelulaRelatorioDTO[] = celula.membros
-        // ordena membros por nome completo
         .sort((a, b) => {
           const nomeA = `${a.first_name} ${a.last_name ?? ""}`.trim();
           const nomeB = `${b.first_name} ${b.last_name ?? ""}`.trim();
@@ -145,6 +142,16 @@ export class DizimoRelatorioRepository {
           const totalLancamentos = membro.Dizimo.length;
           const temRegistro = totalLancamentos > 0;
 
+          // 👇 pega a última data de dízimo do período, se houver
+          let ultimaData: Date | null = null;
+          for (const d of membro.Dizimo) {
+            if (!ultimaData || d.data_dizimou > ultimaData) {
+              ultimaData = d.data_dizimou;
+            }
+          }
+
+          const ultimaDataDizimo = ultimaData ? ultimaData.toISOString() : null;
+
           totalGeral += totalValor;
           totalRegistros += totalLancamentos;
 
@@ -155,6 +162,7 @@ export class DizimoRelatorioRepository {
             totalLancamentos,
             totalValor,
             temRegistro,
+            ultimaDataDizimo, // 👈 NOVO
           };
         });
 
