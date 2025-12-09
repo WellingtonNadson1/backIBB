@@ -14,6 +14,17 @@ type MembroCelulaRelatorioDTO = {
   totalLancamentos: number;
   totalValor: number;
   temRegistro: boolean;
+  ultimaDataDizimo: string | null;
+};
+
+type RelatorioCelulaDetalhadoDTO = {
+  supervisaoId: string;
+  supervisaoNome: string;
+  celulaId: string;
+  celulaNome: string;
+  membros: MembroCelulaRelatorioDTO[];
+  totalGeral: number;
+  totalRegistros: number;
 };
 
 type CelulaRelatorioDTO = {
@@ -182,15 +193,141 @@ export class DizimoRelatorioRepository {
     };
   }
 
+  async findRelatorioDetalhadoPorCelula(params: {
+    celulaId: string;
+    dataInicio: string; // "YYYY-MM-DD"
+    dataFim: string; // "YYYY-MM-DD"
+  }): Promise<RelatorioCelulaDetalhadoDTO> {
+    const { celulaId, dataInicio, dataFim } = params;
+
+    const [yIni, mIni, dIni] = dataInicio.split("-").map(Number);
+    const [yFim, mFim, dFim] = dataFim.split("-").map(Number);
+
+    const inicio = new Date(yIni, mIni - 1, dIni, 0, 0, 0, 0);
+    const fim = new Date(yFim, mFim - 1, dFim, 23, 59, 59, 999);
+
+    const celula = await prisma.celula.findUnique({
+      where: { id: celulaId },
+      select: {
+        id: true,
+        nome: true,
+        supervisao: {
+          select: {
+            id: true,
+            nome: true,
+          },
+        },
+        membros: {
+          select: {
+            id: true,
+            first_name: true,
+            last_name: true,
+            cargo_de_lideranca: {
+              select: { nome: true },
+            },
+            Dizimo: {
+              where: {
+                data_dizimou: {
+                  gte: inicio,
+                  lte: fim,
+                },
+              },
+              select: {
+                id: true,
+                valor: true,
+                data_dizimou: true,
+              },
+            },
+          },
+        },
+      },
+    });
+
+    if (!celula) {
+      return {
+        supervisaoId: "",
+        supervisaoNome: "",
+        celulaId,
+        celulaNome: "",
+        membros: [],
+        totalGeral: 0,
+        totalRegistros: 0,
+      };
+    }
+
+    let totalGeral = 0;
+    let totalRegistros = 0;
+
+    // Ordena membros alfabeticamente
+    const membros: MembroCelulaRelatorioDTO[] = celula.membros
+      .sort((a, b) => {
+        const nomeA = `${a.first_name} ${a.last_name ?? ""}`.trim();
+        const nomeB = `${b.first_name} ${b.last_name ?? ""}`.trim();
+        return nomeA.localeCompare(nomeB, "pt-BR");
+      })
+      .map((membro) => {
+        const nome = `${membro.first_name} ${membro.last_name ?? ""}`.trim();
+        const cargoNome = membro.cargo_de_lideranca?.nome ?? null;
+
+        const totalValor = membro.Dizimo.reduce(
+          (acc, d) => acc + Number(d.valor ?? 0),
+          0
+        );
+        const totalLancamentos = membro.Dizimo.length;
+        const temRegistro = totalLancamentos > 0;
+
+        let ultimaData: Date | null = null;
+        for (const d of membro.Dizimo) {
+          if (!ultimaData || d.data_dizimou > ultimaData) {
+            ultimaData = d.data_dizimou;
+          }
+        }
+
+        const ultimaDataDizimo = ultimaData ? ultimaData.toISOString() : null;
+
+        totalGeral += totalValor;
+        totalRegistros += totalLancamentos;
+
+        return {
+          membroId: membro.id,
+          membroNome: nome,
+          cargoNome,
+          totalLancamentos,
+          totalValor,
+          temRegistro,
+          ultimaDataDizimo,
+        };
+      });
+
+    return {
+      supervisaoId: celula.supervisao.id,
+      supervisaoNome: celula.supervisao.nome,
+      celulaId: celula.id,
+      celulaNome: celula.nome,
+      membros,
+      totalGeral,
+      totalRegistros,
+    };
+  }
+
   async findRelatorioDetalhado(params: {
     tipoRelatorio: TipoRelatorio;
     dataInicio: string; // "YYYY-MM-DD"
     dataFim: string; // "YYYY-MM-DD"
     supervisaoId?: string;
     celulaId?: string;
-  }): Promise<DizimoRelatorioDetalhadoResponse> {
+  }): Promise<DizimoRelatorioDetalhadoResponse | RelatorioCelulaDetalhadoDTO> {
     const { tipoRelatorio, dataInicio, dataFim, supervisaoId, celulaId } =
       params;
+
+    // 🔹 CASO ESPECIAL: relatório por CÉLULA com membros
+    if (tipoRelatorio === "CELULA" && celulaId) {
+      return this.findRelatorioDetalhadoPorCelula({
+        celulaId,
+        dataInicio,
+        dataFim,
+      });
+    }
 
     // monta datas (incluindo fim do dia para dataFim)
     const [yIni, mIni, dIni] = dataInicio.split("-").map(Number);
