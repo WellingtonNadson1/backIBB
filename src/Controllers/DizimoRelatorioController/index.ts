@@ -55,6 +55,25 @@ export class DizimoRelatorioController {
         });
       }
 
+      // 🔹 Caso especial: relatório AGREGADO por supervisão
+      if (tipoRelatorio === "SUPERVISAO") {
+        if (!supervisaoId) {
+          return reply
+            .status(400)
+            .send({ error: "supervisaoId é obrigatório para SUPERVISAO." });
+        }
+
+        const relatorioSupervisao =
+          await dizimoRepository.findRelatorioDetalhadoPorSupervisao({
+            supervisaoId,
+            dataInicio,
+            dataFim,
+          });
+
+        return reply.send(relatorioSupervisao);
+      }
+
+      // 🔹 Demais tipos usam a lógica já existente (registros linha a linha)
       const relatorio = await dizimoRepository.findRelatorioDetalhado({
         tipoRelatorio: tipoRelatorio as TipoRelatorio,
         dataInicio,
@@ -71,7 +90,6 @@ export class DizimoRelatorioController {
         .send({ error: "Erro ao gerar relatório detalhado de dízimos." });
     }
   }
-
   async createMany(request: FastifyRequest, reply: FastifyReply) {
     try {
       const registros = request.body as RegistroDizimoBody[];

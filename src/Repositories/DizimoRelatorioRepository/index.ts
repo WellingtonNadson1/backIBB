@@ -7,6 +7,29 @@ import {
 } from "@prisma/client";
 import { endOfMonth, startOfMonth, subMonths } from "date-fns";
 
+type MembroCelulaRelatorioDTO = {
+  membroId: string;
+  membroNome: string;
+  cargoNome: string | null;
+  totalLancamentos: number;
+  totalValor: number;
+  temRegistro: boolean;
+};
+
+type CelulaRelatorioDTO = {
+  celulaId: string;
+  celulaNome: string;
+  membros: MembroCelulaRelatorioDTO[];
+};
+
+type RelatorioSupervisaoDetalhadoDTO = {
+  supervisaoId: string;
+  supervisaoNome: string;
+  celulas: CelulaRelatorioDTO[];
+  totalGeral: number; // soma de todos os dízimos do período
+  totalRegistros: number; // quantidade de lançamentos de dízimo
+};
+
 type DizimoReportItem = {
   id: string;
   data: string; // ISO string
@@ -35,6 +58,122 @@ type TipoRelatorio = "SUPERVISAO" | "CELULA" | "FUNCAO" | "STATUS";
 const prisma = new PrismaClient();
 
 export class DizimoRelatorioRepository {
+  async findRelatorioDetalhadoPorSupervisao(params: {
+    supervisaoId: string;
+    dataInicio: string; // "YYYY-MM-DD"
+    dataFim: string; // "YYYY-MM-DD"
+  }): Promise<RelatorioSupervisaoDetalhadoDTO> {
+    const { supervisaoId, dataInicio, dataFim } = params;
+
+    const [yIni, mIni, dIni] = dataInicio.split("-").map(Number);
+    const [yFim, mFim, dFim] = dataFim.split("-").map(Number);
+
+    const inicio = new Date(yIni, mIni - 1, dIni, 0, 0, 0, 0);
+    const fim = new Date(yFim, mFim - 1, dFim, 23, 59, 59, 999);
+
+    // 1) Busca a supervisão com TODAS as células e TODOS os membros,
+    //    já trazendo os dízimos desses membros no período.
+    const supervisao = await prisma.supervisao.findUnique({
+      where: { id: supervisaoId },
+      select: {
+        id: true,
+        nome: true,
+        celulas: {
+          select: {
+            id: true,
+            nome: true,
+            membros: {
+              select: {
+                id: true,
+                first_name: true,
+                last_name: true,
+                cargo_de_lideranca: {
+                  select: { nome: true },
+                },
+                Dizimo: {
+                  where: {
+                    data_dizimou: {
+                      gte: inicio,
+                      lte: fim,
+                    },
+                  },
+                  select: {
+                    id: true,
+                    valor: true,
+                    data_dizimou: true,
+                  },
+                },
+              },
+            },
+          },
+          orderBy: {
+            nome: "asc",
+          },
+        },
+      },
+    });
+
+    if (!supervisao) {
+      return {
+        supervisaoId,
+        supervisaoNome: "",
+        celulas: [],
+        totalGeral: 0,
+        totalRegistros: 0,
+      };
+    }
+
+    let totalGeral = 0;
+    let totalRegistros = 0;
+
+    const celulas: CelulaRelatorioDTO[] = supervisao.celulas.map((celula) => {
+      const membros: MembroCelulaRelatorioDTO[] = celula.membros
+        // ordena membros por nome completo
+        .sort((a, b) => {
+          const nomeA = `${a.first_name} ${a.last_name ?? ""}`.trim();
+          const nomeB = `${b.first_name} ${b.last_name ?? ""}`.trim();
+          return nomeA.localeCompare(nomeB, "pt-BR");
+        })
+        .map((membro) => {
+          const nome = `${membro.first_name} ${membro.last_name ?? ""}`.trim();
+          const cargoNome = membro.cargo_de_lideranca?.nome ?? null;
+
+          const totalValor = membro.Dizimo.reduce(
+            (acc, d) => acc + Number(d.valor ?? 0),
+            0
+          );
+          const totalLancamentos = membro.Dizimo.length;
+          const temRegistro = totalLancamentos > 0;
+
+          totalGeral += totalValor;
+          totalRegistros += totalLancamentos;
+
+          return {
+            membroId: membro.id,
+            membroNome: nome,
+            cargoNome,
+            totalLancamentos,
+            totalValor,
+            temRegistro,
+          };
+        });
+
+      return {
+        celulaId: celula.id,
+        celulaNome: celula.nome,
+        membros,
+      };
+    });
+
+    return {
+      supervisaoId: supervisao.id,
+      supervisaoNome: supervisao.nome,
+      celulas,
+      totalGeral,
+      totalRegistros,
+    };
+  }
+
   async findRelatorioDetalhado(params: {
     tipoRelatorio: TipoRelatorio;
     dataInicio: string; // "YYYY-MM-DD"
