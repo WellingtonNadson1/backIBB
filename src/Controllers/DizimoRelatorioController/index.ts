@@ -25,14 +25,34 @@ type TipoRelatorio = "SUPERVISAO" | "CELULA" | "FUNCAO" | "STATUS";
 export class DizimoRelatorioController {
   async findRelatorioDetalhado(request: FastifyRequest, reply: FastifyReply) {
     try {
-      const { tipoRelatorio, dataInicio, dataFim, supervisaoId, celulaId } =
-        request.query as {
-          tipoRelatorio?: string;
-          dataInicio?: string;
-          dataFim?: string;
-          supervisaoId?: string;
-          celulaId?: string;
-        };
+      const {
+        tipoRelatorio,
+        tipoFinanceiro,
+        dataInicio,
+        dataFim,
+        supervisaoId,
+        celulaId,
+      } = request.query as {
+        tipoRelatorio?: string;
+        tipoFinanceiro?: "DIZIMO" | "OFERTA";
+        dataInicio?: string;
+        dataFim?: string;
+        supervisaoId?: string;
+        celulaId?: string;
+      };
+
+      const tf = tipoFinanceiro === "OFERTA" ? "OFERTA" : "DIZIMO"; // default DIZIMO
+
+      // ✅ FUNCAO: lista liderança por supervisão (dizimou ou não)
+      if (tipoRelatorio === "FUNCAO") {
+        const rel = await dizimoRepository.findRelatorioDetalhadoPorFuncao({
+          tipoFinanceiro: tf,
+          dataInicio,
+          dataFim,
+          supervisaoId, // opcional: se quiser filtrar por uma supervisão
+        });
+        return reply.send(rel);
+      }
 
       if (!tipoRelatorio) {
         return reply
@@ -76,6 +96,7 @@ export class DizimoRelatorioController {
       // 🔹 Demais tipos usam a lógica já existente (registros linha a linha)
       const relatorio = await dizimoRepository.findRelatorioDetalhado({
         tipoRelatorio: tipoRelatorio as TipoRelatorio,
+        tipoFinanceiro: tf,
         dataInicio,
         dataFim,
         supervisaoId,

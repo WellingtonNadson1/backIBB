@@ -7,6 +7,20 @@ import {
 } from "@prisma/client";
 import { endOfMonth, startOfMonth, subMonths } from "date-fns";
 
+type LiderPorSupervisaoDTO = {
+  supervisaoId: string;
+  supervisaoNome: string;
+  lideres: MembroCelulaRelatorioDTO[]; // reutiliza seu DTO
+  totalGeral: number;
+  totalRegistros: number;
+};
+
+type RelatorioFuncaoDetalhadoDTO = {
+  supervisoes: LiderPorSupervisaoDTO[];
+  totalGeral: number;
+  totalRegistros: number;
+};
+
 type MembroCelulaRelatorioDTO = {
   membroId: string;
   membroNome: string;
@@ -69,6 +83,144 @@ type TipoRelatorio = "SUPERVISAO" | "CELULA" | "FUNCAO" | "STATUS";
 const prisma = new PrismaClient();
 
 export class DizimoRelatorioRepository {
+  async findRelatorioDetalhadoPorFuncao(params: {
+    tipoFinanceiro: "DIZIMO" | "OFERTA";
+    dataInicio?: string;
+    dataFim?: string;
+    supervisaoId?: string;
+  }): Promise<RelatorioFuncaoDetalhadoDTO> {
+    const { tipoFinanceiro, dataInicio, dataFim, supervisaoId } = params;
+
+    const [yIni, mIni, dIni] = dataInicio?.split("-").map(Number) ?? [];
+    const [yFim, mFim, dFim] = dataFim?.split("-").map(Number) ?? [];
+
+    const inicio = new Date(yIni, mIni - 1, dIni, 0, 0, 0, 0);
+    const fim = new Date(yFim, mFim - 1, dFim, 23, 59, 59, 999);
+
+    const rolesLideranca = [
+      "USERLIDER",
+      "USERSUPERVISOR",
+      "USERPASTOR",
+      "USERCENTRAL",
+      "ADMIN",
+    ] as const;
+
+    const users = await prisma.user.findMany({
+      where: {
+        role: { in: rolesLideranca as any },
+        ...(supervisaoId ? { supervisaoId } : {}),
+      },
+      select: {
+        id: true,
+        first_name: true,
+        last_name: true,
+        cargo_de_lideranca: { select: { nome: true } },
+        supervisao_pertence: { select: { id: true, nome: true } },
+
+        // ✅ “left join lógico”: traz contribuições do período; pode vir vazio
+        Dizimo:
+          tipoFinanceiro === "DIZIMO"
+            ? {
+                where: { data_dizimou: { gte: inicio, lte: fim } },
+                select: { id: true, valor: true, data_dizimou: true },
+              }
+            : false,
+
+        Oferta:
+          tipoFinanceiro === "OFERTA"
+            ? {
+                where: { data_ofertou: { gte: inicio, lte: fim } },
+                select: { id: true, valor: true, data_ofertou: true },
+              }
+            : false,
+      },
+      orderBy: [
+        { supervisao_pertence: { nome: "asc" } },
+        { first_name: "asc" },
+      ],
+    });
+
+    // agrupa por supervisão
+    const map = new Map<string, LiderPorSupervisaoDTO>();
+
+    let totalGeralAll = 0;
+    let totalRegsAll = 0;
+
+    for (const u of users) {
+      const supervisaoNome = u.supervisao_pertence?.nome ?? "SEM_SUPERVISÃO";
+      const supervisaoKey = u.supervisao_pertence?.id ?? "SEM_SUPERVISAO";
+
+      if (!map.has(supervisaoKey)) {
+        map.set(supervisaoKey, {
+          supervisaoId: supervisaoKey,
+          supervisaoNome,
+          lideres: [],
+          totalGeral: 0,
+          totalRegistros: 0,
+        });
+      }
+
+      // pega lista de contribuições do período
+      const contribs =
+        tipoFinanceiro === "DIZIMO"
+          ? (u as any).Dizimo ?? []
+          : (u as any).Oferta ?? [];
+
+      const totalValor = contribs.reduce(
+        (acc: number, c: any) => acc + Number(c.valor ?? 0),
+        0
+      );
+
+      const totalLancamentos = contribs.length;
+      const temRegistro = totalLancamentos > 0;
+
+      // última data no período
+      let ultimaData: Date | null = null;
+      for (const c of contribs) {
+        const dt =
+          tipoFinanceiro === "DIZIMO" ? c.data_dizimou : c.data_ofertou;
+        if (dt && (!ultimaData || dt > ultimaData)) ultimaData = dt;
+      }
+
+      const membroNome = `${u.first_name} ${u.last_name ?? ""}`.trim();
+
+      const dto: MembroCelulaRelatorioDTO = {
+        membroId: u.id,
+        membroNome,
+        cargoNome: u.cargo_de_lideranca?.nome ?? null,
+        totalLancamentos,
+        totalValor,
+        temRegistro,
+        ultimaDataDizimo: ultimaData ? ultimaData.toISOString() : null,
+      };
+
+      const bucket = map.get(supervisaoKey)!;
+      bucket.lideres.push(dto);
+
+      bucket.totalGeral += totalValor;
+      bucket.totalRegistros += totalLancamentos;
+
+      totalGeralAll += totalValor;
+      totalRegsAll += totalLancamentos;
+    }
+
+    // opcional: ordenar líderes dentro da supervisão por (temRegistro desc, totalValor desc, nome)
+    const supervisoes = Array.from(map.values()).map((s) => ({
+      ...s,
+      lideres: s.lideres.sort((a, b) => {
+        if (a.temRegistro !== b.temRegistro) return a.temRegistro ? -1 : 1;
+        if (b.totalValor !== a.totalValor) return b.totalValor - a.totalValor;
+        return a.membroNome.localeCompare(b.membroNome, "pt-BR");
+      }),
+    }));
+
+    return {
+      supervisoes,
+      totalGeral: totalGeralAll,
+      totalRegistros: totalRegsAll,
+    };
+  }
+
   async findRelatorioDetalhadoPorSupervisao(params: {
     supervisaoId: string;
     dataInicio: string; // "YYYY-MM-DD"
@@ -312,6 +464,7 @@ export class DizimoRelatorioRepository {
 
   async findRelatorioDetalhado(params: {
     tipoRelatorio: TipoRelatorio;
+    tipoFinanceiro: "DIZIMO" | "OFERTA";
     dataInicio: string; // "YYYY-MM-DD"
     dataFim: string; // "YYYY-MM-DD"
     supervisaoId?: string;
