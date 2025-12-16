@@ -25,6 +25,7 @@ type MembroCelulaRelatorioDTO = {
   membroId: string;
   membroNome: string;
   cargoNome: string | null;
+  user_roles?: { rolenew: { name: string | null } }[];
   totalLancamentos: number;
   totalValor: number;
   temRegistro: boolean;
@@ -107,8 +108,12 @@ export class DizimoRelatorioRepository {
 
     const users = await prisma.user.findMany({
       where: {
-        role: { in: rolesLideranca as any },
         ...(supervisaoId ? { supervisaoId } : {}),
+        user_roles: {
+          some: {
+            rolenew: { name: { in: rolesLideranca as any } },
+          },
+        },
       },
       select: {
         id: true,
@@ -116,6 +121,7 @@ export class DizimoRelatorioRepository {
         last_name: true,
         cargo_de_lideranca: { select: { nome: true } },
         supervisao_pertence: { select: { id: true, nome: true } },
+        user_roles: { select: { rolenew: { select: { name: true } } } },
 
         // ✅ “left join lógico”: traz contribuições do período; pode vir vazio
         Dizimo:
@@ -188,6 +194,7 @@ export class DizimoRelatorioRepository {
         membroId: u.id,
         membroNome,
         cargoNome: u.cargo_de_lideranca?.nome ?? null,
+        user_roles: u.user_roles,
         totalLancamentos,
         totalValor,
         temRegistro,
@@ -251,6 +258,7 @@ export class DizimoRelatorioRepository {
                 cargo_de_lideranca: {
                   select: { nome: true },
                 },
+                user_roles: { select: { rolenew: { select: { name: true } } } },
                 Dizimo: {
                   where: {
                     data_dizimou: {
@@ -377,6 +385,7 @@ export class DizimoRelatorioRepository {
             cargo_de_lideranca: {
               select: { nome: true },
             },
+            user_roles: { select: { rolenew: { select: { name: true } } } },
             Dizimo: {
               where: {
                 data_dizimou: {
