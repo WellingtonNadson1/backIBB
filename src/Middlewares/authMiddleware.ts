@@ -1,44 +1,74 @@
 import { FastifyReply, FastifyRequest } from "fastify";
-import verify from "jsonwebtoken";
+import jwt from "jsonwebtoken";
 
+type JwtPayload = {
+  sub: string; // userId
+  email?: string;
+  roles?: string[];
+  iat?: number;
+  exp?: number;
+};
+
+declare module "fastify" {
+  interface FastifyRequest {
+    user?: {
+      id: string;
+      email?: string;
+      roles?: string[];
+    };
+  }
+}
+
+function getPathname(url: string) {
+  // remove querystring se existir
+  const q = url.indexOf("?");
+  return q === -1 ? url : url.slice(0, q);
+}
 
 export async function requireAuth(
   request: FastifyRequest,
   reply: FastifyReply
 ) {
-  const authToken = request.headers.authorization;
-  const JWT_SECRET = process.env.JWT_SECRET || ""; // Use an empty string if JWT_SECRET is undefined
+  const JWT_SECRET = process.env.JWT_SECRET || "";
+  const pathname = getPathname(request.url);
 
-  // Routes that don't require authentication
-  if (
-    ["POST", "PUT"].includes(request.method) &&
-    (
-      request.url === "/login" ||
-      request.url === "/password/recorver" ||
-      request.url === "/password/reset" ||
-      request.url === "/users" ||
-      request.url === "/refresh-token"
-    )
-  ) {
+  // ✅ Rotas públicas (ajuste conforme seu backend)
+  const publicRoutes = new Set([
+    "/login",
+    "/refresh-token",
+    "/password/recorver",
+    "/password/reset",
+    "/users",
+  ]);
+
+  // ✅ Libera se for rota pública (independente de método)
+  // Se você quiser restringir método, eu te mostro abaixo.
+  if (publicRoutes.has(pathname)) {
     return;
   }
 
-  // Validate token presence and format
-  if (!authToken || !authToken.startsWith("Bearer ")) {
-    reply.code(401).send({ error: "Unauthorized" });
-    return;
+  const authHeader = request.headers.authorization;
+
+  if (!authHeader || !authHeader.startsWith("Bearer ")) {
+    return reply.status(401).send({ error: "Unauthorized" });
   }
 
-  const token = authToken.substring(7);
+  const token = authHeader.slice("Bearer ".length).trim();
 
   try {
-    // Explicitly specify validation for unsigned tokens using 'none' algorithm
-    verify.verify(token, JWT_SECRET);
+    const decoded = jwt.verify(token, JWT_SECRET) as JwtPayload;
 
-    // Token is valid, proceed with authenticated request handling
-    // ...
+    if (!decoded?.sub) {
+      return reply.status(401).send({ error: "Token sem sub (userId)" });
+    }
+
+    // ✅ salva user no request (agora o controller consegue ler)
+    request.user = {
+      id: decoded.sub,
+      email: decoded.email,
+      roles: decoded.roles,
+    };
   } catch (err) {
-    // Handle invalid or expired tokens
-    reply.code(401).send({ error: "Token invalid" });
+    return reply.status(401).send({ error: "Token invalid" });
   }
 }

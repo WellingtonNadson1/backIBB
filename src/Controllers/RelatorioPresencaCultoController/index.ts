@@ -8,8 +8,7 @@ import dayjs from "dayjs";
 import { PrismaClient } from "@prisma/client";
 import { Writable } from "stream";
 
-
-const prisma = new PrismaClient()
+const prisma = new PrismaClient();
 
 const RelatorioPresencaCultoDataSchema = object({
   status: boolean(),
@@ -25,70 +24,72 @@ interface RelatorioPresencaCultoParams {
   id: string;
 }
 
-const res = async () => { await prisma.supervisao.
-  findFirst({
+const res = async () => {
+  await prisma.supervisao.findFirst({
     where: {
       supervisor: {
-        id: '31c33e5e-282a-45ed-a00f-6a7a40abb6b2'
+        id: "31c33e5e-282a-45ed-a00f-6a7a40abb6b2",
       },
     },
-  select: {
-  supervisor: {
     select: {
-      first_name: true
-    }
-  }
-  }
-})
-}
+      supervisor: {
+        select: {
+          first_name: true,
+        },
+      },
+    },
+  });
+};
 
 class RelatorioPresencaCultoController {
-
   // Fazendo uso do Fastify
   async index(request: FastifyRequest, reply: FastifyReply) {
     const fonts = {
       Helvetica: {
-        normal: 'Helvetica',
-        bold: 'Helvetica-Bold',
-        italics: 'Helvetica-Oblique',
-        bolditalics: 'Helvetica-BoldOblique'
+        normal: "Helvetica",
+        bold: "Helvetica-Bold",
+        italics: "Helvetica-Oblique",
+        bolditalics: "Helvetica-BoldOblique",
       },
-    }
-    const printer = new PdfPrinter(fonts)
+    };
+    const printer = new PdfPrinter(fonts);
 
     const docDefinitions: TDocumentDefinitions = {
       defaultStyle: { font: "Helvetica" },
       content: [
         {
-          pageOrientation: 'landscape',
+          pageOrientation: "landscape",
           table: {
             body: [
-            res && [`SUPERVISOR(A): ${res()}`, `MÊS: ${dayjs().month()} - ${dayjs().year()}`]
-            ]
-          }
-        }
+              res && [
+                `SUPERVISOR(A): ${res()}`,
+                `MÊS: ${dayjs().month()} - ${dayjs().year()}`,
+              ],
+            ],
+          },
+        },
       ],
-    }
+    };
 
-    const pdfDoc = printer.createPdfKitDocument(docDefinitions)
+    const pdfDoc = printer.createPdfKitDocument(docDefinitions);
 
     const buffer = await new Promise((resolve, reject) => {
-      const chunks:  Buffer[] = [];
+      const chunks: Buffer[] = [];
       const stream = new Writable({
-         write: (chunk, _, next) => {
-            chunks.push(chunk);
-            next();
-         }
+        write: (chunk, _, next) => {
+          chunks.push(chunk);
+          next();
+        },
       });
-      stream.once('error', (err) => reject(err));
-      stream.once('close', () => resolve(Buffer.concat(chunks)));
+      stream.once("error", (err) => reject(err));
+      //@ts-ignore
+      stream.once("close", () => resolve(Buffer.concat(chunks)));
 
       pdfDoc.pipe(stream);
       pdfDoc.end();
     });
 
-    reply.type('application/pdf').code(200).send(buffer);
-
+    reply.type("application/pdf").code(200).send(buffer);
   }
 
   async show(
@@ -98,8 +99,7 @@ class RelatorioPresencaCultoController {
     reply: FastifyReply
   ) {
     const id = request.params.id;
-    const presencasReuniaoCelula =
-      await PresencaCultoRepositorie.findById(id);
+    const presencasReuniaoCelula = await PresencaCultoRepositorie.findById(id);
     if (!presencasReuniaoCelula) {
       return reply.code(404).send({ message: "Presença not found!" });
     }
@@ -121,7 +121,6 @@ class RelatorioPresencaCultoController {
   //   }
   //   return reply.code(200).send(presencaCultoIsRegister);
   // }
-
 }
 
-export default new RelatorioPresencaCultoController()
+export default new RelatorioPresencaCultoController();

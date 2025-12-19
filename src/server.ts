@@ -29,6 +29,7 @@ import { ResetPassword } from "./auth/reset-password";
 import { createPrismaInstance, disconnectPrisma } from "./services/prisma";
 import { ofertaRoutes } from "./Routers/ofertaRoutes";
 import { ofertaRelatorioRoutes } from "./Routers/ofertaRelatorioRoutes";
+import { liderDashboardRoutes } from "./Routers/liderDashboardRoutes";
 // import routerLicoesCelula from "./Routers/upLoads/LicoesCelula";
 
 declare module "fastify" {
@@ -61,6 +62,7 @@ app.addHook("onResponse", async (request, reply) => {
 const start = async () => {
   try {
     await app.register(multer.contentParser);
+    await app.register(liderDashboardRoutes);
     await app.register(routerLogin);
     await app.register(dizimoRoutes);
     await app.register(dizimoRelatorioRoutes);
