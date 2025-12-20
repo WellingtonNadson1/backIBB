@@ -529,49 +529,13 @@ class CelulaRepositorie {
 
   async updateCelula(id: string, newData: CelulaDataForm) {
     const prisma = createPrismaInstance();
+    if (!prisma) throw new Error("Prisma instance is null");
 
-    if (!prisma) {
-      throw new Error("Prisma instance is null");
-    }
-
-    // Recuperar membros atuais da célula
-    const existingCelula = await prisma.celula.findUnique({
-      where: { id },
-      select: {
-        membros: {
-          select: { id: true },
-        },
-      },
-    });
-
-    if (!existingCelula) {
-      throw new Error(`Célula com ID ${id} não encontrada.`);
-    }
-
-    // Extrair IDs dos membros atuais e dos novos membros
-    const currentMemberIds = existingCelula.membros.map((m) => m.id);
-    const newMemberIds = newData.membros?.map((m) => m) || [];
-
-    // Identificar membros para adicionar e remover
-    const membersToAdd = newMemberIds.filter(
-      (id) => !currentMemberIds.includes(id)
-    );
-    const membersToRemove = currentMemberIds.filter(
-      (id) => !newMemberIds.includes(id)
-    );
-
-    // Atualize apenas os campos que foram passados
     const updateData: Prisma.CelulaUpdateInput = {
       ...(newData.nome && { nome: newData.nome }),
-      ...(newData.lider && {
-        lider: {
-          connect: { id: newData.lider },
-        },
-      }),
+      ...(newData.lider && { lider: { connect: { id: newData.lider } } }),
       ...(newData.supervisao && {
-        supervisao: {
-          connect: { id: newData.supervisao },
-        },
+        supervisao: { connect: { id: newData.supervisao } },
       }),
       ...(newData.cep && { cep: newData.cep }),
       ...(newData.cidade && { cidade: newData.cidade }),
@@ -586,93 +550,53 @@ class CelulaRepositorie {
       ...(newData.date_que_ocorre && {
         date_que_ocorre: newData.date_que_ocorre,
       }),
-
-      membros: {
-        connect: membersToAdd.map((id) => ({ id })),
-        disconnect: membersToRemove.map((id) => ({ id })),
-      },
     };
 
-    // Atualize a célula com os novos dados
-    const updatedCelula = await prisma?.celula.update({
+    // ✅ Só recalcula/atualiza membros se "membros" veio no payload
+    if (Array.isArray(newData.membros)) {
+      const existingCelula = await prisma.celula.findUnique({
+        where: { id },
+        select: { membros: { select: { id: true } } },
+      });
+      if (!existingCelula)
+        throw new Error(`Célula com ID ${id} não encontrada.`);
+
+      const currentMemberIds = existingCelula.membros.map((m) => m.id);
+      const newMemberIds = newData.membros;
+
+      const membersToAdd = newMemberIds.filter(
+        (mid) => !currentMemberIds.includes(mid)
+      );
+      const membersToRemove = currentMemberIds.filter(
+        (mid) => !newMemberIds.includes(mid)
+      );
+
+      updateData.membros = {
+        connect: membersToAdd.map((mid) => ({ id: mid })),
+        disconnect: membersToRemove.map((mid) => ({ id: mid })),
+      };
+    }
+
+    const updatedCelula = await prisma.celula.update({
       where: { id },
       data: updateData,
     });
+
     await disconnectPrisma();
     return updatedCelula;
   }
 
   async updateDateCelula(id: string, newDate: string) {
     const prisma = createPrismaInstance();
+    if (!prisma) throw new Error("Prisma instance is null");
 
-    if (!prisma) {
-      throw new Error("Prisma instance is null");
-    }
-    // Consulte a célula existente para obter os dados atuais
-    const existingCelula = await prisma?.celula.findUnique({
-      where: {
-        id: id,
-      },
-      include: {
-        // Inclua as relações que você deseja manter sem modificação
-        lider: true,
-        supervisao: true,
-        membros: true,
-        reunioes_celula: true,
-      },
+    const updated = await prisma.celula.update({
+      where: { id },
+      data: { date_que_ocorre: newDate },
     });
 
-    if (!existingCelula) {
-      throw new Error(`Célula com ID ${id} não encontrada.`);
-    }
-
-    // Crie um objeto de dados de atualização que inclui a nova data
-    const updateData: Prisma.CelulaUpdateInput = {
-      date_que_ocorre: newDate,
-    };
-
-    // Mantenha as relações existentes sem modificação
-    if (existingCelula.lider) {
-      updateData.lider = {
-        connect: {
-          id: existingCelula.lider.id,
-        },
-      };
-    }
-
-    if (existingCelula.supervisao) {
-      updateData.supervisao = {
-        connect: {
-          id: existingCelula.supervisao.id,
-        },
-      };
-    }
-
-    if (existingCelula.membros) {
-      updateData.membros = {
-        connect: existingCelula.membros.map((membro) => ({
-          id: membro.id,
-        })),
-      };
-    }
-
-    if (existingCelula.reunioes_celula) {
-      updateData.reunioes_celula = {
-        connect: existingCelula.reunioes_celula.map((reuniao) => ({
-          id: reuniao.id,
-        })),
-      };
-    }
-
-    // Atualize a célula com os novos dados de data
-    const updatedCelula = await prisma?.celula.update({
-      where: {
-        id: id,
-      },
-      data: updateData,
-    });
     await disconnectPrisma();
-    return updatedCelula;
+    return updated;
   }
 
   async deleteCelula(id: string) {
