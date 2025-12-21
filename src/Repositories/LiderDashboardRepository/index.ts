@@ -69,6 +69,12 @@ export type LiderDashboardDTO = {
     id: string;
     nome: string;
     supervisao: { id: string; nome: string; cor: string };
+    lider: {
+      id: string;
+      first_name: string;
+      last_name: string;
+      imageUrl: string | null;
+    } | null;
   };
   cards: DashboardCardDTO;
   acoesPendentes: AcaoPendenteDTO[];
@@ -119,6 +125,14 @@ export class LiderDashboardRepository {
         nome: true,
         date_que_ocorre: true,
         supervisao: { select: { id: true, nome: true, cor: true } },
+        lider: {
+          select: {
+            id: true,
+            first_name: true,
+            last_name: true,
+            image_url: true,
+          },
+        },
         membros: {
           select: {
             id: true,
@@ -339,6 +353,14 @@ export class LiderDashboardRepository {
           nome: celula.supervisao.nome,
           cor: celula.supervisao.cor,
         },
+        lider: celula.lider
+          ? {
+              id: celula.lider.id,
+              first_name: celula.lider.first_name,
+              last_name: celula.lider.last_name,
+              imageUrl: celula.lider.image_url,
+            }
+          : null,
       },
       cards,
       acoesPendentes,
