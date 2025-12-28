@@ -242,8 +242,8 @@ export class LiderDashboardRepository {
     // 5) Agenda do dia (se você usar Agenda global)
     const agendaHoje = await prisma.agenda.findMany({
       where: {
-        data_inicio: { lte: fimHoje },
-        data_termino: { gte: inicioHoje },
+        data_inicio: { lte: fimMes },
+        data_termino: { gte: inicioMes },
         status: true,
       },
       orderBy: { data_inicio: "asc" },
