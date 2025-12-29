@@ -1,6 +1,13 @@
 // Repositories/SupervisorDashboardRepository.ts
 import { PrismaClient } from "@prisma/client";
-import { endOfDay, startOfDay, subDays, differenceInDays } from "date-fns";
+import {
+  endOfDay,
+  startOfDay,
+  subDays,
+  differenceInDays,
+  startOfMonth,
+  endOfMonth,
+} from "date-fns";
 
 const prisma = new PrismaClient();
 
@@ -519,6 +526,7 @@ export class SupervisorDashboardRepository {
   async getCelulaDetailBySupervisor(params: DetailParams) {
     const { supervisorId, celulaId } = params;
 
+    // garante que a célula pertence à supervisão do supervisor
     const supervisao = await prisma.supervisao.findFirst({
       where: { userId: supervisorId, celulas: { some: { id: celulaId } } },
       select: { id: true, nome: true, cor: true },
@@ -528,7 +536,12 @@ export class SupervisorDashboardRepository {
     const hoje = new Date();
     const inicioHoje = startOfDay(hoje);
     const fimHoje = endOfDay(hoje);
+
     const trintaDiasAtras = subDays(hoje, 30);
+
+    // mês atual
+    const inicioMes = startOfMonth(hoje);
+    const fimMes = endOfMonth(hoje);
 
     const celula = await prisma.celula.findUnique({
       where: { id: celulaId },
@@ -545,11 +558,7 @@ export class SupervisorDashboardRepository {
           },
         },
         membros: {
-          select: {
-            id: true,
-            first_name: true,
-            last_name: true,
-          },
+          select: { id: true, first_name: true, last_name: true },
           orderBy: [{ first_name: "asc" }],
         },
         reunioes_celula: {
@@ -568,7 +577,46 @@ export class SupervisorDashboardRepository {
 
     if (!celula) return null;
 
-    // discipulados 30d do líder
+    const membrosTotal = celula.membros.length;
+
+    // ====== última reunião ======
+    const ultimaReuniao = celula.reunioes_celula[0]?.data_reuniao ?? null;
+    const diasSemReuniao = ultimaReuniao
+      ? differenceInDays(hoje, ultimaReuniao)
+      : 999;
+
+    // ====== reunião hoje? ======
+    const reuniaoHoje = await prisma.reuniaoCelula.findFirst({
+      where: { celulaId, data_reuniao: { gte: inicioHoje, lte: fimHoje } },
+      select: { id: true },
+    });
+
+    // ====== culto hoje (primeiro culto do dia) ======
+    const cultosHoje = await prisma.cultoIndividual.findMany({
+      where: { data_inicio_culto: { gte: inicioHoje, lte: fimHoje } },
+      orderBy: { data_inicio_culto: "asc" },
+      select: { id: true },
+    });
+    const primeiroCultoHojeId = cultosHoje[0]?.id ?? null;
+
+    let precisaCultoHoje = false;
+    if (primeiroCultoHojeId && membrosTotal > 0) {
+      const presencasCultoHoje = await prisma.presencaCulto.findMany({
+        where: {
+          cultoIndividualId: primeiroCultoHojeId,
+          status: true,
+          userId: { in: celula.membros.map((m) => m.id) },
+        },
+        select: { userId: true },
+      });
+
+      const presentesSet = new Set(
+        presencasCultoHoje.map((p) => p.userId).filter(Boolean) as string[]
+      );
+      precisaCultoHoje = !celula.membros.every((m) => presentesSet.has(m.id));
+    }
+
+    // ====== discipulado 30d (feito pelo líder) ======
     const liderId = celula.lider?.id ?? null;
     const discipuladosRecentes = liderId
       ? await prisma.discipulado.findMany({
@@ -583,17 +631,116 @@ export class SupervisorDashboardRepository {
     const discipuladosSet = new Set(
       discipuladosRecentes.map((d) => d.usuario_id)
     );
+    const membrosSemDiscipulado = celula.membros.filter(
+      (m) => !discipuladosSet.has(m.id)
+    );
+    const semDiscipulado = membrosSemDiscipulado.length;
+    const semDiscipuladoPct = membrosTotal
+      ? Math.round((semDiscipulado / membrosTotal) * 100)
+      : 0;
 
-    const membros = celula.membros.map((m) => ({
-      id: m.id,
-      nome: `${m.first_name} ${m.last_name ?? ""}`.trim(),
-      semDiscipulado30d: !discipuladosSet.has(m.id),
-    }));
+    // ====== KPI culto mês ======
+    const totalCultosMes = await prisma.cultoIndividual.count({
+      where: {
+        data_inicio_culto: { gte: inicioMes, lte: fimMes },
+      },
+    });
 
-    // reunião hoje?
-    const reuniaoHoje = await prisma.reuniaoCelula.findFirst({
-      where: { celulaId, data_reuniao: { gte: inicioHoje, lte: fimHoje } },
-      select: { id: true },
+    let cultoMesPresencaMediaPct = 0;
+    let membrosBaixaFrequencia: Array<{
+      id: string;
+      nome: string;
+      presencas: number;
+      pct: number;
+    }> = [];
+
+    if (totalCultosMes > 0 && membrosTotal > 0) {
+      const presencasMes = await prisma.presencaCulto.findMany({
+        where: {
+          status: true,
+          userId: { in: celula.membros.map((m) => m.id) },
+          presenca_culto: {
+            data_inicio_culto: { gte: inicioMes, lte: fimMes },
+          },
+        },
+        select: { userId: true },
+      });
+
+      const countPorMembro = new Map<string, number>();
+      for (const p of presencasMes) {
+        if (!p.userId) continue;
+        countPorMembro.set(p.userId, (countPorMembro.get(p.userId) ?? 0) + 1);
+      }
+
+      const pctList = celula.membros.map((m) => {
+        const pres = countPorMembro.get(m.id) ?? 0;
+        const pct = Math.round((pres / totalCultosMes) * 100);
+        return {
+          id: m.id,
+          nome: `${m.first_name} ${m.last_name ?? ""}`.trim(),
+          presencas: pres,
+          pct,
+        };
+      });
+
+      // média por membro
+      cultoMesPresencaMediaPct = Math.round(
+        pctList.reduce((acc, x) => acc + x.pct, 0) / pctList.length
+      );
+
+      // top 6 mais faltosos (menor pct)
+      membrosBaixaFrequencia = pctList
+        .slice()
+        .sort((a, b) => a.pct - b.pct)
+        .slice(0, 6);
+    }
+
+    // ====== pendência de reunião hoje (pela regra do dia da semana) ======
+    const hojeWeekday = hoje.getDay(); // 0..6
+    const diaCelula = celula.date_que_ocorre
+      ? Number(celula.date_que_ocorre)
+      : null;
+    const ehDiaDeCelula = diaCelula !== null && diaCelula === hojeWeekday;
+
+    const precisaReuniaoHoje = ehDiaDeCelula && !reuniaoHoje;
+
+    // ====== status + motivos ======
+    const motivos: string[] = [];
+    if (precisaReuniaoHoje) motivos.push("Reunião pendente hoje");
+    if (precisaCultoHoje) motivos.push("Culto de hoje incompleto");
+    if (diasSemReuniao >= 14) motivos.push("14+ dias sem reunião registrada");
+    else if (diasSemReuniao >= 7)
+      motivos.push("7+ dias sem reunião registrada");
+    if (semDiscipulado >= 5)
+      motivos.push("Muitos membros sem discipulado (30d)");
+    else if (semDiscipulado >= 1) motivos.push("Membros sem discipulado (30d)");
+
+    let status: "CRITICA" | "ATENCAO" | "OK" = "OK";
+    if (
+      precisaReuniaoHoje ||
+      precisaCultoHoje ||
+      diasSemReuniao >= 14 ||
+      semDiscipulado >= 5
+    )
+      status = "CRITICA";
+    else if (diasSemReuniao >= 7 || semDiscipulado >= 1) status = "ATENCAO";
+
+    // ====== últimas reuniões DTO ======
+    const ultimasReunioes = celula.reunioes_celula.map((r) => {
+      const presentes = r.presencas_membros_reuniao_celula.filter(
+        (p) => p.status
+      ).length;
+      const total = membrosTotal || 0;
+      const pct = total ? Math.round((presentes / total) * 100) : 0;
+      return {
+        id: r.id,
+        data: r.data_reuniao ? r.data_reuniao.toISOString() : null,
+        presentes,
+        totalMembros: total,
+        percentual: pct,
+        visitantes: r.visitantes ?? 0,
+        almasGanhas: r.almas_ganhas ?? 0,
+      };
     });
 
     return {
@@ -601,9 +748,7 @@ export class SupervisorDashboardRepository {
       celula: {
         id: celula.id,
         nome: celula.nome,
-        diaSemanaCelula: celula.date_que_ocorre
-          ? Number(celula.date_que_ocorre)
-          : null,
+        diaSemanaCelula: diaCelula,
         lider: celula.lider
           ? {
               id: celula.lider.id,
@@ -613,25 +758,43 @@ export class SupervisorDashboardRepository {
               imageUrl: celula.lider.image_url,
             }
           : null,
+
+        status,
+        motivos,
+        diasSemReuniao,
+        ultimaReuniaoIso: ultimaReuniao ? ultimaReuniao.toISOString() : null,
+
+        pendenciasHoje: {
+          precisaReuniaoHoje,
+          precisaCultoHoje,
+          cultoHoje: {
+            cultoId: primeiroCultoHojeId,
+            totalCultosHoje: cultosHoje.length,
+          },
+        },
+
+        cultoMes: {
+          mesRef: `${hoje.getFullYear()}-${String(hoje.getMonth() + 1).padStart(
+            2,
+            "0"
+          )}`,
+          totalCultosMes,
+          presencaMediaPct: cultoMesPresencaMediaPct,
+          membrosBaixaFrequencia,
+        },
+
+        discipulado30d: {
+          totalMembros: membrosTotal,
+          semDiscipulado,
+          semDiscipuladoPct,
+          membrosSemDiscipulado: membrosSemDiscipulado.map((m) => ({
+            id: m.id,
+            nome: `${m.first_name} ${m.last_name ?? ""}`.trim(),
+          })),
+        },
+
+        ultimasReunioes,
       },
-      membros,
-      reuniaoHoje: !!reuniaoHoje,
-      ultimasReunioes: celula.reunioes_celula.map((r) => {
-        const presentes = r.presencas_membros_reuniao_celula.filter(
-          (p) => p.status
-        ).length;
-        const total = celula.membros.length || 0;
-        const pct = total ? Math.round((presentes / total) * 100) : 0;
-        return {
-          id: r.id,
-          data: r.data_reuniao ? r.data_reuniao.toISOString() : null,
-          presentes,
-          totalMembros: total,
-          percentual: pct,
-          visitantes: r.visitantes ?? 0,
-          almasGanhas: r.almas_ganhas ?? 0,
-        };
-      }),
     };
   }
 }
