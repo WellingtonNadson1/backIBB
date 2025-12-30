@@ -132,6 +132,40 @@ export class SupervisorDashboardRepository {
 
     const hojeWeekday = hoje.getDay(); // 0..6
 
+    // ===== KPI: frequência de culto do mês por célula (sem N+1) =====
+    const inicioMes = startOfMonth(hoje);
+    const fimMes = endOfMonth(hoje);
+
+    const totalCultosMes = await prisma.cultoIndividual.count({
+      where: {
+        data_inicio_culto: { gte: inicioMes, lte: fimMes },
+      },
+    });
+
+    // presenças (status=true) de todos os membros da supervisão no mês
+    const presencasCultoMes =
+      membrosIds.length && totalCultosMes > 0
+        ? await prisma.presencaCulto.findMany({
+            where: {
+              status: true,
+              userId: { in: membrosIds },
+              presenca_culto: {
+                data_inicio_culto: { gte: inicioMes, lte: fimMes },
+              },
+            },
+            select: { userId: true },
+          })
+        : [];
+
+    const presencasMesPorMembro = new Map<string, number>();
+    for (const p of presencasCultoMes) {
+      if (!p.userId) continue;
+      presencasMesPorMembro.set(
+        p.userId,
+        (presencasMesPorMembro.get(p.userId) ?? 0) + 1
+      );
+    }
+
     const celulasResumo = supervisao.celulas.map((c) => {
       const membrosTotal = c.membros.length;
 
@@ -242,6 +276,20 @@ export class SupervisorDashboardRepository {
 
       if (status === "CRITICA") celulasCriticas++;
 
+      // ===== freqCultoMesPct (média da célula no mês) =====
+      let freqCultoMesPct: number | null = null;
+
+      if (totalCultosMes > 0 && membrosTotal > 0) {
+        const somaPresencasCelula = c.membros.reduce((acc, m) => {
+          return acc + (presencasMesPorMembro.get(m.id) ?? 0);
+        }, 0);
+
+        // ocupação média no mês (0..100)
+        freqCultoMesPct = Math.round(
+          (somaPresencasCelula / (membrosTotal * totalCultosMes)) * 100
+        );
+      }
+
       return {
         id: c.id,
         nome: c.nome,
@@ -257,7 +305,7 @@ export class SupervisorDashboardRepository {
         presencaUltimaReuniaoPct: presencaUltimaPct,
         visitantesUltima: ultima?.visitantes ?? 0,
         almasGanhasUltima: ultima?.almas_ganhas ?? 0,
-        freqCultoMesPct: null as number | null,
+        freqCultoMesPct,
         membrosTotal,
         membrosSemDiscipulado30d,
         pendenciasHoje,
