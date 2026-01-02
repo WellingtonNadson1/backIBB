@@ -652,16 +652,17 @@ export class SupervisorDashboardRepository {
       const presencasCultoHoje = await prisma.presencaCulto.findMany({
         where: {
           cultoIndividualId: primeiroCultoHojeId,
-          status: true,
           userId: { in: celula.membros.map((m) => m.id) },
         },
         select: { userId: true },
       });
 
-      const presentesSet = new Set(
+      const registrados = new Set(
         presencasCultoHoje.map((p) => p.userId).filter(Boolean) as string[]
       );
-      precisaCultoHoje = !celula.membros.every((m) => presentesSet.has(m.id));
+
+      // pendente = falta alguém registrar (mesmo que como "ausente")
+      precisaCultoHoje = registrados.size !== membrosTotal;
     }
 
     // ====== discipulado 30d (feito pelo líder) ======
@@ -705,7 +706,6 @@ export class SupervisorDashboardRepository {
     if (totalCultosMes > 0 && membrosTotal > 0) {
       const presencasMes = await prisma.presencaCulto.findMany({
         where: {
-          status: true,
           userId: { in: celula.membros.map((m) => m.id) },
           presenca_culto: {
             data_inicio_culto: { gte: inicioMes, lte: fimMes },
