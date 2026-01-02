@@ -706,6 +706,7 @@ export class SupervisorDashboardRepository {
     if (totalCultosMes > 0 && membrosTotal > 0) {
       const presencasMes = await prisma.presencaCulto.findMany({
         where: {
+          status: true,
           userId: { in: celula.membros.map((m) => m.id) },
           presenca_culto: {
             data_inicio_culto: { gte: inicioMes, lte: fimMes },
