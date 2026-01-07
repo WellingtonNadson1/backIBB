@@ -32,6 +32,7 @@ import { ofertaRelatorioRoutes } from "./Routers/ofertaRelatorioRoutes";
 import { liderDashboardRoutes } from "./Routers/liderDashboardRoutes";
 import { supervisorDashboardRoutes } from "./Routers/supervisorDashboardRoutes";
 import { liderMembrosRoutes } from "./Routers/liderMembrosRoutes";
+import { centralDashboardRoutes } from "./Routers/centralDashboardRoutes";
 // import routerLicoesCelula from "./Routers/upLoads/LicoesCelula";
 
 declare module "fastify" {
@@ -65,6 +66,7 @@ const start = async () => {
   try {
     await app.register(multer.contentParser);
     await app.register(supervisorDashboardRoutes);
+    await app.register(centralDashboardRoutes);
     await app.register(liderDashboardRoutes);
     await app.register(liderMembrosRoutes);
     await app.register(routerLogin);
