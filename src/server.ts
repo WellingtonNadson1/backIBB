@@ -33,6 +33,7 @@ import { liderDashboardRoutes } from "./Routers/liderDashboardRoutes";
 import { supervisorDashboardRoutes } from "./Routers/supervisorDashboardRoutes";
 import { liderMembrosRoutes } from "./Routers/liderMembrosRoutes";
 import { centralDashboardRoutes } from "./Routers/centralDashboardRoutes";
+import { cultoRoutes } from "./Routers/cultoRoutes";
 // import routerLicoesCelula from "./Routers/upLoads/LicoesCelula";
 
 declare module "fastify" {
@@ -77,6 +78,7 @@ const start = async () => {
     // await app.register(routerEvento)
     await registerEscolaRoutes(app);
     await registerCultoRoutes(app);
+    app.register(cultoRoutes);
     await app.register(routerRelatorioPresencaCulto);
     await app.register(routerReuniaoSemanalCelula);
     await app.register(routerPresencaReuniaCelula);

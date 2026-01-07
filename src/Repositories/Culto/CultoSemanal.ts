@@ -2,7 +2,7 @@ import { Prisma } from "@prisma/client";
 import { CultoSemanalData } from "../../Controllers/Culto/CultoSemanal";
 import { createPrismaInstance, disconnectPrisma } from "../../services/prisma";
 
-const prisma = createPrismaInstance()
+const prisma = createPrismaInstance();
 
 type UpdateCultoSemanalInput = Prisma.CultoSemanalUpdateInput & {
   cultos?: { connect: { id: string } }[];
@@ -27,8 +27,9 @@ class CultoSemanalRepositorie {
           },
         },
       },
+      orderBy: { nome: "asc" },
     });
-    await disconnectPrisma()
+    await disconnectPrisma();
     return result;
   }
 
@@ -49,7 +50,7 @@ class CultoSemanalRepositorie {
         },
       },
     });
-    await disconnectPrisma()
+    await disconnectPrisma();
     return result;
   }
 
@@ -61,15 +62,15 @@ class CultoSemanalRepositorie {
       },
     });
 
-      // Conecte os relacionamentos opcionais, se fornecidos
-  if (cultoGeral) {
-    await prisma?.cultoSemanal.update({
-      where: { id: cultoSemanal.id },
-      data: {
-        cultoGeral: { connect: { id: cultoGeral } },
-      },
-    });
-  }
+    // Conecte os relacionamentos opcionais, se fornecidos
+    if (cultoGeral) {
+      await prisma?.cultoSemanal.update({
+        where: { id: cultoSemanal.id },
+        data: {
+          cultoGeral: { connect: { id: cultoGeral } },
+        },
+      });
+    }
 
     if (cultos) {
       await prisma?.cultoSemanal.update({
@@ -79,8 +80,8 @@ class CultoSemanalRepositorie {
         },
       });
     }
-    await disconnectPrisma()
-    return cultoSemanal
+    await disconnectPrisma();
+    return cultoSemanal;
   }
 
   async updateCultoSemanal(id: string, cultoSemanalDataForm: CultoSemanalData) {
@@ -112,7 +113,7 @@ class CultoSemanalRepositorie {
       },
       data: updateCultoSemanalInput,
     });
-    await disconnectPrisma()
+    await disconnectPrisma();
     return result;
   }
 
@@ -122,7 +123,7 @@ class CultoSemanalRepositorie {
         id: id,
       },
     });
-    await disconnectPrisma()
+    await disconnectPrisma();
     return result;
   }
 }
