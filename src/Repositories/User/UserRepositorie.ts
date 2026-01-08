@@ -215,6 +215,7 @@ class UserRepositorie {
             select: {
               id: true,
               first_name: true,
+              image_url: true,
               discipulos: {
                 select: {
                   user_discipulos: {
@@ -241,6 +242,7 @@ class UserRepositorie {
                 select: {
                   id: true,
                   first_name: true,
+                  image_url: true,
                 },
               },
             },
@@ -281,6 +283,7 @@ class UserRepositorie {
               select: {
                 id: true,
                 first_name: true,
+                image_url: true,
               },
             },
           },
@@ -291,6 +294,7 @@ class UserRepositorie {
               select: {
                 id: true,
                 first_name: true,
+                image_url: true,
               },
             },
           },
@@ -423,6 +427,7 @@ class UserRepositorie {
               select: {
                 id: true,
                 first_name: true,
+                image_url: true,
               },
             },
           },
@@ -433,6 +438,7 @@ class UserRepositorie {
               select: {
                 id: true,
                 first_name: true,
+                image_url: true,
                 cargo_de_lideranca: true,
               },
             },
@@ -555,6 +561,7 @@ class UserRepositorie {
               select: {
                 id: true,
                 first_name: true,
+                image_url: true,
               },
             },
           },
@@ -565,6 +572,7 @@ class UserRepositorie {
               select: {
                 id: true,
                 first_name: true,
+                image_url: true,
                 cargo_de_lideranca: true,
               },
             },
@@ -881,6 +889,7 @@ class UserRepositorie {
               select: {
                 id: true,
                 first_name: true,
+                image_url: true,
               },
             },
           },
@@ -891,6 +900,7 @@ class UserRepositorie {
               select: {
                 id: true,
                 first_name: true,
+                image_url: true,
               },
             },
           },
@@ -1009,6 +1019,7 @@ class UserRepositorie {
               select: {
                 id: true,
                 first_name: true,
+                image_url: true,
               },
             },
           },
@@ -1020,6 +1031,7 @@ class UserRepositorie {
               select: {
                 id: true,
                 first_name: true,
+                image_url: true,
               },
             },
           },
@@ -1143,6 +1155,7 @@ class UserRepositorie {
               select: {
                 id: true,
                 first_name: true,
+                image_url: true,
               },
             },
           },
@@ -1154,6 +1167,7 @@ class UserRepositorie {
               select: {
                 id: true,
                 first_name: true,
+                image_url: true,
               },
             },
           },
@@ -1270,6 +1284,7 @@ class UserRepositorie {
               select: {
                 id: true,
                 first_name: true,
+                image_url: true,
               },
             },
           },
@@ -1280,6 +1295,7 @@ class UserRepositorie {
               select: {
                 id: true,
                 first_name: true,
+                image_url: true,
               },
             },
           },
@@ -1311,6 +1327,7 @@ class UserRepositorie {
           select: {
             id: true,
             first_name: true,
+            image_url: true,
           },
         },
         estado_civil: true,
