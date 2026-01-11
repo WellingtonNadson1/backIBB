@@ -433,6 +433,7 @@ export class LiderDashboardRepository {
           id: true,
           first_name: true,
           last_name: true,
+          image_url: true,
           presencas_cultos: {
             where: {
               status: true,
