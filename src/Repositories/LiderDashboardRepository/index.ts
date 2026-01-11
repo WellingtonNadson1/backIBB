@@ -320,6 +320,7 @@ export class LiderDashboardRepository {
           membros: membrosSemDiscipulado.slice(0, 8).map((m) => ({
             id: m.id,
             nome: `${m.first_name} ${m.last_name ?? ""}`.trim(),
+            image_url: m.image_url ?? null,
           })),
         },
       });
