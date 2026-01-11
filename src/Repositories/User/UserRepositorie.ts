@@ -21,12 +21,6 @@ type UpdateUserInput = Prisma.UserUpdateInput & {
       };
     };
   };
-  // user_discipulos?: {
-  //   connect: {
-  //     usuario_id: string;
-  //     discipulador_id: string;
-  //   };
-  // };
   supervisao_pertence?: { connect: { id: string } };
   role?: string;
   celula?: { connect: { id: string } };
@@ -262,7 +256,7 @@ class UserRepositorie {
       almasGanhasNoMes,
       almasGanhasNoMesPassado,
       almasGanhasNoAno,
-      almasGanhasNoAnoPassado, // 👈 Aqui está o valor retornado do ano passado
+      almasGanhasNoAnoPassado,
       almasPorMesNoAno,
     };
   }
@@ -270,9 +264,8 @@ class UserRepositorie {
   async findAllCell() {
     const prisma = createPrismaInstance();
 
-    if (!prisma) {
-      throw new Error("Prisma instance is null");
-    }
+    if (!prisma) throw new Error("Prisma instance is null");
+
     const result = await prisma?.user.findMany({
       select: {
         id: true,
@@ -280,33 +273,19 @@ class UserRepositorie {
         discipulador: {
           select: {
             user_discipulador: {
-              select: {
-                id: true,
-                first_name: true,
-                image_url: true,
-              },
+              select: { id: true, first_name: true, image_url: true },
             },
           },
         },
         discipulos: {
           select: {
             user_discipulos: {
-              select: {
-                id: true,
-                first_name: true,
-                image_url: true,
-              },
+              select: { id: true, first_name: true, image_url: true },
             },
           },
         },
         user_roles: {
-          select: {
-            rolenew: {
-              select: {
-                name: true,
-              },
-            },
-          },
+          select: { rolenew: { select: { name: true } } },
         },
         image_url: true,
         email: true,
@@ -338,53 +317,19 @@ class UserRepositorie {
         supervisaoId: false,
         situacaoNoReinoId: false,
         cargoDeLiderancaId: false,
-        supervisao_pertence: {
-          select: {
-            id: true,
-            nome: true,
-          },
-        },
-        celula: {
-          select: {
-            id: true,
-            nome: true,
-          },
-        },
-        celula_lidera: {
-          select: {
-            id: true,
-            nome: true,
-          },
-        },
-        situacao_no_reino: {
-          select: {
-            id: true,
-            nome: true,
-          },
-        },
-        cargo_de_lideranca: {
-          select: {
-            id: true,
-            nome: true,
-          },
-        },
-        escolas: {
-          select: {
-            id: true,
-            nome: true,
-          },
-        },
-        encontros: {
-          select: {
-            id: true,
-            nome: true,
-          },
-        },
+        supervisao_pertence: { select: { id: true, nome: true } },
+        celula: { select: { id: true, nome: true } },
+        celula_lidera: { select: { id: true, nome: true } },
+        situacao_no_reino: { select: { id: true, nome: true } },
+        cargo_de_lideranca: { select: { id: true, nome: true } },
+        escolas: { select: { id: true, nome: true } },
+        encontros: { select: { id: true, nome: true } },
         presencas_aulas_escolas: false,
         presencas_cultos: false,
         password: false,
       },
     });
+
     await disconnectPrisma();
     return result;
   }
@@ -397,133 +342,61 @@ class UserRepositorie {
     supervisorId: string;
   }) {
     const prisma = createPrismaInstance();
+    if (!prisma) throw new Error("Prisma instance is null");
+    if (!supervisorId) throw new Error("Supervisor ID is not defined");
 
-    if (!supervisorId) {
-      throw new Error("Supervisor ID is not defined");
+    try {
+      const [supervisor, discipulos] = await prisma.$transaction([
+        prisma.user.findUnique({
+          where: { id: supervisorId },
+          select: {
+            id: true,
+            first_name: true,
+            last_name: true,
+            image_url: true,
+            role: true,
+            supervisao_pertence: { select: { id: true, nome: true } },
+            cargo_de_lideranca: { select: { id: true, nome: true } },
+            user_roles: { select: { rolenew: { select: { name: true } } } },
+          },
+        }),
+
+        prisma.user.findMany({
+          where: {
+            supervisaoId: dicipuladosupervisaoId, // mantém no “distrito/supervisão”
+            discipuladorId: supervisorId, // ✅ pega SOMENTE os atuais
+          },
+          select: {
+            id: true,
+            first_name: true,
+            last_name: true,
+            image_url: true,
+            role: true,
+            discipuladorId: true,
+            supervisao_pertence: { select: { id: true, nome: true } },
+            celula: { select: { id: true, nome: true } },
+            cargo_de_lideranca: { select: { id: true, nome: true } },
+            situacao_no_reino: { select: { id: true, nome: true } },
+            user_roles: { select: { rolenew: { select: { name: true } } } },
+            // ✅ se você quiser contar/mostrar discipulado recente, faça em outro endpoint
+            // porque aqui seu "discipulos" é histórico e pode confundir.
+          },
+          orderBy: [{ first_name: "asc" }],
+        }),
+      ]);
+
+      if (!supervisor) {
+        throw new Error(`Supervisor ${supervisorId} não encontrado`);
+      }
+
+      return {
+        supervisor,
+        discipulos,
+        total: discipulos.length,
+      };
+    } finally {
+      await disconnectPrisma();
     }
-
-    console.log("dicipuladosupervisaoId", dicipuladosupervisaoId);
-    console.log("supervisorId", supervisorId);
-
-    if (!prisma) {
-      throw new Error("Prisma instance is null");
-    }
-    const result = await prisma?.user.findMany({
-      where: {
-        discipulador: {
-          some: {
-            user_discipulador: {
-              id: supervisorId,
-            },
-          },
-        },
-      },
-      select: {
-        id: true,
-        role: true,
-        discipulador: {
-          select: {
-            user_discipulador: {
-              select: {
-                id: true,
-                first_name: true,
-                image_url: true,
-              },
-            },
-          },
-        },
-        discipulos: {
-          select: {
-            user_discipulos: {
-              select: {
-                id: true,
-                first_name: true,
-                image_url: true,
-                cargo_de_lideranca: true,
-              },
-            },
-          },
-        },
-        user_roles: {
-          select: {
-            rolenew: {
-              select: {
-                name: true,
-              },
-            },
-          },
-        },
-        image_url: true,
-        email: false,
-        first_name: true,
-        last_name: true,
-        cpf: false,
-        date_nascimento: false,
-        sexo: false,
-        telefone: false,
-        escolaridade: false,
-        profissao: false,
-        batizado: true,
-        date_batizado: false,
-        is_discipulado: true,
-        discipuladorId: true,
-        estado_civil: false,
-        nome_conjuge: false,
-        date_casamento: false,
-        has_filho: false,
-        quantidade_de_filho: false,
-        date_decisao: false,
-        celulaId: false,
-        cep: false,
-        cidade: false,
-        estado: false,
-        bairro: false,
-        endereco: false,
-        numero_casa: false,
-        supervisaoId: false,
-        situacaoNoReinoId: false,
-        cargoDeLiderancaId: false,
-        supervisao_pertence: {
-          select: {
-            id: true,
-            nome: true,
-          },
-        },
-        celula: {
-          select: {
-            id: true,
-            nome: true,
-          },
-        },
-        celula_lidera: {
-          select: {
-            id: true,
-            nome: true,
-          },
-        },
-        situacao_no_reino: {
-          select: {
-            id: true,
-            nome: true,
-          },
-        },
-        cargo_de_lideranca: {
-          select: {
-            id: true,
-            nome: true,
-          },
-        },
-        escolas: false,
-        encontros: false,
-        presencas_aulas_escolas: false,
-        presencas_cultos: false,
-        password: false,
-      },
-    });
-    await disconnectPrisma();
-
-    console.log("result discipulos", result);
-    return result;
   }
 
   async findAllDiscipulosSupervisores({
@@ -534,171 +407,131 @@ class UserRepositorie {
     cargoLiderancaSupervisores: { id: string; nome: string }[];
   }) {
     const prisma = createPrismaInstance();
+    if (!prisma) throw new Error("Prisma instance is null");
 
-    console.log("dicipuladosupervisaoId", dicipuladosupervisaoId);
-    console.log("cargoLiderancaSupervisores", cargoLiderancaSupervisores);
+    try {
+      // 1) Busca supervisores (pessoas que são supervisores dentro da supervisão)
+      const supervisores = await prisma.user.findMany({
+        where: {
+          supervisaoId: dicipuladosupervisaoId,
+          OR: cargoLiderancaSupervisores.map((cargo) => ({
+            cargo_de_lideranca: { nome: { contains: cargo.nome } },
+          })),
+        },
+        select: {
+          id: true,
+          role: true,
+          image_url: true,
+          first_name: true,
+          last_name: true,
+          batizado: true,
+          is_discipulado: true,
+          discipuladorId: true,
 
-    if (!prisma) {
-      throw new Error("Prisma instance is null");
+          // ✅ se você quiser mostrar o discipulador ATUAL desse supervisor (1:1 via discipuladorId)
+          user: {
+            select: {
+              id: true,
+              first_name: true,
+              last_name: true,
+              image_url: true,
+            },
+          },
+
+          user_roles: { select: { rolenew: { select: { name: true } } } },
+
+          supervisao_pertence: { select: { id: true, nome: true } },
+          celula: { select: { id: true, nome: true } },
+          celula_lidera: { select: { id: true, nome: true } },
+          situacao_no_reino: { select: { id: true, nome: true } },
+          cargo_de_lideranca: { select: { id: true, nome: true } },
+
+          // ⚠️ NÃO use "discipulos" aqui para contagem/visão atual (isso é histórico)
+          // discipulos: ... REMOVIDO
+        },
+        orderBy: [{ first_name: "asc" }],
+      });
+
+      const supervisorIds = supervisores.map((s) => s.id);
+      if (supervisorIds.length === 0) {
+        return [];
+      }
+
+      // 2) Conta discípulos ATUAIS por supervisor (discipuladorId)
+      const counts = await prisma.user.groupBy({
+        by: ["discipuladorId"],
+        where: {
+          supervisaoId: dicipuladosupervisaoId,
+          discipuladorId: { in: supervisorIds },
+        },
+        _count: { _all: true },
+      });
+
+      const countMap = new Map<string, number>();
+      for (const row of counts) {
+        const key = row.discipuladorId;
+        if (key) countMap.set(key, row._count._all);
+      }
+
+      // 3) (Opcional) trazer uma amostra dos discípulos atuais para cada supervisor (ex: 3)
+      // Se não precisar, pode remover esse bloco inteiro.
+      const amostraDiscipulos = await prisma.user.findMany({
+        where: {
+          supervisaoId: dicipuladosupervisaoId,
+          discipuladorId: { in: supervisorIds },
+        },
+        select: {
+          id: true,
+          first_name: true,
+          last_name: true,
+          image_url: true,
+          discipuladorId: true,
+          cargo_de_lideranca: { select: { id: true, nome: true } },
+        },
+        orderBy: [{ first_name: "asc" }],
+      });
+
+      const amostraMap = new Map<string, any[]>();
+      for (const d of amostraDiscipulos) {
+        const key = d.discipuladorId;
+        if (!key) continue;
+        const list = amostraMap.get(key) ?? [];
+        if (list.length < 3) {
+          list.push(d);
+          amostraMap.set(key, list);
+        }
+      }
+
+      // 4) Retorno final com contagem correta
+      return supervisores.map((s) => ({
+        ...s,
+        discipulosAtuaisCount: countMap.get(s.id) ?? 0,
+        discipulosAtuaisPreview: amostraMap.get(s.id) ?? [],
+      }));
+    } finally {
+      await disconnectPrisma();
     }
-    const result = await prisma?.user.findMany({
-      where: {
-        supervisaoId: dicipuladosupervisaoId,
-        OR: cargoLiderancaSupervisores.map((cargo) => ({
-          cargo_de_lideranca: {
-            nome: {
-              contains: cargo.nome,
-            },
-          },
-        })),
-      },
-      select: {
-        id: true,
-        role: true,
-        discipulador: {
-          select: {
-            user_discipulador: {
-              select: {
-                id: true,
-                first_name: true,
-                image_url: true,
-              },
-            },
-          },
-        },
-        discipulos: {
-          select: {
-            user_discipulos: {
-              select: {
-                id: true,
-                first_name: true,
-                image_url: true,
-                cargo_de_lideranca: true,
-              },
-            },
-          },
-        },
-        user_roles: {
-          select: {
-            rolenew: {
-              select: {
-                name: true,
-              },
-            },
-          },
-        },
-        image_url: true,
-        email: false,
-        first_name: true,
-        last_name: true,
-        cpf: false,
-        date_nascimento: false,
-        sexo: false,
-        telefone: false,
-        escolaridade: false,
-        profissao: false,
-        batizado: true,
-        date_batizado: false,
-        is_discipulado: true,
-        discipuladorId: true,
-        estado_civil: false,
-        nome_conjuge: false,
-        date_casamento: false,
-        has_filho: false,
-        quantidade_de_filho: false,
-        date_decisao: false,
-        celulaId: false,
-        cep: false,
-        cidade: false,
-        estado: false,
-        bairro: false,
-        endereco: false,
-        numero_casa: false,
-        supervisaoId: false,
-        situacaoNoReinoId: false,
-        cargoDeLiderancaId: false,
-        supervisao_pertence: {
-          select: {
-            id: true,
-            nome: true,
-          },
-        },
-        celula: {
-          select: {
-            id: true,
-            nome: true,
-          },
-        },
-        celula_lidera: {
-          select: {
-            id: true,
-            nome: true,
-          },
-        },
-        situacao_no_reino: {
-          select: {
-            id: true,
-            nome: true,
-          },
-        },
-        cargo_de_lideranca: {
-          select: {
-            id: true,
-            nome: true,
-          },
-        },
-        escolas: false,
-        encontros: false,
-        presencas_aulas_escolas: false,
-        presencas_cultos: false,
-        password: false,
-      },
-    });
-    await disconnectPrisma();
-
-    console.log("result", result);
-    return result;
   }
 
   async findAllDiscipulados() {
     const prisma = createPrismaInstance();
+    if (!prisma) throw new Error("Prisma instance is null");
 
-    if (!prisma) {
-      throw new Error("Prisma instance is null");
-    }
     const result = await prisma?.user.findMany({
       select: {
         id: true,
         role: true,
         discipulador: {
           select: {
-            user_discipulador: {
-              select: {
-                id: true,
-                first_name: true,
-              },
-            },
+            user_discipulador: { select: { id: true, first_name: true } },
           },
         },
         discipulos: {
           select: {
-            user_discipulos: {
-              select: {
-                id: true,
-                first_name: true,
-              },
-            },
+            user_discipulos: { select: { id: true, first_name: true } },
           },
         },
-        user_roles: {
-          select: {
-            rolenew: {
-              select: {
-                name: true,
-              },
-            },
-          },
-        },
+        user_roles: { select: { rolenew: { select: { name: true } } } },
         image_url: true,
         email: false,
         first_name: true,
@@ -729,156 +562,91 @@ class UserRepositorie {
         supervisaoId: false,
         situacaoNoReinoId: false,
         cargoDeLiderancaId: false,
-        supervisao_pertence: {
-          select: {
-            id: true,
-            nome: true,
-          },
-        },
-        celula: {
-          select: {
-            id: true,
-            nome: true,
-          },
-        },
-        celula_lidera: {
-          select: {
-            id: true,
-            nome: true,
-          },
-        },
-        situacao_no_reino: {
-          select: {
-            id: true,
-            nome: true,
-          },
-        },
-        cargo_de_lideranca: {
-          select: {
-            id: true,
-            nome: true,
-          },
-        },
-        escolas: {
-          select: {
-            id: true,
-            nome: true,
-          },
-        },
-        encontros: {
-          select: {
-            id: true,
-            nome: true,
-          },
-        },
+        supervisao_pertence: { select: { id: true, nome: true } },
+        celula: { select: { id: true, nome: true } },
+        celula_lidera: { select: { id: true, nome: true } },
+        situacao_no_reino: { select: { id: true, nome: true } },
+        cargo_de_lideranca: { select: { id: true, nome: true } },
+        escolas: { select: { id: true, nome: true } },
+        encontros: { select: { id: true, nome: true } },
         presencas_aulas_escolas: false,
         presencas_cultos: false,
         password: false,
       },
     });
+
+    await disconnectPrisma();
+    return result;
+  }
+
+  async findAllDiscipuladosAvailable() {
+    const prisma = createPrismaInstance();
+    if (!prisma) throw new Error("Prisma instance is null");
+
+    const result = await prisma?.user.findMany({
+      select: {
+        id: true,
+        first_name: true,
+        last_name: true,
+        image_url: true,
+        supervisao_pertence: { select: { id: true, nome: true } },
+        celula: { select: { id: true, nome: true } },
+        situacao_no_reino: { select: { id: true, nome: true } },
+        cargo_de_lideranca: { select: { id: true, nome: true } },
+      },
+    });
+
     await disconnectPrisma();
     return result;
   }
 
   async findAllMembers() {
     const prisma = createPrismaInstance();
+    if (!prisma) throw new Error("Prisma instance is null");
 
-    if (!prisma) {
-      throw new Error("Prisma instance is null");
-    }
     const result = await prisma?.user.findMany({
       select: {
         id: true,
-        user_roles: {
-          select: {
-            rolenew: {
-              select: {
-                name: true,
-              },
-            },
-          },
-        },
+        user_roles: { select: { rolenew: { select: { name: true } } } },
         image_url: true,
         first_name: true,
         last_name: true,
-        supervisao_pertence: {
-          select: {
-            id: true,
-            nome: true,
-          },
-        },
-        celula: {
-          select: {
-            id: true,
-            nome: true,
-          },
-        },
-        situacao_no_reino: {
-          select: {
-            id: true,
-            nome: true,
-          },
-        },
-        cargo_de_lideranca: {
-          select: {
-            id: true,
-            nome: true,
-          },
-        },
+        supervisao_pertence: { select: { id: true, nome: true } },
+        celula: { select: { id: true, nome: true } },
+        situacao_no_reino: { select: { id: true, nome: true } },
+        cargo_de_lideranca: { select: { id: true, nome: true } },
       },
     });
+
     await disconnectPrisma();
     return result;
   }
 
   async findAllSimple() {
     const prisma = createPrismaInstance();
+    if (!prisma) throw new Error("Prisma instance is null");
 
-    if (!prisma) {
-      throw new Error("Prisma instance is null");
-    }
     const result = await prisma?.user.findMany({
       select: {
         id: true,
         image_url: true,
         first_name: true,
         last_name: true,
-        supervisao_pertence: {
-          select: {
-            id: true,
-            nome: true,
-          },
-        },
-        celula: {
-          select: {
-            id: true,
-            nome: true,
-          },
-        },
-        situacao_no_reino: {
-          select: {
-            id: true,
-            nome: true,
-          },
-        },
-        cargo_de_lideranca: {
-          select: {
-            id: true,
-            nome: true,
-          },
-        },
+        supervisao_pertence: { select: { id: true, nome: true } },
+        celula: { select: { id: true, nome: true } },
+        situacao_no_reino: { select: { id: true, nome: true } },
+        cargo_de_lideranca: { select: { id: true, nome: true } },
       },
     });
+
     await disconnectPrisma();
     return result;
   }
 
   async findAll() {
     const prisma = createPrismaInstance();
+    if (!prisma) throw new Error("Prisma instance is null");
 
-    if (!prisma) {
-      throw new Error("Prisma instance is null");
-    }
     const result = await prisma?.user.findMany({
       select: {
         id: true,
@@ -886,34 +654,18 @@ class UserRepositorie {
         discipulador: {
           select: {
             user_discipulador: {
-              select: {
-                id: true,
-                first_name: true,
-                image_url: true,
-              },
+              select: { id: true, first_name: true, image_url: true },
             },
           },
         },
         discipulos: {
           select: {
             user_discipulos: {
-              select: {
-                id: true,
-                first_name: true,
-                image_url: true,
-              },
+              select: { id: true, first_name: true, image_url: true },
             },
           },
         },
-        user_roles: {
-          select: {
-            rolenew: {
-              select: {
-                name: true,
-              },
-            },
-          },
-        },
+        user_roles: { select: { rolenew: { select: { name: true } } } },
         image_url: true,
         email: true,
         first_name: true,
@@ -944,67 +696,29 @@ class UserRepositorie {
         supervisaoId: false,
         situacaoNoReinoId: false,
         cargoDeLiderancaId: false,
-        supervisao_pertence: {
-          select: {
-            id: true,
-            nome: true,
-          },
-        },
-        celula: {
-          select: {
-            id: true,
-            nome: true,
-          },
-        },
-        celula_lidera: {
-          select: {
-            id: true,
-            nome: true,
-          },
-        },
-        situacao_no_reino: {
-          select: {
-            id: true,
-            nome: true,
-          },
-        },
-        cargo_de_lideranca: {
-          select: {
-            id: true,
-            nome: true,
-          },
-        },
-        escolas: {
-          select: {
-            id: true,
-            nome: true,
-          },
-        },
-        encontros: {
-          select: {
-            id: true,
-            nome: true,
-          },
-        },
+        supervisao_pertence: { select: { id: true, nome: true } },
+        celula: { select: { id: true, nome: true } },
+        celula_lidera: { select: { id: true, nome: true } },
+        situacao_no_reino: { select: { id: true, nome: true } },
+        cargo_de_lideranca: { select: { id: true, nome: true } },
+        escolas: { select: { id: true, nome: true } },
+        encontros: { select: { id: true, nome: true } },
         presencas_aulas_escolas: true,
         presencas_cultos: false,
         password: false,
       },
     });
+
     await disconnectPrisma();
     return result;
   }
 
   async findByIdCell(id: string) {
     const prisma = createPrismaInstance();
+    if (!prisma) throw new Error("Prisma instance is null");
 
-    if (!prisma) {
-      throw new Error("Prisma instance is null");
-    }
     const result = await prisma?.user.findUnique({
-      where: {
-        id: id,
-      },
+      where: { id },
       select: {
         id: true,
         first_name: true,
@@ -1012,39 +726,22 @@ class UserRepositorie {
         email: true,
         image_url: true,
         role: true,
-        // DISCIPULADOR
         discipulador: {
           select: {
             user_discipulador: {
-              select: {
-                id: true,
-                first_name: true,
-                image_url: true,
-              },
+              select: { id: true, first_name: true, image_url: true },
             },
           },
         },
-        // DISCIPULO(S)
         discipulos: {
           select: {
             user_discipulos: {
-              select: {
-                id: true,
-                first_name: true,
-                image_url: true,
-              },
+              select: { id: true, first_name: true, image_url: true },
             },
           },
         },
         user_roles: {
-          select: {
-            rolenew: {
-              select: {
-                id: true,
-                name: true,
-              },
-            },
-          },
+          select: { rolenew: { select: { id: true, name: true } } },
         },
         cpf: true,
         date_nascimento: true,
@@ -1056,13 +753,6 @@ class UserRepositorie {
         date_batizado: true,
         is_discipulado: true,
         discipuladorId: true,
-        // user = discipulador
-        // user: {
-        //   select: {
-        //     id: true,
-        //     first_name: true,
-        //   }
-        // },
         estado_civil: false,
         nome_conjuge: false,
         date_casamento: false,
@@ -1079,68 +769,27 @@ class UserRepositorie {
         supervisaoId: false,
         situacaoNoReinoId: false,
         cargoDeLiderancaId: false,
-        supervisao_pertence: {
-          select: {
-            id: true,
-            nome: true,
-          },
-        },
-        celula: {
-          select: {
-            id: true,
-            nome: true,
-          },
-        },
-        celula_lidera: {
-          select: {
-            id: true,
-            nome: true,
-          },
-        },
-        situacao_no_reino: {
-          select: {
-            id: true,
-            nome: true,
-          },
-        },
-        cargo_de_lideranca: {
-          select: {
-            id: true,
-            nome: true,
-          },
-        },
-        // escolas: {
-        //   select: {
-        //     id: true,
-        //     nome: true,
-        //   },
-        // },
-        // encontros: {
-        //   select: {
-        //     id: true,
-        //     nome: true,
-        //   },
-        // },
+        supervisao_pertence: { select: { id: true, nome: true } },
+        celula: { select: { id: true, nome: true } },
+        celula_lidera: { select: { id: true, nome: true } },
+        situacao_no_reino: { select: { id: true, nome: true } },
+        cargo_de_lideranca: { select: { id: true, nome: true } },
         presencas_aulas_escolas: false,
         presencas_cultos: false,
         password: false,
       },
     });
+
     await disconnectPrisma();
     return result;
   }
 
   async findById(id: string) {
     const prisma = createPrismaInstance();
-    console.log("idRepo:", id);
+    if (!prisma) throw new Error("Prisma instance is null");
 
-    if (!prisma) {
-      throw new Error("Prisma instance is null");
-    }
     const result = await prisma?.user.findUnique({
-      where: {
-        id: id,
-      },
+      where: { id },
       select: {
         id: true,
         first_name: true,
@@ -1148,39 +797,22 @@ class UserRepositorie {
         email: true,
         image_url: true,
         role: true,
-        // DISCIPULADOR
         discipulador: {
           select: {
             user_discipulador: {
-              select: {
-                id: true,
-                first_name: true,
-                image_url: true,
-              },
+              select: { id: true, first_name: true, image_url: true },
             },
           },
         },
-        // DISCIPULO(S)
         discipulos: {
           select: {
             user_discipulos: {
-              select: {
-                id: true,
-                first_name: true,
-                image_url: true,
-              },
+              select: { id: true, first_name: true, image_url: true },
             },
           },
         },
         user_roles: {
-          select: {
-            rolenew: {
-              select: {
-                id: true,
-                name: true,
-              },
-            },
-          },
+          select: { rolenew: { select: { id: true, name: true } } },
         },
         cpf: true,
         date_nascimento: true,
@@ -1192,13 +824,6 @@ class UserRepositorie {
         date_batizado: true,
         is_discipulado: true,
         discipuladorId: true,
-        // user = discipulador
-        // user: {
-        //   select: {
-        //     id: true,
-        //     first_name: true,
-        //   }
-        // },
         estado_civil: true,
         nome_conjuge: true,
         date_casamento: true,
@@ -1215,54 +840,18 @@ class UserRepositorie {
         supervisaoId: true,
         situacaoNoReinoId: true,
         cargoDeLiderancaId: true,
-        supervisao_pertence: {
-          select: {
-            id: true,
-            nome: true,
-          },
-        },
-        celula: {
-          select: {
-            id: true,
-            nome: true,
-          },
-        },
-        celula_lidera: {
-          select: {
-            id: true,
-            nome: true,
-          },
-        },
-        situacao_no_reino: {
-          select: {
-            id: true,
-            nome: true,
-          },
-        },
-        cargo_de_lideranca: {
-          select: {
-            id: true,
-            nome: true,
-          },
-        },
-        escolas: {
-          select: {
-            id: true,
-            nome: true,
-          },
-        },
-        encontros: {
-          select: {
-            id: true,
-            nome: true,
-          },
-        },
+        supervisao_pertence: { select: { id: true, nome: true } },
+        celula: { select: { id: true, nome: true } },
+        celula_lidera: { select: { id: true, nome: true } },
+        situacao_no_reino: { select: { id: true, nome: true } },
+        cargo_de_lideranca: { select: { id: true, nome: true } },
+        escolas: { select: { id: true, nome: true } },
+        encontros: { select: { id: true, nome: true } },
         presencas_aulas_escolas: true,
         presencas_cultos: false,
         password: false,
       },
     });
-    console.log("Result Repo:", result);
 
     await disconnectPrisma();
     return result;
@@ -1272,43 +861,25 @@ class UserRepositorie {
     const prisma = createPrismaInstance();
 
     const result = await prisma?.user.findFirst({
-      where: {
-        email: email,
-      },
+      where: { email },
       select: {
         id: true,
         role: true,
         discipulador: {
           select: {
             user_discipulador: {
-              select: {
-                id: true,
-                first_name: true,
-                image_url: true,
-              },
+              select: { id: true, first_name: true, image_url: true },
             },
           },
         },
         discipulos: {
           select: {
             user_discipulos: {
-              select: {
-                id: true,
-                first_name: true,
-                image_url: true,
-              },
+              select: { id: true, first_name: true, image_url: true },
             },
           },
         },
-        user_roles: {
-          select: {
-            rolenew: {
-              select: {
-                name: true,
-              },
-            },
-          },
-        },
+        user_roles: { select: { rolenew: { select: { name: true } } } },
         image_url: true,
         email: true,
         first_name: true,
@@ -1323,13 +894,7 @@ class UserRepositorie {
         date_batizado: true,
         is_discipulado: true,
         discipuladorId: true,
-        user: {
-          select: {
-            id: true,
-            first_name: true,
-            image_url: true,
-          },
-        },
+        user: { select: { id: true, first_name: true, image_url: true } },
         estado_civil: true,
         nome_conjuge: true,
         date_casamento: true,
@@ -1346,53 +911,19 @@ class UserRepositorie {
         supervisaoId: true,
         situacaoNoReinoId: true,
         cargoDeLiderancaId: true,
-        supervisao_pertence: {
-          select: {
-            id: true,
-            nome: true,
-          },
-        },
-        celula: {
-          select: {
-            id: true,
-            nome: true,
-          },
-        },
-        celula_lidera: {
-          select: {
-            id: true,
-            nome: true,
-          },
-        },
-        situacao_no_reino: {
-          select: {
-            id: true,
-            nome: true,
-          },
-        },
-        cargo_de_lideranca: {
-          select: {
-            id: true,
-            nome: true,
-          },
-        },
-        escolas: {
-          select: {
-            id: true,
-            nome: true,
-          },
-        },
-        encontros: {
-          select: {
-            id: true,
-            nome: true,
-          },
-        },
+        supervisao_pertence: { select: { id: true, nome: true } },
+        celula: { select: { id: true, nome: true } },
+        celula_lidera: { select: { id: true, nome: true } },
+        situacao_no_reino: { select: { id: true, nome: true } },
+        cargo_de_lideranca: { select: { id: true, nome: true } },
+        escolas: { select: { id: true, nome: true } },
+        encontros: { select: { id: true, nome: true } },
         presencas_aulas_escolas: false,
         presencas_cultos: false,
         password: true,
       },
     });
+
     await disconnectPrisma();
     return result;
   }
@@ -1431,12 +962,11 @@ class UserRepositorie {
         date_batizado,
         date_casamento,
         date_decisao,
-        supervisao_pertence: { connect: { id: supervisao_pertence } }, // Obrigatório
-        celula: celula ? { connect: { id: celula } } : undefined, // Obrigatório
-        situacao_no_reino: { connect: { id: situacao_no_reino } }, // Obrigatório
-        cargo_de_lideranca: { connect: { id: cargo_de_lideranca } }, // Obrigatório
-        // Ajuste para discipuladorId: só conecta se estiver presente
-        ...(discipuladorId && { user: { connect: { id: discipuladorId } } }), // Relação ajustada
+        supervisao_pertence: { connect: { id: supervisao_pertence } },
+        celula: celula ? { connect: { id: celula } } : undefined,
+        situacao_no_reino: { connect: { id: situacao_no_reino } },
+        cargo_de_lideranca: { connect: { id: cargo_de_lideranca } },
+        ...(discipuladorId && { user: { connect: { id: discipuladorId } } }),
         TurmaEscola: TurmaEscola ? { connect: { id: TurmaEscola } } : undefined,
         escolas: escolas?.length
           ? { connect: escolas.map((escola) => ({ id: escola.id })) }
@@ -1466,38 +996,20 @@ class UserRepositorie {
             }
           : undefined,
         presencas_aulas_escolas: presencas_aulas_escolas?.length
-          ? {
-              connect: presencas_aulas_escolas.map(
-                (presencasAulasEscolasId) => ({ id: presencasAulasEscolasId })
-              ),
-            }
+          ? { connect: presencas_aulas_escolas.map((id) => ({ id })) }
           : undefined,
         presencas_cultos: presencas_cultos?.length
-          ? {
-              connect: presencas_cultos.map((presencasCultosId) => ({
-                id: presencasCultosId,
-              })),
-            }
+          ? { connect: presencas_cultos.map((id) => ({ id })) }
           : undefined,
         presencas_reuniao_celula: presencas_reuniao_celula?.length
-          ? {
-              connect: presencas_reuniao_celula.map(
-                (presencasReuniaoCelulaId) => ({ id: presencasReuniaoCelulaId })
-              ),
-            }
+          ? { connect: presencas_reuniao_celula.map((id) => ({ id })) }
           : undefined,
       },
     });
 
+    // ✅ cria relação pivô (sem “update” de PK)
     if (user.discipuladorId) {
-      try {
-        await this.createOrUpdateDiscipuladorRelation(
-          user.id,
-          user.discipuladorId
-        );
-      } catch (error) {
-        throw new Error("Erro ao criar relacao discipulo / discipulador");
-      }
+      await this.ensureDiscipuladorRelation(user.id, user.discipuladorId);
     }
 
     await disconnectPrisma();
@@ -1506,9 +1018,7 @@ class UserRepositorie {
 
   async updateUser(id: string, userDataForm: UserDataUpdate) {
     const prisma = createPrismaInstance();
-    if (!prisma) {
-      throw new Error("Prisma instance is null");
-    }
+    if (!prisma) throw new Error("Prisma instance is null");
 
     try {
       const {
@@ -1541,11 +1051,9 @@ class UserRepositorie {
         date_casamento,
       };
 
-      // Atualizar campos simples apenas se fornecidos
       if (password !== undefined) updateUserInput.password = password;
       if (role !== undefined) updateUserInput.role = role;
 
-      // Relacionamentos: desconectar antes de conectar novos valores
       if (supervisao_pertence !== undefined) {
         updateUserInput.supervisao_pertence = {
           connect: { id: supervisao_pertence },
@@ -1555,7 +1063,7 @@ class UserRepositorie {
       if (celula !== undefined) {
         updateUserInput.celula = celula
           ? { connect: { id: celula } }
-          : { disconnect: true }; // Desconectar se vier como null/undefined
+          : { disconnect: true };
       }
 
       if (situacao_no_reino !== undefined) {
@@ -1570,109 +1078,77 @@ class UserRepositorie {
         };
       }
 
-      if (discipuladorId !== undefined) {
-        console.log("discipuladorId fornecido:", discipuladorId);
-        console.log("usuario_id:", id);
-
-        // Validar se o discipulador existe (se discipuladorId não for null)
-        if (discipuladorId) {
-          const discipuladorExists = await prisma.user.findUnique({
-            where: { id: discipuladorId },
-          });
-          console.log("discipuladorExists:", discipuladorExists);
-          if (!discipuladorExists) {
-            throw new Error(
-              `Discipulador com ID ${discipuladorId} não encontrado`
-            );
-          }
-        }
-
-        // Validar se o usuário existe
-        const userExists = await prisma.user.findUnique({
-          where: { id },
-        });
-        console.log("userExists:", userExists);
-        if (!userExists) {
-          throw new Error(`Usuário com ID ${id} não encontrado`);
-        }
-
-        // Verificar se a relação já existe
-        const existingRelation = await prisma.discipulador_usuario.findFirst({
-          where: { usuario_id: id },
-        });
-        console.log("existingRelation:", existingRelation);
-
-        if (discipuladorId) {
-          if (existingRelation) {
-            console.log("Deletando relação existente:", existingRelation);
-            await prisma.discipulador_usuario.delete({
-              where: {
-                usuario_id_discipulador_id: {
-                  usuario_id: id,
-                  discipulador_id: existingRelation.discipulador_id,
-                },
-              },
-            });
-          }
-
-          console.log(
-            "Criando nova relação com discipuladorId:",
-            discipuladorId
-          );
-          await prisma.discipulador_usuario.create({
-            data: {
-              usuario_id: id,
-              discipulador_id: discipuladorId,
-            },
-          });
-        } else if (existingRelation) {
-          console.log("Removendo relação existente:", existingRelation);
-          await prisma.discipulador_usuario.delete({
-            where: {
-              usuario_id_discipulador_id: {
-                usuario_id: id,
-                discipulador_id: existingRelation.discipulador_id,
-              },
-            },
-          });
-        }
-
-        console.log(
-          "Atualizando discipuladorId na tabela User:",
-          discipuladorId || null
-        );
-        await prisma.user.update({
-          where: { id },
-          data: { discipuladorId: discipuladorId || null },
-        });
-      }
-
       if (TurmaEscola !== undefined) {
         updateUserInput.TurmaEscola = TurmaEscola
           ? { connect: { id: TurmaEscola } }
           : { disconnect: true };
       }
 
+      // ✅ DISCIPULADOR: NÃO deleta relação antiga. NÃO update em discipulador_usuario.
+      // Apenas:
+      // 1) seta User.discipuladorId
+      // 2) upsert na pivô para garantir que existe a relação (historico pode existir)
+      if (discipuladorId !== undefined) {
+        await prisma.$transaction(async (tx) => {
+          if (discipuladorId) {
+            const discipuladorExists = await tx.user.findUnique({
+              where: { id: discipuladorId },
+              select: { id: true },
+            });
+            if (!discipuladorExists) {
+              throw new Error(
+                `Discipulador com ID ${discipuladorId} não encontrado`
+              );
+            }
+
+            await tx.user.update({
+              where: { id },
+              data: { discipuladorId },
+            });
+
+            await tx.discipulador_usuario.upsert({
+              where: {
+                usuario_id_discipulador_id: {
+                  usuario_id: id,
+                  discipulador_id: discipuladorId,
+                },
+              },
+              update: {},
+              create: {
+                usuario_id: id,
+                discipulador_id: discipuladorId,
+              },
+            });
+          } else {
+            // se quiser permitir "remover discipulador atual"
+            await tx.user.update({
+              where: { id },
+              data: { discipuladorId: null },
+            });
+
+            // ⚠️ não apaga pivô antiga (pra não apagar discipulado por cascade)
+          }
+        });
+      }
+
       // Arrays de relações
       if (escolas !== undefined) {
-        // Desconectar escolas existentes e conectar as novas
         await prisma.user.update({
           where: { id },
-          data: { escolas: { set: [] } }, // Limpa as conexões existentes
+          data: { escolas: { set: [] } },
         });
         updateUserInput.escolas = {
-          connect: escolas?.map((escola) => ({ id: escola.id })) || [],
+          connect: escolas?.map((e) => ({ id: e.id })) || [],
         };
       }
 
       if (encontros !== undefined) {
-        // Desconectar encontros existentes e conectar os novos
         await prisma.user.update({
           where: { id },
-          data: { encontros: { set: [] } }, // Limpa as conexões existentes
+          data: { encontros: { set: [] } },
         });
         updateUserInput.encontros = {
-          connect: encontros?.map((encontro) => ({ id: encontro.id })) || [],
+          connect: encontros?.map((e) => ({ id: e.id })) || [],
         };
       }
 
@@ -1716,8 +1192,6 @@ class UserRepositorie {
         };
       }
 
-      console.log("updateUserInput", updateUserInput);
-
       const result = await prisma.user.update({
         where: { id },
         data: updateUserInput,
@@ -1727,50 +1201,32 @@ class UserRepositorie {
       return result;
     } catch (error) {
       console.error(error);
+      await disconnectPrisma();
       throw error;
     }
   }
 
-  // Função para criar ou atualizar a relação discipulador_usuario
-  async createOrUpdateDiscipuladorRelation(
-    userId: string,
-    discipuladorId: string
-  ) {
+  // ✅ Não atualiza PK, não deleta histórico, não quebra FK de discipulado
+  async ensureDiscipuladorRelation(userId: string, discipuladorId: string) {
     const prisma = createPrismaInstance();
+    if (!prisma) throw new Error("Prisma instance is null");
 
-    if (!prisma) {
-      throw new Error("Prisma instance is null");
-    }
-    // Verificar se a relação já existe
-    const existingRelation = await prisma.discipulador_usuario.findFirst({
-      where: { usuario_id: userId },
-    });
-
-    console.log("existingRelation com Disicipulo: ", existingRelation);
-
-    if (existingRelation) {
-      // Se já existe uma relação, atualizar para o novo discipuladorId
-      await prisma.discipulador_usuario.update({
+    try {
+      return await prisma.discipulador_usuario.upsert({
         where: {
           usuario_id_discipulador_id: {
             usuario_id: userId,
-            discipulador_id: existingRelation.discipulador_id,
+            discipulador_id: discipuladorId,
           },
         },
-        data: {
-          discipulador_id: discipuladorId,
-        },
-      });
-    } else {
-      // Se não existe relação, criar uma nova
-      const disipuladoFeitoUpdate = await prisma.discipulador_usuario.create({
-        data: {
+        update: {},
+        create: {
           usuario_id: userId,
           discipulador_id: discipuladorId,
         },
       });
-
-      return disipuladoFeitoUpdate;
+    } finally {
+      await disconnectPrisma();
     }
   }
 
@@ -1781,82 +1237,78 @@ class UserRepositorie {
     idMembro: string;
     statusMembro: string;
   }) {
-    const membro = await prisma?.user.findUnique({
-      where: {
-        id: idMembro,
-      },
-    });
+    // ⚠️ aqui no seu código original você usa "prisma" global, o que dá bug.
+    // Vamos manter o padrão createPrismaInstance() igual aos outros métodos.
+    const prisma = createPrismaInstance();
+    if (!prisma) throw new Error("Prisma instance is null");
 
-    if (!membro) {
-      throw new Error("Evento not found.");
+    try {
+      const membro = await prisma.user.findUnique({ where: { id: idMembro } });
+      if (!membro) throw new Error("Evento not found.");
+
+      await prisma.user.update({
+        where: { id: idMembro },
+        data: { situacaoNoReinoId: statusMembro },
+      });
+
+      return { message: "Satus Atualizado com Sucesso!" };
+    } finally {
+      await disconnectPrisma();
     }
-
-    await prisma?.user.update({
-      where: {
-        id: idMembro,
-      },
-      data: {
-        situacaoNoReinoId: statusMembro,
-      },
-    });
-
-    await disconnectPrisma();
-    return { message: "Satus Atualizado com Sucesso!" };
   }
 
   async updateDiscipuladorId(userId: string, discipuladorId: string) {
     const prisma = createPrismaInstance();
-
-    if (!prisma) {
-      throw new Error("Prisma instance is null");
-    }
-    console.log("discipuladorId", discipuladorId);
+    if (!prisma) throw new Error("Prisma instance is null");
 
     try {
-      // Check if the new discipuladorId exists before updating
-      const discipuladorExists = await prisma.discipulador_usuario.findFirst({
-        where: { discipulador_id: discipuladorId },
+      const userExists = await prisma.user.findUnique({
+        where: { id: userId },
       });
+      if (!userExists) throw new Error(`Usuário ${userId} não encontrado`);
 
+      const discipuladorExists = await prisma.user.findUnique({
+        where: { id: discipuladorId },
+      });
       if (!discipuladorExists) {
-        // Create a new discipulador_usuario relation if it doesn't exist
-        await prisma.discipulador_usuario.create({
-          data: { usuario_id: userId, discipulador_id: discipuladorId },
-        });
+        throw new Error(`Discipulador ${discipuladorId} não encontrado`);
       }
 
-      await prisma.user.update({
-        where: { id: userId },
-        data: { discipuladorId: discipuladorId },
+      await prisma.$transaction(async (tx) => {
+        await tx.user.update({
+          where: { id: userId },
+          data: { discipuladorId },
+        });
+
+        await tx.discipulador_usuario.upsert({
+          where: {
+            usuario_id_discipulador_id: {
+              usuario_id: userId,
+              discipulador_id: discipuladorId,
+            },
+          },
+          update: {},
+          create: {
+            usuario_id: userId,
+            discipulador_id: discipuladorId,
+          },
+        });
       });
 
-      // Criar ou atualizar a relação discipulador_usuario
-      const newRelation = await this.createOrUpdateDiscipuladorRelation(
-        userId,
-        discipuladorId
-      );
-      console.log("New relation created or updated:", newRelation);
-
-      await disconnectPrisma();
-      return `Discipulador updated successfully`;
+      return "Discipulador updated successfully";
     } catch (error) {
-      console.error(`Error updating discipuladorId: ${error}`);
+      console.error("Error updating discipuladorId:", error);
+      throw error;
+    } finally {
       await disconnectPrisma();
-      throw error; // Re-throw the error for proper handling
     }
   }
 
   async deleteUser(id: string) {
     const prisma = createPrismaInstance();
+    if (!prisma) throw new Error("Prisma instance is null");
 
-    if (!prisma) {
-      throw new Error("Prisma instance is null");
-    }
-    const result = await prisma?.user.delete({
-      where: {
-        id: id,
-      },
-    });
+    const result = await prisma?.user.delete({ where: { id } });
     await disconnectPrisma();
     return result;
   }

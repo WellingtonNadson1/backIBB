@@ -113,6 +113,19 @@ class UserController {
     }
   }
 
+  // Get all users available for disciplado
+  async indexDiscipuladosAvailable(
+    request: FastifyRequest,
+    reply: FastifyReply
+  ) {
+    try {
+      const users = await UserRepositorie.findAllDiscipuladosAvailable();
+      return reply.code(200).send(users);
+    } catch (error) {
+      return reply.code(500).send({ error: "Internal Server Error" });
+    }
+  }
+
   // Show a user by ID in a cell
   async showcell(
     request: FastifyRequest<{ Params: UserParams }>,
