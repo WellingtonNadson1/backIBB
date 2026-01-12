@@ -8,29 +8,57 @@ import {
   startOfMonth,
   endOfMonth,
 } from "date-fns";
+import { utcToZonedTime, zonedTimeToUtc } from "date-fns-tz";
+
+// ================= Helpers (Timezone) =================
+const TZ = "America/Sao_Paulo";
+
+/**
+ * Retorna:
+ * - nowSP: "agora" no relógio de São Paulo (para lógica: weekday, diffDays etc)
+ * - ranges em UTC (inicioHojeUTC/fimHojeUTC/inicioMesUTC/fimMesUTC) para consultar no banco
+ */
+function getSaoPauloRangeNow() {
+  const now = new Date(); // instante real
+  const nowSP = utcToZonedTime(now, TZ);
+
+  const inicioHojeUTC = zonedTimeToUtc(startOfDay(nowSP), TZ);
+  const fimHojeUTC = zonedTimeToUtc(endOfDay(nowSP), TZ);
+
+  const inicioMesUTC = zonedTimeToUtc(startOfMonth(nowSP), TZ);
+  const fimMesUTC = zonedTimeToUtc(endOfMonth(nowSP), TZ);
+
+  return { now, nowSP, inicioHojeUTC, fimHojeUTC, inicioMesUTC, fimMesUTC };
+}
 
 const prisma = new PrismaClient();
 
 type Params = { supervisorId: string; inicio: Date; fim: Date };
 
 export type CelulaStatus = "CRITICA" | "ATENCAO" | "OK";
-
 export type CelulaOrder = "criticidade" | "dias" | "frequencia";
 
 export type ListParams = {
   supervisorId: string;
-  status?: CelulaStatus; // já normalizado no controller
+  status?: CelulaStatus;
   q?: string;
-  order?: CelulaOrder; // ✅ ADICIONAR ISSO
+  order?: CelulaOrder;
 };
 
 type DetailParams = { supervisorId: string; celulaId: string };
 
 export class SupervisorDashboardRepository {
   async getDashboardBySupervisor(supervisorId: string) {
-    const hoje = new Date();
-    const inicioHoje = startOfDay(hoje);
-    const fimHoje = endOfDay(hoje);
+    const { nowSP, inicioHojeUTC, fimHojeUTC, inicioMesUTC, fimMesUTC } =
+      getSaoPauloRangeNow();
+
+    // "hoje" para lógica sempre em SP
+    const hoje = nowSP;
+
+    // ranges para o banco sempre em UTC
+    const inicioHoje = inicioHojeUTC;
+    const fimHoje = fimHojeUTC;
+
     const trintaDiasAtras = subDays(hoje, 30);
     const quatorzeDiasAtras = subDays(hoje, 14);
 
@@ -55,6 +83,7 @@ export class SupervisorDashboardRepository {
             },
             membros: { select: { id: true } },
             reunioes_celula: {
+              // ✅ usa fimHoje (UTC) para comparar corretamente
               where: { data_reuniao: { lte: fimHoje } },
               orderBy: { data_reuniao: "desc" },
               take: 1,
@@ -74,38 +103,50 @@ export class SupervisorDashboardRepository {
     if (!supervisao) return null;
 
     const totalCelulas = supervisao.celulas.length;
+
     const lideres = supervisao.celulas
       .map((c) => c.lider?.id)
       .filter(Boolean) as string[];
     const totalLideres = new Set(lideres).size;
 
+    // ================= Cultos de hoje (range UTC) =================
     const cultosHoje = await prisma.cultoIndividual.findMany({
       where: { data_inicio_culto: { gte: inicioHoje, lte: fimHoje } },
       orderBy: { data_inicio_culto: "asc" },
       select: { id: true },
     });
+
     const primeiroCultoHojeId = cultosHoje[0]?.id ?? null;
 
     const membrosIds = supervisao.celulas.flatMap((c) =>
       c.membros.map((m) => m.id)
     );
 
-    const presencasCultoHoje =
+    /**
+     * ✅ PENDÊNCIA CORRETA:
+     * Para "pendência", NÃO filtre por status=true.
+     * O que importa é: existe registro (true/false) para o membro no culto?
+     */
+    const presencasCultoHojeRegistradas =
       primeiroCultoHojeId && membrosIds.length
         ? await prisma.presencaCulto.findMany({
             where: {
+              // se no seu schema for cultoIndividualId, mantenha.
+              // se for via relação, troque por: presenca_culto: { is: { id: primeiroCultoHojeId } }
               cultoIndividualId: primeiroCultoHojeId,
-              status: true,
               userId: { in: membrosIds },
             },
             select: { userId: true },
           })
         : [];
 
-    const presentesCultoSet = new Set(
-      presencasCultoHoje.map((p) => p.userId).filter(Boolean) as string[]
+    const registradosCultoSet = new Set(
+      presencasCultoHojeRegistradas
+        .map((p) => p.userId)
+        .filter(Boolean) as string[]
     );
 
+    // ================= Discipulados 30d =================
     const discipuladosRecentes = lideres.length
       ? await prisma.discipulado.findMany({
           where: {
@@ -130,19 +171,18 @@ export class SupervisorDashboardRepository {
     let membrosSemDiscipulado30dTotal = 0;
     let celulasCriticas = 0;
 
-    const hojeWeekday = hoje.getDay(); // 0..6
+    // ✅ weekday baseado em SP
+    const hojeWeekday = hoje.getDay(); // 0..6 (domingo..sábado)
 
-    // ===== KPI: frequência de culto do mês por célula (sem N+1) =====
-    const inicioMes = startOfMonth(hoje);
-    const fimMes = endOfMonth(hoje);
+    // ================= KPI: frequência do mês (range UTC) =================
+    const inicioMes = inicioMesUTC;
+    const fimMes = fimMesUTC;
 
     const totalCultosMes = await prisma.cultoIndividual.count({
-      where: {
-        data_inicio_culto: { gte: inicioMes, lte: fimMes },
-      },
+      where: { data_inicio_culto: { gte: inicioMes, lte: fimMes } },
     });
 
-    // presenças (status=true) de todos os membros da supervisão no mês
+    // frequência = status=true (aqui faz sentido)
     const presencasCultoMes =
       membrosIds.length && totalCultosMes > 0
         ? await prisma.presencaCulto.findMany({
@@ -184,6 +224,7 @@ export class SupervisorDashboardRepository {
           ? Math.round((presentesUltima / membrosTotal) * 100)
           : null;
 
+      // ✅ range UTC para "reunião hoje"
       const precisaRegistrarReuniaoHoje =
         ehDiaDeCelula &&
         (!ultimaData || ultimaData < inicioHoje || ultimaData > fimHoje);
@@ -199,12 +240,15 @@ export class SupervisorDashboardRepository {
         });
       }
 
+      // ✅ pendência de culto = falta registro (true/false) para algum membro
       let precisaCultoHoje = false;
       if (primeiroCultoHojeId && membrosTotal > 0) {
-        const todosPresentes = c.membros.every((m) =>
-          presentesCultoSet.has(m.id)
-        );
-        precisaCultoHoje = !todosPresentes;
+        const registrados = c.membros.reduce((acc, m) => {
+          if (registradosCultoSet.has(m.id)) acc++;
+          return acc;
+        }, 0);
+
+        precisaCultoHoje = registrados !== membrosTotal;
       }
 
       if (cultosHoje.length && precisaCultoHoje) {
@@ -213,7 +257,7 @@ export class SupervisorDashboardRepository {
           id: `acao-culto-hoje-${c.id}`,
           type: "CELULA_CULTO_PENDENTE_HOJE",
           title: "Culto pendente hoje",
-          description: `A célula "${c.nome}" ainda não completou a presença do culto de hoje.`,
+          description: `A célula "${c.nome}" ainda não completou o registro de presença do culto de hoje.`,
           meta: {
             celulaId: c.id,
             cultoId: primeiroCultoHojeId,
@@ -244,6 +288,7 @@ export class SupervisorDashboardRepository {
       const membrosSemDiscipulado30d = c.membros.filter(
         (m) => !discipuladosSet.has(m.id)
       ).length;
+
       membrosSemDiscipulado30dTotal += membrosSemDiscipulado30d;
 
       if (membrosSemDiscipulado30d > 0) {
@@ -284,7 +329,6 @@ export class SupervisorDashboardRepository {
           return acc + (presencasMesPorMembro.get(m.id) ?? 0);
         }, 0);
 
-        // ocupação média no mês (0..100)
         freqCultoMesPct = Math.round(
           (somaPresencasCelula / (membrosTotal * totalCultosMes)) * 100
         );
@@ -346,7 +390,12 @@ export class SupervisorDashboardRepository {
   }
 
   async getFrequenciaCultosMesPorSupervisao(params: Params) {
-    const { supervisorId, inicio, fim } = params;
+    const { supervisorId } = params;
+
+    // ✅ normaliza início/fim para o mês no fuso SP (igual padrão do dashboard)
+    const { inicioMesUTC, fimMesUTC, nowSP } = getSaoPauloRangeNow();
+    const inicio = inicioMesUTC;
+    const fim = fimMesUTC;
 
     const supervisao = await prisma.supervisao.findFirst({
       where: { userId: supervisorId },
@@ -359,8 +408,8 @@ export class SupervisorDashboardRepository {
       },
     });
 
-    const mesRef = `${inicio.getFullYear()}-${String(
-      inicio.getMonth() + 1
+    const mesRef = `${nowSP.getFullYear()}-${String(
+      nowSP.getMonth() + 1
     ).padStart(2, "0")}`;
 
     if (!supervisao) {
@@ -369,8 +418,7 @@ export class SupervisorDashboardRepository {
 
     const totalCultosMes = await prisma.cultoIndividual.count({
       where: {
-        data_inicio_culto: { gte: inicio },
-        data_termino_culto: { lte: fim },
+        data_inicio_culto: { gte: inicio, lte: fim },
       },
     });
 
@@ -384,8 +432,7 @@ export class SupervisorDashboardRepository {
             status: true,
             userId: { in: membrosIds },
             presenca_culto: {
-              data_inicio_culto: { gte: inicio },
-              data_termino_culto: { lte: fim },
+              data_inicio_culto: { gte: inicio, lte: fim },
             },
           },
           select: { userId: true },
@@ -432,11 +479,9 @@ export class SupervisorDashboardRepository {
     };
   }
 
-  // ✅ NOVO: lista para /supervisor/celulas
   async listCelulasBySupervisor(params: ListParams) {
     const { supervisorId, status, q, order = "criticidade" } = params;
 
-    // 1) pega supervisão + células (base)
     const supervisao = await prisma.supervisao.findFirst({
       where: { userId: supervisorId },
       select: {
@@ -480,14 +525,13 @@ export class SupervisorDashboardRepository {
       };
     }
 
-    const hoje = new Date();
+    const { nowSP } = getSaoPauloRangeNow();
+    const hoje = nowSP;
 
-    // 2) transforma em DTO com “dias sem reunião” e “status”
     const celulasDTO = supervisao.celulas.map((c) => {
       const ultima = c.reunioes_celula[0]?.data_reuniao ?? null;
       const diasSemReuniao = ultima ? differenceInDays(hoje, ultima) : 999;
 
-      // ✅ Regras simples (ajuste como quiser)
       let st: CelulaStatus = "OK";
       if (diasSemReuniao >= 14) st = "CRITICA";
       else if (diasSemReuniao >= 7) st = "ATENCAO";
@@ -506,19 +550,15 @@ export class SupervisorDashboardRepository {
         ultimaReuniaoIso: ultima ? ultima.toISOString() : null,
         diasSemReuniao,
         status: st,
-        // se você tiver no backend: pendenciasHoje, freqCultoMesPct etc, inclua aqui
         pendenciasHoje: 0,
         freqCultoMesPct: null as number | null,
       };
     });
 
-    // 3) filtro por status
     let filtered = celulasDTO;
-    if (status) {
-      filtered = filtered.filter((c) => c.status === status);
-    }
 
-    // 4) busca textual (nome da célula ou líder)
+    if (status) filtered = filtered.filter((c) => c.status === status);
+
     if (q) {
       const needle = q.toLowerCase();
       filtered = filtered.filter((c) => {
@@ -527,28 +567,23 @@ export class SupervisorDashboardRepository {
       });
     }
 
-    // 5) ordenação
     const rank = { CRITICA: 0, ATENCAO: 1, OK: 2 } as const;
 
     filtered.sort((a, b) => {
       if (order === "dias") return b.diasSemReuniao - a.diasSemReuniao;
 
       if (order === "frequencia") {
-        // quem tem menor frequência primeiro (null vai pro fim)
         const av = a.freqCultoMesPct ?? 999;
         const bv = b.freqCultoMesPct ?? 999;
         return av - bv;
       }
 
-      // default: criticidade
       const byStatus = rank[a.status] - rank[b.status];
       if (byStatus !== 0) return byStatus;
 
-      // desempate: mais dias sem reunião primeiro
       return b.diasSemReuniao - a.diasSemReuniao;
     });
 
-    // 6) cards (para refletir no front)
     const totalCelulas = supervisao.celulas.length;
     const celulasCriticas = celulasDTO.filter(
       (c) => c.status === "CRITICA"
@@ -570,26 +605,26 @@ export class SupervisorDashboardRepository {
     };
   }
 
-  // ✅ NOVO: detalhe para ações (painel por célula)
   async getCelulaDetailBySupervisor(params: DetailParams) {
     const { supervisorId, celulaId } = params;
 
-    // garante que a célula pertence à supervisão do supervisor
     const supervisao = await prisma.supervisao.findFirst({
       where: { userId: supervisorId, celulas: { some: { id: celulaId } } },
       select: { id: true, nome: true, cor: true },
     });
     if (!supervisao) return null;
 
-    const hoje = new Date();
-    const inicioHoje = startOfDay(hoje);
-    const fimHoje = endOfDay(hoje);
+    const { nowSP, inicioHojeUTC, fimHojeUTC, inicioMesUTC, fimMesUTC } =
+      getSaoPauloRangeNow();
+
+    const hoje = nowSP;
+    const inicioHoje = inicioHojeUTC;
+    const fimHoje = fimHojeUTC;
 
     const trintaDiasAtras = subDays(hoje, 30);
 
-    // mês atual
-    const inicioMes = startOfMonth(hoje);
-    const fimMes = endOfMonth(hoje);
+    const inicioMes = inicioMesUTC;
+    const fimMes = fimMesUTC;
 
     const celula = await prisma.celula.findUnique({
       where: { id: celulaId },
@@ -627,26 +662,25 @@ export class SupervisorDashboardRepository {
 
     const membrosTotal = celula.membros.length;
 
-    // ====== última reunião ======
     const ultimaReuniao = celula.reunioes_celula[0]?.data_reuniao ?? null;
     const diasSemReuniao = ultimaReuniao
       ? differenceInDays(hoje, ultimaReuniao)
       : 999;
 
-    // ====== reunião hoje? ======
     const reuniaoHoje = await prisma.reuniaoCelula.findFirst({
       where: { celulaId, data_reuniao: { gte: inicioHoje, lte: fimHoje } },
       select: { id: true },
     });
 
-    // ====== culto hoje (primeiro culto do dia) ======
     const cultosHoje = await prisma.cultoIndividual.findMany({
       where: { data_inicio_culto: { gte: inicioHoje, lte: fimHoje } },
       orderBy: { data_inicio_culto: "asc" },
       select: { id: true },
     });
+
     const primeiroCultoHojeId = cultosHoje[0]?.id ?? null;
 
+    // ✅ pendência = falta registro (true/false), não falta status=true
     let precisaCultoHoje = false;
     if (primeiroCultoHojeId && membrosTotal > 0) {
       const presencasCultoHoje = await prisma.presencaCulto.findMany({
@@ -661,11 +695,9 @@ export class SupervisorDashboardRepository {
         presencasCultoHoje.map((p) => p.userId).filter(Boolean) as string[]
       );
 
-      // pendente = falta alguém registrar (mesmo que como "ausente")
       precisaCultoHoje = registrados.size !== membrosTotal;
     }
 
-    // ====== discipulado 30d (feito pelo líder) ======
     const liderId = celula.lider?.id ?? null;
     const discipuladosRecentes = liderId
       ? await prisma.discipulado.findMany({
@@ -688,11 +720,8 @@ export class SupervisorDashboardRepository {
       ? Math.round((semDiscipulado / membrosTotal) * 100)
       : 0;
 
-    // ====== KPI culto mês ======
     const totalCultosMes = await prisma.cultoIndividual.count({
-      where: {
-        data_inicio_culto: { gte: inicioMes, lte: fimMes },
-      },
+      where: { data_inicio_culto: { gte: inicioMes, lte: fimMes } },
     });
 
     let cultoMesPresencaMediaPct = 0;
@@ -732,20 +761,18 @@ export class SupervisorDashboardRepository {
         };
       });
 
-      // média por membro
       cultoMesPresencaMediaPct = Math.round(
         pctList.reduce((acc, x) => acc + x.pct, 0) / pctList.length
       );
 
-      // top 6 mais faltosos (menor pct)
       membrosBaixaFrequencia = pctList
         .slice()
         .sort((a, b) => a.pct - b.pct)
         .slice(0, 6);
     }
 
-    // ====== pendência de reunião hoje (pela regra do dia da semana) ======
-    const hojeWeekday = hoje.getDay(); // 0..6
+    // ✅ weekday SP
+    const hojeWeekday = hoje.getDay();
     const diaCelula = celula.date_que_ocorre
       ? Number(celula.date_que_ocorre)
       : null;
@@ -753,7 +780,6 @@ export class SupervisorDashboardRepository {
 
     const precisaReuniaoHoje = ehDiaDeCelula && !reuniaoHoje;
 
-    // ====== status + motivos ======
     const motivos: string[] = [];
     if (precisaReuniaoHoje) motivos.push("Reunião pendente hoje");
     if (precisaCultoHoje) motivos.push("Culto de hoje incompleto");
@@ -770,11 +796,12 @@ export class SupervisorDashboardRepository {
       precisaCultoHoje ||
       diasSemReuniao >= 14 ||
       semDiscipulado >= 5
-    )
+    ) {
       status = "CRITICA";
-    else if (diasSemReuniao >= 7 || semDiscipulado >= 1) status = "ATENCAO";
+    } else if (diasSemReuniao >= 7 || semDiscipulado >= 1) {
+      status = "ATENCAO";
+    }
 
-    // ====== últimas reuniões DTO ======
     const ultimasReunioes = celula.reunioes_celula.map((r) => {
       const presentes = r.presencas_membros_reuniao_celula.filter(
         (p) => p.status

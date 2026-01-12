@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { PrismaClient } from "@prisma/client";
 import {
   endOfDay,
@@ -9,18 +10,18 @@ import {
 import { createPrismaInstance, disconnectPrisma } from "../../services/prisma";
 import { utcToZonedTime, zonedTimeToUtc } from "date-fns-tz";
 
-//Helpers
+// Helpers
 const TZ = "America/Sao_Paulo";
 
 function getSaoPauloRangeNow() {
-  const now = new Date(); // instante real (UTC internamente)
-  const nowSP = utcToZonedTime(now, TZ); // "parece" São Paulo
+  const now = new Date(); // instante real
+  const nowSP = utcToZonedTime(now, TZ); // "relógio" SP
 
-  // IMPORTANTe: startOfDay/endOfDay aplicados em nowSP (dia SP)
-  // e depois convertemos esse "relógio SP" para UTC para consultar o banco
+  // DIA em SP -> converte para UTC p/ query no DB
   const inicioHojeUTC = zonedTimeToUtc(startOfDay(nowSP), TZ);
   const fimHojeUTC = zonedTimeToUtc(endOfDay(nowSP), TZ);
 
+  // MÊS em SP -> converte para UTC p/ query no DB
   const inicioMesUTC = zonedTimeToUtc(startOfMonth(nowSP), TZ);
   const fimMesUTC = zonedTimeToUtc(endOfMonth(nowSP), TZ);
 
@@ -44,7 +45,12 @@ type DashboardCardDTO = {
   };
   cultosHoje: {
     total: number;
-    jaRegistrouPresenca?: boolean; // true se todos membros têm presença no 1º culto do dia
+    /**
+     * ✅ agora significa:
+     * "há registro (presente/ausente) para todos os membros"
+     * (não depende do status ser true)
+     */
+    jaRegistrouPresenca?: boolean;
   };
 };
 
@@ -129,15 +135,13 @@ export class LiderDashboardRepository {
     const { nowSP, inicioHojeUTC, fimHojeUTC, inicioMesUTC, fimMesUTC } =
       getSaoPauloRangeNow();
 
-    const hoje = nowSP; // use "hoje" em SP para lógica (weekday etc)
-    const inicioHoje = inicioHojeUTC; // use UTC para queries no banco
+    const hoje = nowSP; // lógica (weekday etc) em SP
+    const inicioHoje = inicioHojeUTC; // queries no DB em UTC
     const fimHoje = fimHojeUTC;
     const inicioMes = inicioMesUTC;
     const fimMes = fimMesUTC;
 
-    // 1) Descobrir a célula do líder:
-    // - tenta pela relação celula_lidera
-    // - fallback: user.celulaId (caso você use isso)
+    // 1) Descobrir a célula do líder
     const celula = await prisma.celula.findFirst({
       where: {
         OR: [{ userId: liderId }, { membros: { some: { id: liderId } } }],
@@ -161,12 +165,6 @@ export class LiderDashboardRepository {
             first_name: true,
             last_name: true,
             image_url: true,
-            presencas_reuniao_celula: {
-              select: { status: true, reuniaoCelulaId: true },
-            },
-            presencas_cultos: {
-              select: { status: true, cultoIndividualId: true },
-            },
           },
         },
       },
@@ -225,27 +223,81 @@ export class LiderDashboardRepository {
       };
     })();
 
-    // 3) Cultos de hoje (existem / e se já registrou)
+    // 3) Cultos de hoje
     const cultosHoje = await prisma.cultoIndividual.findMany({
       where: {
         data_inicio_culto: { gte: inicioHoje, lte: fimHoje },
       },
-      select: { id: true },
+      select: { id: true, data_inicio_culto: true },
       orderBy: { data_inicio_culto: "asc" },
     });
 
-    const primeiroCultoHojeId = cultosHoje[0]?.id ?? null;
+    const cultosHojeIds = cultosHoje.map((c) => c.id);
+    const membrosIds = celula.membros.map((m) => m.id);
 
-    const jaRegistrouPresenca =
-      primeiroCultoHojeId && membrosTotal > 0
-        ? celula.membros.every((m) =>
-            m.presencas_cultos.some(
-              (p) => p.cultoIndividualId === primeiroCultoHojeId && p.status
-            )
-          )
-        : false;
+    // ✅ Se quiser só cobrar pendência quando o culto já começou:
+    const cultosQueJaComecaramIds = cultosHoje
+      .filter((c) => c.data_inicio_culto <= fimHoje)
+      .map((c) => c.id);
 
-    // 4) Lição vigente (pela data)
+    const cultosParaChecarIds =
+      cultosQueJaComecaramIds.length > 0
+        ? cultosQueJaComecaramIds
+        : cultosHojeIds;
+
+    let jaRegistrouPresenca = false;
+    let pendenciasPorCulto: Array<{ cultoId: string; faltam: number }> = [];
+
+    if (cultosParaChecarIds.length > 0 && membrosIds.length > 0) {
+      /**
+       * ✅ CORREÇÃO DO PRISMA:
+       * Seu model PresencaCulto tem:
+       * - userId
+       * - presenca_culto (relação com CultoIndividual)
+       * - membro (relação com User)
+       *
+       * Então filtramos por:
+       * - userId IN membrosIds
+       * - presenca_culto.id IN cultosParaChecarIds
+       */
+      const presencasHoje = await prisma.presencaCulto.findMany({
+        where: {
+          userId: { in: membrosIds },
+          presenca_culto: {
+            // relação nullable => use "is" para filtrar pelo registro relacionado
+            is: { id: { in: cultosParaChecarIds } },
+          },
+        },
+        select: {
+          userId: true,
+          status: true,
+          presenca_culto: { select: { id: true } },
+        },
+      });
+
+      // Mapa cultoId -> set(userId) que já tem registro
+      const mapCultoToSet = new Map<string, Set<string>>();
+      for (const cultoId of cultosParaChecarIds) {
+        mapCultoToSet.set(cultoId, new Set());
+      }
+
+      for (const p of presencasHoje) {
+        const cultoId = p.presenca_culto?.id;
+        if (!cultoId) continue;
+        mapCultoToSet.get(cultoId)?.add(p.userId!);
+      }
+
+      pendenciasPorCulto = cultosParaChecarIds.map((cultoId) => {
+        const set = mapCultoToSet.get(cultoId) ?? new Set<string>();
+        const faltam = membrosIds.filter((id) => !set.has(id)).length;
+        return { cultoId, faltam };
+      });
+
+      // ✅ completo se TODOS os cultos checados tiverem registro para TODOS os membros
+      jaRegistrouPresenca = pendenciasPorCulto.every((x) => x.faltam === 0);
+    }
+
+    // 4) Lição vigente
     const licaoVigente = await prisma.licaoCelula.findFirst({
       where: {
         data_inicio: { lte: fimHoje },
@@ -262,7 +314,7 @@ export class LiderDashboardRepository {
       },
     });
 
-    // 5) Agenda do dia (se você usar Agenda global)
+    // 5) Agenda do mês
     const agendaHoje = await prisma.agenda.findMany({
       where: {
         data_inicio: { lte: fimMes },
@@ -282,24 +334,25 @@ export class LiderDashboardRepository {
     // 6) Ações pendentes
     const acoesPendentes: AcaoPendenteDTO[] = [];
 
-    // 6.1 registrar culto hoje (se existe culto e não registrou)
-    if (cultosHoje.length > 0 && !jaRegistrouPresenca) {
+    // 6.1 registrar culto hoje (se há culto e faltam registros)
+    if (cultosParaChecarIds.length > 0 && !jaRegistrouPresenca) {
       acoesPendentes.push({
         id: "acao-registrar-culto",
         type: "REGISTRAR_CULTO",
         title: "Registrar presença do culto de hoje",
         description:
-          "Há culto(s) hoje e a presença ainda não foi registrada para todos os membros.",
+          "Há culto(s) hoje e ainda faltam registros (presente/ausente) para alguns membros.",
         meta: {
-          cultoId: primeiroCultoHojeId,
           totalCultosHoje: cultosHoje.length,
+          cultosChecados: cultosParaChecarIds.length,
+          pendenciasPorCulto: pendenciasPorCulto.filter((p) => p.faltam > 0),
         },
       });
     }
 
-    // 6.2 registrar reunião da célula hoje (se hoje for dia da célula e não existe reunião do dia)
+    // 6.2 registrar reunião da célula hoje
     const diaCelula = Number(celula.date_que_ocorre ?? "-1");
-    const hojeWeekday = hoje.getUTCDay(); // 0 domingo... 6 sábado
+    const hojeWeekday = hoje.getDay(); // ✅ agora correto (SP)
     const ehDiaDeCelula = diaCelula === hojeWeekday;
 
     if (ehDiaDeCelula && !reuniaoHoje) {
@@ -314,7 +367,6 @@ export class LiderDashboardRepository {
     }
 
     // 6.3 membros sem discipulado recente (últimos 30 dias)
-    // (você tem disciplinado por tabela "discipulado" vinculada via discipulador_usuario)
     const trintaDiasAtras = subDays(hoje, 30);
 
     const discipuladosRecentes = await prisma.discipulado.findMany({
@@ -328,6 +380,7 @@ export class LiderDashboardRepository {
     const discipuladosSet = new Set(
       discipuladosRecentes.map((d) => d.usuario_id)
     );
+
     const membrosSemDiscipulado = celula.membros.filter(
       (m) => !discipuladosSet.has(m.id)
     );
@@ -348,8 +401,7 @@ export class LiderDashboardRepository {
       });
     }
 
-    // 7) Mensagem de fé semanal (fallback estático por enquanto)
-    // Depois a gente transforma em tabela própria ou usa Agenda com type=FE
+    // 7) Mensagem de fé semanal
     const mensagemFeSemanal: MensagemFeDTO = {
       titulo: "Fidelidade e ordem",
       versiculo: "1 Coríntios 14:40",
@@ -417,7 +469,6 @@ export class LiderDashboardRepository {
     try {
       const { userId, inicio, fim } = params;
 
-      // 1) pega célula do líder
       const lider = await prisma.user.findUnique({
         where: { id: userId },
         select: {
@@ -440,8 +491,6 @@ export class LiderDashboardRepository {
 
       const celulaId = lider.celulaId;
 
-      // 2) total de cultos no mês
-      // ✅ aqui você pode ajustar o filtro se quiser por supervisão, igreja, etc.
       const totalCultosMes = await prisma.cultoIndividual.count({
         where: {
           data_inicio_culto: { gte: inicio },
@@ -449,7 +498,6 @@ export class LiderDashboardRepository {
         },
       });
 
-      // 3) membros da célula + presenças do mês (status true)
       const membros = await prisma.user.findMany({
         where: { celulaId },
         select: {
@@ -465,7 +513,7 @@ export class LiderDashboardRepository {
                 data_termino_culto: { lte: fim },
               },
             },
-            select: { id: true }, // só precisa contar
+            select: { id: true },
           },
         },
         orderBy: [{ first_name: "asc" }],
