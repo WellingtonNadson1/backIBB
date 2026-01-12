@@ -7,6 +7,25 @@ import {
   subDays,
 } from "date-fns";
 import { createPrismaInstance, disconnectPrisma } from "../../services/prisma";
+import { utcToZonedTime, zonedTimeToUtc } from "date-fns-tz";
+
+//Helpers
+const TZ = "America/Sao_Paulo";
+
+function getSaoPauloRangeNow() {
+  const now = new Date(); // instante real (UTC internamente)
+  const nowSP = utcToZonedTime(now, TZ); // "parece" São Paulo
+
+  // IMPORTANTe: startOfDay/endOfDay aplicados em nowSP (dia SP)
+  // e depois convertemos esse "relógio SP" para UTC para consultar o banco
+  const inicioHojeUTC = zonedTimeToUtc(startOfDay(nowSP), TZ);
+  const fimHojeUTC = zonedTimeToUtc(endOfDay(nowSP), TZ);
+
+  const inicioMesUTC = zonedTimeToUtc(startOfMonth(nowSP), TZ);
+  const fimMesUTC = zonedTimeToUtc(endOfMonth(nowSP), TZ);
+
+  return { now, nowSP, inicioHojeUTC, fimHojeUTC, inicioMesUTC, fimMesUTC };
+}
 
 const prisma = new PrismaClient();
 
@@ -107,11 +126,14 @@ export class LiderDashboardRepository {
   async getDashboardByLider(
     liderId: string
   ): Promise<LiderDashboardDTO | null> {
-    const hoje = new Date();
-    const inicioHoje = startOfDay(hoje);
-    const fimHoje = endOfDay(hoje);
-    const inicioMes = startOfMonth(hoje);
-    const fimMes = endOfMonth(hoje);
+    const { nowSP, inicioHojeUTC, fimHojeUTC, inicioMesUTC, fimMesUTC } =
+      getSaoPauloRangeNow();
+
+    const hoje = nowSP; // use "hoje" em SP para lógica (weekday etc)
+    const inicioHoje = inicioHojeUTC; // use UTC para queries no banco
+    const fimHoje = fimHojeUTC;
+    const inicioMes = inicioMesUTC;
+    const fimMes = fimMesUTC;
 
     // 1) Descobrir a célula do líder:
     // - tenta pela relação celula_lidera
@@ -277,7 +299,7 @@ export class LiderDashboardRepository {
 
     // 6.2 registrar reunião da célula hoje (se hoje for dia da célula e não existe reunião do dia)
     const diaCelula = Number(celula.date_que_ocorre ?? "-1");
-    const hojeWeekday = hoje.getDay(); // 0 domingo... 6 sábado
+    const hojeWeekday = hoje.getUTCDay(); // 0 domingo... 6 sábado
     const ehDiaDeCelula = diaCelula === hojeWeekday;
 
     if (ehDiaDeCelula && !reuniaoHoje) {
