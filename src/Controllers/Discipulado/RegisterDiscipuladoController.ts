@@ -61,7 +61,7 @@ class RegisterDiscipuladoController {
       request.body as CultoIndividual;
 
     const resultRelatorioCultos =
-      await RegisterDiscipuladoRepositorie.cultosRelatoriosSupervisor(
+      await RegisterDiscipuladoRepositorie.discipuladosSupervisorRelatorios(
         startDate,
         endDate,
         superVisionId,

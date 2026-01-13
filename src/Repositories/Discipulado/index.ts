@@ -197,96 +197,131 @@ class RegisterDiscipuladoRepositorie {
   //   }
   // }
 
-  async cultosRelatoriosSupervisor(
+  async discipuladosSupervisorRelatorios(
     startDate: Date,
     endDate: Date,
     superVisionId: string,
     cargoLiderancaId: string[]
   ) {
-    const dataFim = dayjs(endDate).endOf("day").toISOString();
+    const prisma = createPrismaInstance();
+    const dataFim = dayjs(endDate).endOf("day").toDate();
 
     try {
-      const prisma = createPrismaInstance();
-      const result = await prisma.supervisao.findMany({
-        where: {
-          id: superVisionId,
-        },
+      // 1) Supervisão + supervisores (membros filtrados por cargo)
+      const supervisao = await prisma.supervisao.findUnique({
+        where: { id: superVisionId },
         select: {
+          id: true,
+          nome: true,
           membros: {
             where: {
-              cargoDeLiderancaId: {
-                in: cargoLiderancaId,
-              },
+              cargoDeLiderancaId: { in: cargoLiderancaId },
             },
             select: {
               id: true,
               first_name: true,
-              cargo_de_lideranca: {
-                select: {
-                  nome: true,
-                },
-              },
+              cargo_de_lideranca: { select: { nome: true } },
               celula: {
                 select: {
                   id: true,
                   nome: true,
-                  lider: {
-                    select: {
-                      first_name: true,
-                    },
-                  },
+                  lider: { select: { first_name: true } },
                 },
               },
-              supervisao_pertence: {
-                select: {
-                  id: true,
-                  nome: true,
-                },
-              },
-
-              discipulos: {
-                select: {
-                  user_discipulos: {
-                    select: {
-                      first_name: true,
-                      discipulos: {
-                        select: {
-                          user_discipulos: {
-                            select: {
-                              first_name: true,
-                            },
-                          },
-                        },
-                      },
-                    },
-                  },
-                  discipulado: {
-                    where: {
-                      data_ocorreu: {
-                        gte: new Date(startDate),
-                        lte: new Date(dataFim),
-                      },
-                    },
-                    select: {
-                      // discipulador_usuario: {
-                      //   select: {
-                      //     user_discipulos: {
-                      //       select: {
-                      //         first_name: true
-                      //       }
-                      //     }
-                      //   }
-                      // },
-                      data_ocorreu: true,
-                    },
-                  },
-                },
-              },
+              supervisao_pertence: { select: { id: true, nome: true } },
             },
+            orderBy: [{ first_name: "asc" }],
           },
         },
       });
-      return result;
+
+      if (!supervisao) return [];
+
+      const supervisorIds = supervisao.membros.map((m) => m.id);
+      if (supervisorIds.length === 0) {
+        return [{ id: supervisao.id, nome: supervisao.nome, membros: [] }];
+      }
+
+      // 2) Discípulos ATUAIS (fonte de verdade: User.discipuladorId)
+      const discipulosAtuais = await prisma.user.findMany({
+        where: {
+          supervisaoId: superVisionId,
+          discipuladorId: { in: supervisorIds },
+          // se quiser reforçar:
+          // is_discipulado: true,
+        },
+        select: {
+          id: true,
+          first_name: true,
+          discipuladorId: true,
+        },
+        orderBy: [{ first_name: "asc" }],
+      });
+
+      const discipuloIds = discipulosAtuais.map((d) => d.id);
+
+      // 3) Discipulados no período (tabela discipulado)
+      //    Aqui pega por (usuario_id, discipulador_id) e data
+      const discipuladosNoPeriodo = discipuloIds.length
+        ? await prisma.discipulado.findMany({
+            where: {
+              usuario_id: { in: discipuloIds },
+              discipulador_id: { in: supervisorIds },
+              data_ocorreu: {
+                gte: new Date(startDate),
+                lte: dataFim,
+              },
+            },
+            select: {
+              usuario_id: true,
+              discipulador_id: true,
+              data_ocorreu: true,
+            },
+            orderBy: [{ data_ocorreu: "desc" }],
+          })
+        : [];
+
+      // 4) Indexa discipulados por par (usuario|discipulador)
+      const discipuladoByPair = new Map<string, { data_ocorreu: Date }[]>();
+      for (const r of discipuladosNoPeriodo) {
+        const key = `${r.usuario_id}|${r.discipulador_id}`;
+        const list = discipuladoByPair.get(key) ?? [];
+        list.push({ data_ocorreu: r.data_ocorreu });
+        discipuladoByPair.set(key, list);
+      }
+
+      // 5) Agrupa discípulos por supervisor, montando o MESMO shape do front:
+      //    discipulador.discipulos[] => { user_discipulos: { first_name }, discipulado: [{data_ocorreu}] }
+      const discipulosBySupervisor = new Map<string, any[]>();
+
+      for (const d of discipulosAtuais) {
+        const supId = d.discipuladorId;
+        if (!supId) continue;
+
+        const keyPair = `${d.id}|${supId}`;
+        const discipulado = discipuladoByPair.get(keyPair) ?? [];
+
+        const list = discipulosBySupervisor.get(supId) ?? [];
+        list.push({
+          user_discipulos: { first_name: d.first_name },
+          discipulado,
+        });
+        discipulosBySupervisor.set(supId, list);
+      }
+
+      // 6) Retorno final com supervisores + discipulos atuais
+      const membros = supervisao.membros.map((m) => ({
+        ...m,
+        discipulos: discipulosBySupervisor.get(m.id) ?? [],
+      }));
+
+      return [
+        {
+          id: supervisao.id,
+          nome: supervisao.nome,
+          membros,
+        },
+      ];
     } finally {
       await disconnectPrisma();
     }
