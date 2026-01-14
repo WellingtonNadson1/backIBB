@@ -29,10 +29,17 @@ export async function requireAuth(
   request: FastifyRequest,
   reply: FastifyReply
 ) {
-  const JWT_SECRET = process.env.JWT_SECRET || "";
+  // ✅ libera preflight
+  if (request.method === "OPTIONS") return;
+
+  const JWT_SECRET = process.env.JWT_SECRET;
+  if (!JWT_SECRET) {
+    request.log.error("JWT_SECRET is missing");
+    return reply.status(500).send({ error: "Server misconfigured" });
+  }
+
   const pathname = getPathname(request.url);
 
-  // ✅ Rotas públicas (ajuste conforme seu backend)
   const publicRoutes = new Set([
     "/login",
     "/refresh-token",
@@ -41,15 +48,11 @@ export async function requireAuth(
     "/users",
   ]);
 
-  // ✅ Libera se for rota pública (independente de método)
-  // Se você quiser restringir método, eu te mostro abaixo.
-  if (publicRoutes.has(pathname)) {
-    return;
-  }
+  if (publicRoutes.has(pathname)) return;
 
   const authHeader = request.headers.authorization;
 
-  if (!authHeader || !authHeader.startsWith("Bearer ")) {
+  if (!authHeader?.startsWith("Bearer ")) {
     return reply.status(401).send({ error: "Unauthorized" });
   }
 
@@ -62,13 +65,13 @@ export async function requireAuth(
       return reply.status(401).send({ error: "Token sem sub (userId)" });
     }
 
-    // ✅ salva user no request (agora o controller consegue ler)
     request.user = {
       id: decoded.sub,
       email: decoded.email,
       roles: decoded.roles,
     };
   } catch (err) {
+    request.log.error({ err }, "jwt verify failed");
     return reply.status(401).send({ error: "Token invalid" });
   }
 }

@@ -47,8 +47,10 @@ const PORT = process.env.PORT ? Number(process.env.PORT) : 8888;
 const app: FastifyInstance = Fastify({ logger: true });
 
 app.register(cors, {
-  origin: "*",
-  methods: ["GET", "POST", "PUT", "PATCH", "DELETE"],
+  origin: ["http://localhost:3000"],
+  methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
+  allowedHeaders: ["Content-Type", "Authorization"],
+  credentials: false,
 });
 
 app.addHook("onRequest", requireAuth);
