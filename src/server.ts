@@ -46,8 +46,34 @@ const PORT = process.env.PORT ? Number(process.env.PORT) : 8888;
 
 const app: FastifyInstance = Fastify({ logger: true });
 
+const ALLOWED_ORIGINS = (process.env.CORS_ORIGINS ?? "")
+  .split(",")
+  .map((s) => s.trim())
+  .filter(Boolean);
+
+// Opcional: liberar previews da Vercel por sufixo
+const ALLOW_VERCEL_PREVIEWS = process.env.ALLOW_VERCEL_PREVIEWS === "true";
+
 app.register(cors, {
-  origin: ["http://localhost:3000"],
+  origin: (origin, cb) => {
+    // origin pode vir undefined em chamadas server-to-server (curl/postman) ou same-origin
+    if (!origin) return cb(null, true);
+
+    // 1) lista fixa
+    if (ALLOWED_ORIGINS.includes(origin)) return cb(null, true);
+
+    // 2) previews (se quiser)
+    if (ALLOW_VERCEL_PREVIEWS) {
+      try {
+        const { hostname, protocol } = new URL(origin);
+        const isHttps = protocol === "https:";
+        const isVercel = hostname.endsWith(".vercel.app");
+        if (isHttps && isVercel) return cb(null, true);
+      } catch {}
+    }
+
+    return cb(new Error("Not allowed by CORS"), false);
+  },
   methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
   allowedHeaders: ["Content-Type", "Authorization"],
   credentials: false,
