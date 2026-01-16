@@ -710,7 +710,21 @@ class UserRepositorie {
     });
 
     await disconnectPrisma();
-    return result;
+
+    const normalized = result.map((u) => {
+      const discipulador_atual = u.discipuladorId
+        ? u.discipulador.find(
+            (d) => d.user_discipulador?.id === u.discipuladorId
+          )?.user_discipulador ?? null
+        : null;
+
+      return {
+        ...u,
+        discipulador: discipulador_atual, // { id, first_name, image_url } | null
+      };
+    });
+
+    return normalized;
   }
 
   async findByIdCell(id: string) {
