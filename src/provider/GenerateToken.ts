@@ -13,16 +13,12 @@ type TokenPayload = {
 class GenerateToken {
   async execute(userId: string, payload: TokenPayload) {
     const JWT_SECRET = process.env.JWT_SECRET;
+    if (!JWT_SECRET) throw new Error("JWT_SECRET is not defined");
 
-    if (typeof JWT_SECRET === "undefined") {
-      throw new Error("JWT_TOKEN is not defined in the enviroment");
-    }
-
-    const token = sign(payload, JWT_SECRET, {
+    return sign(payload, JWT_SECRET, {
       subject: userId,
-      expiresIn: "180d",
+      expiresIn: "15m", // ✅ bem melhor que 180d
     });
-    return token;
   }
 }
 

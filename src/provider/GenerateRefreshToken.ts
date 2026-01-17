@@ -1,20 +1,18 @@
-import { PrismaClient } from "@prisma/client";
 import dayjs from "dayjs";
-
-const prisma = new PrismaClient();
+import { PrismaClient } from "@prisma/client";
 
 class GenerateRfreshToken {
-  async execute(userId: string) {
-    const expiresIn = dayjs().add(200, "day").unix();
-    const generateRefreshToken = await prisma.refreshToken.create({
+  async execute(userId: string, prisma: PrismaClient) {
+    const expiresIn = dayjs().add(30, "day").unix();
+
+    // como userIdRefresh é unique, podemos fazer upsert também.
+    // mas como a rotação já deleta antes, create é ok.
+    return prisma.refreshToken.create({
       data: {
-        user: {
-          connect: { id: userId },
-        },
+        user: { connect: { id: userId } },
         expiresIn,
       },
     });
-    return generateRefreshToken;
   }
 }
 

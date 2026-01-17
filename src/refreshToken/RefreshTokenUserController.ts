@@ -1,14 +1,27 @@
 import { FastifyReply, FastifyRequest } from "fastify";
+import { refreshTokenSchema } from "../schemas/refresh-token.schema";
 import { RefreshTokenUserUseCase } from "./RefreshTokenUserUseCase";
 
 class RefreshTokenUserController {
   async handle(request: FastifyRequest, reply: FastifyReply) {
-    const { refresh_token } = request.body as { refresh_token: string };
+    const parsed = refreshTokenSchema.safeParse(request.body);
 
-    const refreshTokenUserUseCase = new RefreshTokenUserUseCase();
-    const token = await refreshTokenUserUseCase.execute(refresh_token, reply);
+    if (!parsed.success) {
+      return reply.code(400).send({ error: "Campo inválido" });
+    }
 
-    return reply.status(200).send(token);
+    try {
+      const useCase = new RefreshTokenUserUseCase();
+      const result = await useCase.execute(
+        parsed.data.refresh_token,
+        request.prisma
+      );
+
+      return reply.code(200).send(result);
+    } catch {
+      // não vaza se expirou, se não existe, etc
+      return reply.code(401).send({ error: "Não autorizado" });
+    }
   }
 }
 

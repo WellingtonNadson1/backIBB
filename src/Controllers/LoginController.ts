@@ -1,10 +1,9 @@
-import { PrismaClient } from "@prisma/client";
 import bcrypt from "bcrypt";
 import { FastifyReply, FastifyRequest } from "fastify";
+import { loginSchema } from "../schemas/login.schema";
+import UserRepositorie from "../Repositories/User/UserRepositorie";
 import { GenerateRfreshToken } from "../provider/GenerateRefreshToken";
 import { GenerateToken } from "../provider/GenerateToken";
-import { UserData } from "./User/schema";
-import UserRepositorie from "../Repositories/User/UserRepositorie";
 
 type TokenPayload = {
   role: string;
@@ -16,26 +15,27 @@ type TokenPayload = {
   celula_lidera: string | null;
 };
 
-const prisma = new PrismaClient();
-
 class LoginController {
   async login(request: FastifyRequest, reply: FastifyReply) {
-    // Dados de credenciais vindas do FrontEnd
-    const { email, password } = request.body as UserData;
+    const parsed = loginSchema.safeParse(request.body);
 
-    const user = await UserRepositorie.findByEmail(email.toLowerCase());
-
-    if (!user) {
-      return reply
-        .code(402)
-        .send({ message: "Email or password invalid, please try again!" });
+    if (!parsed.success) {
+      return reply.code(400).send({ error: "Campo inválido" });
     }
 
-    const verifyPass = await bcrypt.compare(password, user.password ?? "");
+    const email = parsed.data.email.toLowerCase();
+    const password = parsed.data.password;
+
+    const user = await UserRepositorie.findByEmail(email);
+
+    // resposta genérica (não revela se user existe)
+    if (!user || !user.password) {
+      return reply.code(401).send({ error: "Credenciais inválidas" });
+    }
+
+    const verifyPass = await bcrypt.compare(password, user.password);
     if (!verifyPass) {
-      return reply
-        .code(404)
-        .send({ message: "Email or password invalid, please try again!" });
+      return reply.code(401).send({ error: "Credenciais inválidas" });
     }
 
     const tokenPayload: TokenPayload = {
@@ -48,24 +48,23 @@ class LoginController {
       celula_lidera: user.celulaId,
     };
 
-    // Function for generation token JWT after sing in
     const generateToken = new GenerateToken();
+    // ⛔️ recomendo reduzir esse tempo (ver abaixo)
     const token = await generateToken.execute(user.id, tokenPayload);
 
-    await prisma.refreshToken.deleteMany({
-      where: {
-        userIdRefresh: user.id,
-      },
+    // ✅ use request.prisma (não PrismaClient global)
+    await request.prisma.refreshToken.deleteMany({
+      where: { userIdRefresh: user.id },
     });
 
     const generateRefreshToken = new GenerateRfreshToken();
-    const refreshToken = await generateRefreshToken.execute(user.id);
+    const refreshToken = await generateRefreshToken.execute(
+      user.id,
+      request.prisma
+    );
 
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    const { password: _, ...newUser } = user;
-    const userWithToken = { ...newUser, token, refreshToken };
-
-    return reply.code(200).send(userWithToken);
+    const { password: _pw, ...newUser } = user as any;
+    return reply.code(200).send({ ...newUser, token, refreshToken });
   }
 }
 

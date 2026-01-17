@@ -34,6 +34,7 @@ import { supervisorDashboardRoutes } from "./Routers/supervisorDashboardRoutes";
 import { liderMembrosRoutes } from "./Routers/liderMembrosRoutes";
 import { centralDashboardRoutes } from "./Routers/centralDashboardRoutes";
 import { cultoRoutes } from "./Routers/cultoRoutes";
+import rateLimit from "@fastify/rate-limit";
 // import routerLicoesCelula from "./Routers/upLoads/LicoesCelula";
 
 declare module "fastify" {
@@ -44,7 +45,7 @@ declare module "fastify" {
 
 const PORT = process.env.PORT ? Number(process.env.PORT) : 8888;
 
-const app: FastifyInstance = Fastify({ logger: true });
+const app: FastifyInstance = Fastify({ logger: true, trustProxy: true });
 
 const ALLOWED_ORIGINS = (process.env.CORS_ORIGINS ?? "")
   .split(",")
@@ -53,6 +54,12 @@ const ALLOWED_ORIGINS = (process.env.CORS_ORIGINS ?? "")
 
 // Opcional: liberar previews da Vercel por sufixo
 const ALLOW_VERCEL_PREVIEWS = process.env.ALLOW_VERCEL_PREVIEWS === "true";
+
+app.register(rateLimit, {
+  global: false, // melhor: aplicar por rota
+  // Se estiver atrás de proxy (Vercel/Cloudflare), habilite:
+  // trustProxy: true  // (ou app = Fastify({ logger: true, trustProxy: true }))
+});
 
 app.register(cors, {
   origin: (origin, cb) => {
@@ -79,7 +86,25 @@ app.register(cors, {
   credentials: false,
 });
 
-app.addHook("onRequest", requireAuth);
+app.addHook("onRequest", async (request, reply) => {
+  // Sempre liberar preflight
+  if (request.method === "OPTIONS") return;
+
+  const path = request.url.split("?")[0];
+
+  // rotas públicas
+  const publicRoutes = new Set([
+    "/login",
+    "/refresh-token",
+    "/request-reset-password",
+    "/reset-password",
+  ]);
+
+  if (publicRoutes.has(path)) return;
+
+  // protege o resto
+  return requireAuth(request, reply);
+});
 
 app.addHook("onRequest", async (request, reply) => {
   request.prisma = createPrismaInstance();
