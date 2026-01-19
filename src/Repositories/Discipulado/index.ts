@@ -201,7 +201,7 @@ class RegisterDiscipuladoRepositorie {
     startDate: Date,
     endDate: Date,
     superVisionId: string,
-    cargoLiderancaId: string[]
+    cargoLiderancaId: string[],
   ) {
     const prisma = createPrismaInstance();
     const dataFim = dayjs(endDate).endOf("day").toDate();
@@ -596,27 +596,13 @@ class RegisterDiscipuladoRepositorie {
     lastDayOfMonth: Date;
   }) {
     const prisma = createPrismaInstance();
-    // console.log('supervisor_id', supervisor_id)
-    // console.log('firstDayOfMonth', firstDayOfMonth)
-    // console.log('lastDayOfMonth', lastDayOfMonth)
+
     try {
-      const lastDayOfMonthPlusOneDay = dayjs(lastDayOfMonth).add(1, "day");
-      const result = await prisma.user.findMany({
-        where: {
-          id: supervisor_id,
-          // discipulos: {
-          //   some: {
-          //     discipulado: {
-          //       some: {
-          //         data_ocorreu: {
-          //           gte: firstDayOfMonth,
-          //           lte: lastDayOfMonth
-          //         }
-          //       }
-          //     }
-          //   }
-          // }
-        },
+      const end = dayjs(lastDayOfMonth).endOf("day").toDate();
+
+      // 1) Supervisor (mantém o shape esperado)
+      const supervisorArr = await prisma.user.findMany({
+        where: { id: supervisor_id },
         select: {
           id: true,
           first_name: true,
@@ -626,42 +612,8 @@ class RegisterDiscipuladoRepositorie {
               nome: true,
             },
           },
-          // DISCIPULADOR
-          discipulos: {
-            select: {
-              user_discipulos: {
-                select: {
-                  id: true,
-                  first_name: true,
-                  image_url: true,
-                },
-              },
-              _count: {
-                select: {
-                  discipulado: {
-                    where: {
-                      data_ocorreu: {
-                        gte: firstDayOfMonth,
-                        lte: lastDayOfMonthPlusOneDay.toISOString(),
-                      },
-                    },
-                  },
-                },
-              },
-              discipulado: {
-                where: {
-                  data_ocorreu: {
-                    gte: firstDayOfMonth,
-                    lte: lastDayOfMonthPlusOneDay.toISOString(),
-                  },
-                },
-                // select: {
-                //   data_ocorreu: true
-                // }
-              },
-            },
-          },
-          // DISCIPULOS
+
+          // Quem discipula ESTE supervisor (mantém o shape atual)
           discipulador: {
             select: {
               user_discipulos: {
@@ -677,7 +629,7 @@ class RegisterDiscipuladoRepositorie {
                     where: {
                       data_ocorreu: {
                         gte: firstDayOfMonth,
-                        lte: lastDayOfMonthPlusOneDay.toISOString(),
+                        lte: end,
                       },
                     },
                   },
@@ -687,24 +639,96 @@ class RegisterDiscipuladoRepositorie {
                 where: {
                   data_ocorreu: {
                     gte: firstDayOfMonth,
-                    lte: lastDayOfMonthPlusOneDay.toISOString(),
+                    lte: end,
                   },
                 },
-                // select: {
-                //   data_ocorreu: true
-                // }
+                select: {
+                  data_ocorreu: true,
+                },
+                orderBy: [{ data_ocorreu: "desc" }],
               },
             },
           },
+
+          // ⚠️ NÃO usamos mais a relação "discipulos" aqui pra definir "atuais"
+          // Vamos montar manualmente com base em User.discipuladorId
+          // (mas deixamos o campo aqui fora do select)
         },
       });
 
-      // const quantidadeDiscipuladoRealizado = result.length
-      // const discipuladosRealizados = result
+      const supervisor = supervisorArr[0];
+      if (!supervisor) return [];
 
-      // return { quantidadeDiscipuladoRealizado, discipuladosRealizados };
-      console.log("result", result);
-      return result;
+      // 2) Discípulos ATUAIS (fonte de verdade: user.discipuladorId)
+      const discipulosAtuais = await prisma.user.findMany({
+        where: {
+          discipuladorId: supervisor_id,
+          // se quiser reforçar "atual", use regras de negócio:
+          // is_discipulado: true,
+          // situacao_no_reino: { nome: { equals: "Ativo" } },
+        },
+        select: {
+          id: true,
+          first_name: true,
+          image_url: true,
+        },
+        orderBy: [{ first_name: "asc" }],
+      });
+
+      const discipuloIds = discipulosAtuais.map((d) => d.id);
+
+      // 3) Discipulados no período para esses discípulos (tabela discipulado)
+      const discipulados = discipuloIds.length
+        ? await prisma.discipulado.findMany({
+            where: {
+              usuario_id: { in: discipuloIds },
+              discipulador_id: supervisor_id,
+              data_ocorreu: {
+                gte: firstDayOfMonth,
+                lte: end,
+              },
+            },
+            select: {
+              usuario_id: true,
+              data_ocorreu: true,
+            },
+            orderBy: [{ data_ocorreu: "desc" }],
+          })
+        : [];
+
+      // 4) Indexa por usuário
+      const byUser = new Map<string, Date[]>();
+      for (const d of discipulados) {
+        const list = byUser.get(d.usuario_id) ?? [];
+        list.push(d.data_ocorreu);
+        byUser.set(d.usuario_id, list);
+      }
+
+      // 5) Monta o campo "discipulos" no SHAPE esperado
+      const discipulosShape = discipulosAtuais.map((u) => {
+        const datas = byUser.get(u.id) ?? [];
+        return {
+          user_discipulos: {
+            id: u.id,
+            first_name: u.first_name,
+            image_url: u.image_url ?? "",
+          },
+          _count: {
+            discipulado: datas.length,
+          },
+          discipulado: datas.map((dt) => ({
+            data_ocorreu: dt.toISOString(),
+          })),
+        };
+      });
+
+      // 6) Retorna no formato final esperado: data: User[] (array)
+      return [
+        {
+          ...supervisor,
+          discipulos: discipulosShape,
+        },
+      ];
     } finally {
       await disconnectPrisma();
     }
@@ -846,7 +870,7 @@ class RegisterDiscipuladoRepositorie {
   }
 
   async createRegisterDiscipulado(
-    RegisterDiscipuladoDataForm: dataSchemaCreateDiscipulado
+    RegisterDiscipuladoDataForm: dataSchemaCreateDiscipulado,
   ) {
     const prisma = createPrismaInstance();
 
@@ -869,7 +893,7 @@ class RegisterDiscipuladoRepositorie {
 
   async updatePresencaCulto(
     id: string,
-    presencaCultoDataForm: PresencaCultoData
+    presencaCultoDataForm: PresencaCultoData,
   ) {
     const prisma = createPrismaInstance();
 

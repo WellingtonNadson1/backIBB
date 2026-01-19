@@ -4,30 +4,27 @@ import { RegisterDiscipuladoController } from "../../Controllers/Discipulado";
 const routerRegisterDiscipulado = async (fastify: FastifyInstance) => {
   fastify.get(
     "/discipuladosibb/metrics",
-    RegisterDiscipuladoController.getDiscipleMetrics
+    RegisterDiscipuladoController.getDiscipleMetrics,
   );
-  // fastify.get('/discipuladosibb/relatorios', RegisterDiscipuladoController.cultosRelatorios);
   fastify.post(
     "/discipuladosibb/supervisao/relatorio",
-    RegisterDiscipuladoController.discipuladosRelatorioSupervisao
+    RegisterDiscipuladoController.discipuladosRelatorioSupervisao,
   );
   fastify.post(
     "/discipuladosibb/supervisor/relatorio",
-    RegisterDiscipuladoController.discipuladosRelatorioSupervisor
+    RegisterDiscipuladoController.discipuladosRelatorioSupervisor,
   );
-  // fastify.get('/discipuladosibb/:id', RegisterDiscipuladoController.show);
-  // fastify.get(`/discipuladosibbbycelula/:culto/:lider`, RegisterDiscipuladoController.searchByIdCulto);
   fastify.post(
     "/discipuladosibb/existing-register",
-    RegisterDiscipuladoController.isregister
+    RegisterDiscipuladoController.isregister,
   );
   fastify.post(
     "/discipuladosibb/allmemberscell/existing-register",
-    RegisterDiscipuladoController.isMembersCellRegister
+    RegisterDiscipuladoController.isMembersCellRegister,
   );
   fastify.post(
     "/discipuladosibb/allmemberssupervisor/existing-register",
-    RegisterDiscipuladoController.isMembersDiscipuladoSupervisorRegister
+    RegisterDiscipuladoController.isMembersDiscipuladoSupervisorRegister,
   );
   fastify.post("/discipuladosibb", RegisterDiscipuladoController.store);
   fastify.delete("/discipuladosibb/:id", RegisterDiscipuladoController.delete);
