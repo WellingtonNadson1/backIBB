@@ -8,6 +8,47 @@ import { createPrismaInstance, disconnectPrisma } from "../../services/prisma";
 dayjs.extend(utc);
 dayjs.extend(timezone);
 
+type Period = { start: Date; end: Date };
+
+type UUID = string;
+
+type UserMini = {
+  id: UUID;
+  first_name: string;
+  image_url: string | null;
+};
+
+type UserMiniNoImg = {
+  id: UUID;
+  first_name: string;
+};
+
+type DiscipuladoRow = {
+  usuario_id: UUID;
+  discipulador_id: UUID;
+  data_ocorreu: Date;
+};
+
+type DiscipuladorShape = {
+  user_discipulador: UserMiniNoImg & { image_url?: string | null };
+  _count: { discipulado: number };
+  discipulado: { data_ocorreu: string }[];
+};
+
+type DisciplosShape = {
+  user_discipulos: { id: UUID; first_name: string; image_url: string };
+  _count: { discipulado: number };
+  discipulado: { data_ocorreu: string }[];
+};
+
+function endOfDay(d: Date) {
+  return dayjs(d).endOf("day").toDate();
+}
+
+function toPeriod(firstDayOfMonth: Date, lastDayOfMonth: Date): Period {
+  return { start: firstDayOfMonth, end: endOfDay(lastDayOfMonth) };
+}
+
 class RegisterDiscipuladoRepositorie {
   findLog() {
     const dataBrasil = dayjs().tz("America/Sao_Paulo");
@@ -16,187 +57,74 @@ class RegisterDiscipuladoRepositorie {
     console.log("Data Brasil (Date):", dataBrasilDate);
   }
 
-  // async cultosRelatoriosSupervisor(
-  //   startDate: Date,
-  //   endDate: Date,
-  //   superVisionId: string,
-  //   cargoLideranca: string[],
-  // ) {
+  // =========================
+  // Helpers (regra: "atual" = User.discipuladorId)
+  // =========================
 
-  //   try {
-  //     const prisma = createPrismaInstance();
+  private async getUsersByIds(prisma: any, ids: UUID[]): Promise<UserMini[]> {
+    if (!ids.length) return [];
+    return prisma.user.findMany({
+      where: { id: { in: ids } },
+      select: { id: true, first_name: true, image_url: true },
+    }) as Promise<UserMini[]>;
+  }
 
-  //     const dataInicio = dayjs(startDate).toISOString();
-  //     const dataFim = dayjs(endDate).toISOString();
+  private async getCurrentDisciplesOf(
+    prisma: any,
+    discipuladorId: UUID,
+  ): Promise<UserMini[]> {
+    return prisma.user.findMany({
+      where: { discipuladorId },
+      select: { id: true, first_name: true, image_url: true },
+      orderBy: [{ first_name: "asc" }],
+    }) as Promise<UserMini[]>;
+  }
 
-  //     // Consulta para buscar membros da supervisão que compareceram aos cultos no intervalo de tempo
-  //     const membrosCompareceramCultos = await prisma?.user.findMany({
-  //       where: {
-  //         supervisaoId: superVisionId,
-  //         cargoDeLiderancaId: {
-  //           in: cargoLideranca,
-  //         },
-  //         presencas_cultos: {
-  //           some: {
-  //             AND: [
-  //               { presenca_culto: { data_inicio_culto: { gte: dataInicio } } },
-  //               { presenca_culto: { data_termino_culto: { lte: dataFim } } }
-  //             ]
-  //           },
-  //         },
-  //       },
-  //       // Use a opção 'select' para selecionar apenas os campos desejados
-  //       select: {
-  //         id: true, // Inclua os campos que você deseja
-  //         first_name: true,
-  //         last_name: true,
-  //         // Adicione outros campos necessários
-  //         presencas_cultos: {
-  //           select: {
-  //             // Selecione apenas os campos relevantes em 'presencas_cultos'
-  //             status: true,
-  //             cultoIndividualId: true,
-  //             date_create: true,
-  //             presenca_culto: {
-  //               select: {
-  //                 data_inicio_culto: true,
-  //                 culto_semana: {
-  //                   select: {
-  //                     id: true
-  //                   }
-  //                 }
-  //               }
-  //             }
-  //           },
-  //         },
-  //         cargo_de_lideranca: {
-  //           select: {
-  //             nome: true
-  //           }
-  //         },
-  //       },
-  //     });
+  private async getDiscipuladosForPairsInPeriod(
+    prisma: any,
+    pairs: Array<{ usuario_id: UUID; discipulador_id: UUID }>,
+    period: Period,
+  ): Promise<DiscipuladoRow[]> {
+    if (!pairs.length) return [];
+    const OR = pairs.map((p) => ({
+      usuario_id: p.usuario_id,
+      discipulador_id: p.discipulador_id,
+    }));
 
-  //     const cultosIndividuaisForDate = await CultoIndividualRepositorie.findAllIntervall(startDate, endDate, superVisionId);
+    return prisma.discipulado.findMany({
+      where: { OR, data_ocorreu: { gte: period.start, lte: period.end } },
+      select: { usuario_id: true, discipulador_id: true, data_ocorreu: true },
+      orderBy: [{ data_ocorreu: "desc" }],
+    }) as Promise<DiscipuladoRow[]>;
+  }
 
-  //     const totalCultosPeriodo = cultosIndividuaisForDate.totalCultosPeriodo
-  //     const cultoQuarta = cultosIndividuaisForDate.cultoQuarta
-  //     const cultoPrimicia = cultosIndividuaisForDate.cultoPrimicia
-  //     const cultoDomingoSacrificio = cultosIndividuaisForDate.cultoDomingoSacrificio
-  //     const cultoSabado = cultosIndividuaisForDate.cultoSabado
-  //     const totalCultosDomingoManha = cultosIndividuaisForDate.cultoDomingoManha
-  //     const totalCultosDomingoTarde = cultosIndividuaisForDate.cultoDomingoTarde
+  private buildDatesByPairIndex(rows: DiscipuladoRow[]) {
+    const byPair = new Map<string, Date[]>();
+    for (const r of rows) {
+      const key = `${r.usuario_id}|${r.discipulador_id}`;
+      const list = byPair.get(key) ?? [];
+      list.push(r.data_ocorreu);
+      byPair.set(key, list);
+    }
+    return byPair;
+  }
 
-  //     // Filtrar as presenças dentro do intervalo de datas
-  //     const membrosCompareceramCultosFiltrados = membrosCompareceramCultos.map((membro) => {
-  //       const presencasFiltradas = membro.presencas_cultos.filter((presenca) => {
-  //         const dataPresenca = dayjs(presenca.date_create).utcOffset(0);
-  //         return (
-  //           dataPresenca.isAfter(dayjs(dataInicio).utcOffset(0)) &&
-  //           dataPresenca.isBefore(dayjs(dataFim).utcOffset(0))
-  //         );
-  //       });
+  private buildCountAndDatesIndex(rows: DiscipuladoRow[]): Map<string, Date[]> {
+    const byPair = new Map<string, Date[]>();
 
-  //       const quantidadeCultosPresentes = presencasFiltradas.reduce((total, presente) => {
-  //         return total + (presente.status === true ? 1 : 0);
-  //       }, 0);
+    for (const r of rows) {
+      const key = `${r.usuario_id}|${r.discipulador_id}`;
+      const list = byPair.get(key) ?? [];
+      list.push(r.data_ocorreu);
+      byPair.set(key, list);
+    }
 
-  //       const quantidadeCultosPresentePrimicia = presencasFiltradas.reduce((total, presente) => {
-  //         return total + ((presente.status === true && presente.presenca_culto?.culto_semana?.id === 'bffb62af-8d03-473a-ba20-ab5a9d7dafbe') ? 1 : 0);
-  //       }, 0);
+    return byPair;
+  }
 
-  //       const quantidadeCultosPresenteDomingoSacrificio = presencasFiltradas.reduce((total, presente) => {
-  //         return total + ((presente.status === true && presente.presenca_culto?.culto_semana?.id === 'e7bc72d1-8faa-4bbe-9c24-475b64f956cf') ? 1 : 0);
-  //       }, 0);
-
-  //       const quantidadeCultosPresenteQuarta = presencasFiltradas.reduce((total, presente) => {
-  //         return total + ((presente.status === true && presente.presenca_culto?.culto_semana?.id === '4064be1d-bf55-4851-9f76-99c4554a6265') ? 1 : 0);
-  //       }, 0);
-
-  //       const quantidadeCultosPresenteSabado = presencasFiltradas.reduce((total, presente) => {
-  //         return total + ((presente.status === true && presente.presenca_culto?.culto_semana?.id === '84acfbe4-c7e0-4841-813c-04731ffa9c67') ? 1 : 0);
-  //       }, 0);
-
-  //       const quantidadeCultosPresenteDomingoManha = presencasFiltradas.reduce((total, presente) => {
-  //         return total + ((presente.status === true && presente.presenca_culto?.culto_semana?.id === 'cab02f30-cade-46ca-b118-930461013d53') ? 1 : 0);
-  //       }, 0);
-
-  //       const quantidadeCultosPresenteDomingoTarde = presencasFiltradas.reduce((total, presente) => {
-  //         return total + ((presente.status === true && presente.presenca_culto?.culto_semana?.id === 'ea08ec9b-3d1b-42f3-818a-ec53ef99b78f') ? 1 : 0);
-  //       }, 0);
-
-  //       const porcentagemPresencaTotal = ((quantidadeCultosPresentes / totalCultosPeriodo) * 100).toFixed(2).slice(0, 5);
-
-  //       let porcentagemPresencaQuarta = undefined
-  //       if (quantidadeCultosPresenteQuarta !== 0) {
-  //         porcentagemPresencaQuarta = ((quantidadeCultosPresenteQuarta / cultoQuarta) * 100).toFixed(2).slice(0, 5);
-  //       } else {
-  //         porcentagemPresencaQuarta = 0.00.toFixed(2)
-  //       }
-
-  //       let porcentagemPresencaPrimicia = undefined
-  //       if (quantidadeCultosPresentePrimicia !== 0) {
-  //         porcentagemPresencaPrimicia = ((quantidadeCultosPresentePrimicia / cultoPrimicia) * 100).toFixed(2).slice(0, 5);
-  //       } else {
-  //         porcentagemPresencaPrimicia = 0.00.toFixed(2)
-  //       }
-
-  //       let porcentagemPresencaDomingoSacrificio = undefined
-  //       if (quantidadeCultosPresenteDomingoSacrificio !== 0) {
-  //         porcentagemPresencaDomingoSacrificio = ((quantidadeCultosPresenteDomingoSacrificio / cultoDomingoSacrificio) * 100).toFixed(2).slice(0, 5);
-  //       } else {
-  //         porcentagemPresencaDomingoSacrificio = 0.00.toFixed(2)
-  //       }
-
-  //       let porcentagemPresencaSabado = undefined
-  //       if (quantidadeCultosPresenteSabado !== 0) {
-  //         porcentagemPresencaSabado = ((quantidadeCultosPresenteSabado / cultoSabado) * 100).toFixed(2).slice(0, 5);
-  //       } else {
-  //         porcentagemPresencaSabado = 0.00.toFixed(2)
-  //       }
-
-  //       let porcentagemPresencaTotalDomingoManha = undefined
-  //       if (quantidadeCultosPresenteDomingoManha !== 0) {
-  //         porcentagemPresencaTotalDomingoManha = ((quantidadeCultosPresenteDomingoManha / totalCultosDomingoManha) * 100).toFixed(2).slice(0, 5);
-  //       } else {
-  //         porcentagemPresencaTotalDomingoManha = 0.00.toFixed(2)
-  //       }
-
-  //       let porcentagemPresencaTotalDomingoTarde = undefined
-  //       if (quantidadeCultosPresenteDomingoTarde !== 0) {
-  //         porcentagemPresencaTotalDomingoTarde = ((quantidadeCultosPresenteDomingoTarde / totalCultosDomingoTarde) * 100).toFixed(2).slice(0, 5);
-  //       } else {
-  //         porcentagemPresencaTotalDomingoTarde = 0.00.toFixed(2)
-  //       }
-
-  //       const cultos = {
-  //         porcentagemPresencaTotal,
-  //         porcentagemPresencaQuarta,
-  //         porcentagemPresencaPrimicia,
-  //         porcentagemPresencaDomingoSacrificio,
-  //         porcentagemPresencaSabado,
-  //         porcentagemPresencaTotalDomingoManha,
-  //         porcentagemPresencaTotalDomingoTarde,
-  //       }
-
-  //       return {
-  //         ...membro,
-  //         presencasFiltradas,
-  //         cultos: cultos
-
-  //       };
-  //     });
-
-  //     return membrosCompareceramCultosFiltrados;
-  //   } catch (error) {
-  //     console.error('Erro:', error);
-  //     return ('Erro interno do servidor');
-  //   }
-  //   finally {
-  //     await disconnectPrisma();
-  //   }
-  // }
-
+  // =========================
+  // Relatório Supervisor (já estava no caminho certo)
+  // =========================
   async discipuladosSupervisorRelatorios(
     startDate: Date,
     endDate: Date,
@@ -204,19 +132,19 @@ class RegisterDiscipuladoRepositorie {
     cargoLiderancaId: string[],
   ) {
     const prisma = createPrismaInstance();
-    const dataFim = dayjs(endDate).endOf("day").toDate();
+    const period: Period = {
+      start: new Date(startDate),
+      end: endOfDay(endDate),
+    };
 
     try {
-      // 1) Supervisão + supervisores (membros filtrados por cargo)
       const supervisao = await prisma.supervisao.findUnique({
         where: { id: superVisionId },
         select: {
           id: true,
           nome: true,
           membros: {
-            where: {
-              cargoDeLiderancaId: { in: cargoLiderancaId },
-            },
+            where: { cargoDeLiderancaId: { in: cargoLiderancaId } },
             select: {
               id: true,
               first_name: true,
@@ -238,193 +166,204 @@ class RegisterDiscipuladoRepositorie {
       if (!supervisao) return [];
 
       const supervisorIds = supervisao.membros.map((m) => m.id);
-      if (supervisorIds.length === 0) {
+      if (!supervisorIds.length) {
         return [{ id: supervisao.id, nome: supervisao.nome, membros: [] }];
       }
 
-      // 2) Discípulos ATUAIS (fonte de verdade: User.discipuladorId)
+      // Discípulos atuais por supervisor (fonte de verdade)
       const discipulosAtuais = await prisma.user.findMany({
         where: {
           supervisaoId: superVisionId,
           discipuladorId: { in: supervisorIds },
-          // se quiser reforçar:
-          // is_discipulado: true,
+          // is_discipulado: true, // opcional
         },
         select: {
           id: true,
           first_name: true,
+          image_url: true,
           discipuladorId: true,
         },
         orderBy: [{ first_name: "asc" }],
       });
 
-      const discipuloIds = discipulosAtuais.map((d) => d.id);
+      const pairs = discipulosAtuais
+        .filter((d) => d.discipuladorId)
+        .map((d) => ({ usuario_id: d.id, discipulador_id: d.discipuladorId! }));
 
-      // 3) Discipulados no período (tabela discipulado)
-      //    Aqui pega por (usuario_id, discipulador_id) e data
-      const discipuladosNoPeriodo = discipuloIds.length
-        ? await prisma.discipulado.findMany({
-            where: {
-              usuario_id: { in: discipuloIds },
-              discipulador_id: { in: supervisorIds },
-              data_ocorreu: {
-                gte: new Date(startDate),
-                lte: dataFim,
-              },
-            },
-            select: {
-              usuario_id: true,
-              discipulador_id: true,
-              data_ocorreu: true,
-            },
-            orderBy: [{ data_ocorreu: "desc" }],
-          })
-        : [];
+      const discipuladosNoPeriodo = await this.getDiscipuladosForPairsInPeriod(
+        prisma,
+        pairs,
+        period,
+      );
 
-      // 4) Indexa discipulados por par (usuario|discipulador)
-      const discipuladoByPair = new Map<string, { data_ocorreu: Date }[]>();
-      for (const r of discipuladosNoPeriodo) {
-        const key = `${r.usuario_id}|${r.discipulador_id}`;
-        const list = discipuladoByPair.get(key) ?? [];
-        list.push({ data_ocorreu: r.data_ocorreu });
-        discipuladoByPair.set(key, list);
-      }
+      const byPair = this.buildCountAndDatesIndex(discipuladosNoPeriodo);
 
-      // 5) Agrupa discípulos por supervisor, montando o MESMO shape do front:
-      //    discipulador.discipulos[] => { user_discipulos: { first_name }, discipulado: [{data_ocorreu}] }
       const discipulosBySupervisor = new Map<string, any[]>();
-
       for (const d of discipulosAtuais) {
         const supId = d.discipuladorId;
         if (!supId) continue;
-
-        const keyPair = `${d.id}|${supId}`;
-        const discipulado = discipuladoByPair.get(keyPair) ?? [];
+        const key = `${d.id}|${supId}`;
+        const datas = byPair.get(key) ?? [];
 
         const list = discipulosBySupervisor.get(supId) ?? [];
         list.push({
-          user_discipulos: { first_name: d.first_name },
-          discipulado,
+          user_discipulos: {
+            id: d.id,
+            first_name: d.first_name,
+            image_url: d.image_url ?? "",
+          },
+          _count: { discipulado: datas.length },
+          discipulado: datas.map((dt) => ({ data_ocorreu: dt.toISOString() })),
         });
         discipulosBySupervisor.set(supId, list);
       }
 
-      // 6) Retorno final com supervisores + discipulos atuais
       const membros = supervisao.membros.map((m) => ({
         ...m,
         discipulos: discipulosBySupervisor.get(m.id) ?? [],
       }));
 
-      return [
-        {
-          id: supervisao.id,
-          nome: supervisao.nome,
-          membros,
-        },
-      ];
+      return [{ id: supervisao.id, nome: supervisao.nome, membros }];
     } finally {
       await disconnectPrisma();
     }
   }
 
+  // =========================
+  // Métricas (não muda)
+  // =========================
   async getMemberMetrics() {
     const prisma = createPrismaInstance();
-    const totalMembros = await prisma.user.count();
-    const totalAtivos = await prisma.user.count({
-      where: { situacao_no_reino: { nome: { equals: "Ativo" } } },
-    });
-    const totalNormais = await prisma.user.count({
-      where: { situacao_no_reino: { nome: { equals: "Normal" } } },
-    });
-    const totalInativos = await prisma.user.count({
-      where: { situacao_no_reino: { nome: { equals: "Afastado" } } },
-    });
+    try {
+      const totalMembros = await prisma.user.count();
+      const totalAtivos = await prisma.user.count({
+        where: { situacao_no_reino: { nome: { equals: "Ativo" } } },
+      });
+      const totalNormais = await prisma.user.count({
+        where: { situacao_no_reino: { nome: { equals: "Normal" } } },
+      });
+      const totalInativos = await prisma.user.count({
+        where: { situacao_no_reino: { nome: { equals: "Afastado" } } },
+      });
 
-    const totalDiscipulados = await prisma.discipulado.count();
+      const totalDiscipulados = await prisma.discipulado.count();
 
-    return {
-      totalMembros,
-      totalAtivos,
-      totalNormais,
-      totalInativos,
-      totalDiscipulados,
-    };
+      return {
+        totalMembros,
+        totalAtivos,
+        totalNormais,
+        totalInativos,
+        totalDiscipulados,
+      };
+    } finally {
+      await disconnectPrisma();
+    }
   }
 
+  // =========================
+  // Relatório Supervisão (AJUSTADO: só discipulado atual)
+  // Mantém o retorno já esperado (membros -> discipulador -> discipulado)
+  // =========================
   async discipuladosRelatorioSupervisao(params: {
     superVisionId: string;
     startDate: Date;
     endDate: Date;
   }) {
-    const dataFim = dayjs(params.endDate).endOf("day").toISOString();
-
     const prisma = createPrismaInstance();
+    const period: Period = {
+      start: new Date(params.startDate),
+      end: endOfDay(params.endDate),
+    };
+
     try {
-      const result = await prisma.supervisao.findMany({
-        where: {
-          id: params.superVisionId,
-        },
+      // 1) Membros da supervisão com discipuladorId atual
+      const supervisaoArr = await prisma.supervisao.findMany({
+        where: { id: params.superVisionId },
         select: {
           membros: {
             select: {
               id: true,
               first_name: true,
+              image_url: true,
+              discipuladorId: true, // <- fonte de verdade
               celula: {
                 select: {
                   id: true,
                   nome: true,
-                  lider: {
-                    select: {
-                      first_name: true,
-                    },
-                  },
+                  lider: { select: { first_name: true } },
                 },
               },
-              supervisao_pertence: {
-                select: {
-                  id: true,
-                  nome: true,
-                },
-              },
-              discipulador: {
-                select: {
-                  user_discipulador: {
-                    select: {
-                      first_name: true,
-                    },
-                  },
-                  discipulado: {
-                    where: {
-                      data_ocorreu: {
-                        gte: new Date(params.startDate),
-                        lte: new Date(dataFim),
-                      },
-                    },
-                    select: {
-                      discipulador_usuario: {
-                        select: {
-                          user_discipulos: {
-                            select: {
-                              first_name: true,
-                            },
-                          },
-                        },
-                      },
-                      data_ocorreu: true,
-                    },
-                  },
-                },
-              },
+              supervisao_pertence: { select: { id: true, nome: true } },
             },
           },
         },
       });
-      return result;
+
+      const supervisao = supervisaoArr[0];
+      if (!supervisao) return [];
+
+      const membros = supervisao.membros;
+
+      // 2) Pega dados dos discipuladores atuais (nome/imagem) num batch
+      const discipuladorIds = Array.from(
+        new Set(membros.map((m) => m.discipuladorId).filter(Boolean)),
+      ) as string[];
+
+      const discipuladores = await this.getUsersByIds(prisma, discipuladorIds);
+      const discipuladorById = new Map<UUID, UserMini>(
+        discipuladores.map((u: UserMini) => [u.id, u]),
+      );
+
+      // 3) Busca discipulados no período apenas do par atual (membro.id + membro.discipuladorId)
+      const pairs = membros
+        .filter((m) => !!m.discipuladorId)
+        .map((m) => ({ usuario_id: m.id, discipulador_id: m.discipuladorId! }));
+
+      const discipulados = await this.getDiscipuladosForPairsInPeriod(
+        prisma,
+        pairs,
+        period,
+      );
+      const byPair = this.buildCountAndDatesIndex(discipulados);
+
+      // 4) Monta no mesmo shape do front:
+      // discipulador: [{ user_discipulador, _count, discipulado[] }]
+      const membrosComDiscipuladorShape = membros.map((m) => {
+        const discipuladorId = m.discipuladorId;
+        if (!discipuladorId) {
+          return { ...m, discipulador: [] };
+        }
+
+        const discipuladorUser = discipuladorById.get(discipuladorId);
+        const datas = byPair.get(`${m.id}|${discipuladorId}`) ?? [];
+
+        return {
+          ...m,
+          discipulador: [
+            {
+              user_discipulador: {
+                id: discipuladorUser?.id ?? discipuladorId,
+                first_name: discipuladorUser?.first_name ?? "",
+              },
+              _count: { discipulado: datas.length },
+              discipulado: datas.map((dt) => ({
+                data_ocorreu: dt.toISOString(),
+              })),
+            },
+          ],
+        };
+      });
+
+      // mantém o “array de supervisao” como antes (seu código retornava um array)
+      return [{ membros: membrosComDiscipuladorShape }];
     } finally {
       await disconnectPrisma();
     }
   }
 
+  // =========================
+  // Cultos / Presença (não muda)
+  // =========================
   async cultosRelatorios(params: {
     supervisaoId: string;
     startOfInterval: string;
@@ -433,9 +372,8 @@ class RegisterDiscipuladoRepositorie {
     const prisma = createPrismaInstance();
     const dataFim = dayjs(params.endOfInterval).endOf("day").toISOString();
 
-    console.log(params);
     try {
-      const result = await prisma.cultoIndividual.findMany({
+      return await prisma.cultoIndividual.findMany({
         where: {
           data_inicio_culto: { gte: params.startOfInterval },
           data_termino_culto: { lte: dataFim },
@@ -447,27 +385,14 @@ class RegisterDiscipuladoRepositorie {
                 select: {
                   id: true,
                   first_name: true,
-                  celula: {
-                    select: {
-                      id: true,
-                      nome: true,
-                    },
-                  },
-                  supervisao_pertence: {
-                    select: {
-                      id: true,
-                      nome: true,
-                    },
-                  },
+                  celula: { select: { id: true, nome: true } },
+                  supervisao_pertence: { select: { id: true, nome: true } },
                 },
               },
             },
           },
         },
       });
-
-      console.log(result);
-      return result;
     } finally {
       await disconnectPrisma();
     }
@@ -475,9 +400,8 @@ class RegisterDiscipuladoRepositorie {
 
   async findAll() {
     const prisma = createPrismaInstance();
-
     try {
-      const result = await prisma.presencaCulto.findMany({
+      return await prisma.presencaCulto.findMany({
         select: {
           id: true,
           status: true,
@@ -487,19 +411,13 @@ class RegisterDiscipuladoRepositorie {
             select: {
               id: true,
               first_name: true,
-              celula: {
-                select: {
-                  nome: true,
-                },
-              },
+              celula: { select: { nome: true } },
             },
           },
           date_create: true,
           date_update: true,
         },
       });
-
-      return result;
     } finally {
       await disconnectPrisma();
     }
@@ -513,79 +431,69 @@ class RegisterDiscipuladoRepositorie {
     membro: string;
   }) {
     const prisma = createPrismaInstance();
-
-    const result = await prisma.presencaCulto.findFirst({
-      where: {
-        presenca_culto: { id: presenca_culto },
-        membro: { id: membro },
-      },
-      select: {
-        id: true,
-        status: true,
-        membro: {
-          select: {
-            id: true,
-            first_name: true,
-            celula: {
-              select: {
-                nome: true,
-              },
+    try {
+      return await prisma.presencaCulto.findFirst({
+        where: {
+          presenca_culto: { id: presenca_culto },
+          membro: { id: membro },
+        },
+        select: {
+          id: true,
+          status: true,
+          membro: {
+            select: {
+              id: true,
+              first_name: true,
+              celula: { select: { nome: true } },
             },
           },
+          presenca_culto: true,
         },
-        presenca_culto: true,
-      },
-    });
-    await disconnectPrisma();
-    return result;
+      });
+    } finally {
+      await disconnectPrisma();
+    }
   }
 
   async findById(id: string) {
     const prisma = createPrismaInstance();
-
-    const result = await prisma.presencaCulto.findUnique({
-      where: {
-        id: id,
-      },
-      select: {
-        id: true,
-        status: true,
-        membro: {
-          select: {
-            id: true,
-            first_name: true,
-            celula: {
-              select: {
-                nome: true,
-              },
+    try {
+      return await prisma.presencaCulto.findUnique({
+        where: { id },
+        select: {
+          id: true,
+          status: true,
+          membro: {
+            select: {
+              id: true,
+              first_name: true,
+              celula: { select: { nome: true } },
             },
           },
+          presenca_culto: true,
         },
-        presenca_culto: true,
-      },
-    });
-    await disconnectPrisma();
-    return result;
+      });
+    } finally {
+      await disconnectPrisma();
+    }
   }
 
   async findByIdCulto(culto: string, lider: string) {
     const prisma = createPrismaInstance();
-
-    const result = await prisma.presencaCulto.findFirst({
-      where: {
-        cultoIndividualId: culto,
-        userId: lider,
-      },
-      select: {
-        id: true,
-        status: true,
-        presenca_culto: true,
-      },
-    });
-    await disconnectPrisma();
-    return result;
+    try {
+      return await prisma.presencaCulto.findFirst({
+        where: { cultoIndividualId: culto, userId: lider },
+        select: { id: true, status: true, presenca_culto: true },
+      });
+    } finally {
+      await disconnectPrisma();
+    }
   }
 
+  // =========================
+  // Rota: allmemberssupervisor/existing-register (AJUSTADO: já está ok)
+  // Mantém retorno: data: User[] com discipulador[] e discipulos[]
+  // =========================
   async findAllMembersSupervisorForPeriod({
     supervisor_id,
     firstDayOfMonth,
@@ -596,136 +504,96 @@ class RegisterDiscipuladoRepositorie {
     lastDayOfMonth: Date;
   }) {
     const prisma = createPrismaInstance();
+    const period = toPeriod(firstDayOfMonth, lastDayOfMonth);
 
     try {
-      const end = dayjs(lastDayOfMonth).endOf("day").toDate();
-
-      // 1) Supervisor (mantém o shape esperado)
+      // Supervisor
       const supervisorArr = await prisma.user.findMany({
         where: { id: supervisor_id },
         select: {
           id: true,
           first_name: true,
-          cargo_de_lideranca: {
-            select: {
-              id: true,
-              nome: true,
-            },
-          },
-
-          // Quem discipula ESTE supervisor (mantém o shape atual)
-          discipulador: {
-            select: {
-              user_discipulos: {
-                select: {
-                  id: true,
-                  first_name: true,
-                  image_url: true,
-                },
-              },
-              _count: {
-                select: {
-                  discipulado: {
-                    where: {
-                      data_ocorreu: {
-                        gte: firstDayOfMonth,
-                        lte: end,
-                      },
-                    },
-                  },
-                },
-              },
-              discipulado: {
-                where: {
-                  data_ocorreu: {
-                    gte: firstDayOfMonth,
-                    lte: end,
-                  },
-                },
-                select: {
-                  data_ocorreu: true,
-                },
-                orderBy: [{ data_ocorreu: "desc" }],
-              },
-            },
-          },
-
-          // ⚠️ NÃO usamos mais a relação "discipulos" aqui pra definir "atuais"
-          // Vamos montar manualmente com base em User.discipuladorId
-          // (mas deixamos o campo aqui fora do select)
+          cargo_de_lideranca: { select: { id: true, nome: true } },
+          discipuladorId: true, // <- fonte de verdade pra "quem discipula ele"
         },
       });
 
       const supervisor = supervisorArr[0];
       if (!supervisor) return [];
 
-      // 2) Discípulos ATUAIS (fonte de verdade: user.discipuladorId)
-      const discipulosAtuais = await prisma.user.findMany({
-        where: {
-          discipuladorId: supervisor_id,
-          // se quiser reforçar "atual", use regras de negócio:
-          // is_discipulado: true,
-          // situacao_no_reino: { nome: { equals: "Ativo" } },
-        },
-        select: {
-          id: true,
-          first_name: true,
-          image_url: true,
-        },
-        orderBy: [{ first_name: "asc" }],
-      });
+      // discipulador atual do supervisor (1 item no array)
+      let discipuladorShape: any[] = [];
+      if (supervisor.discipuladorId) {
+        const discipuladorUser = await prisma.user.findUnique({
+          where: { id: supervisor.discipuladorId },
+          select: { id: true, first_name: true },
+        });
 
-      const discipuloIds = discipulosAtuais.map((d) => d.id);
+        const discipuladosDoSupervisor = await prisma.discipulado.findMany({
+          where: {
+            usuario_id: supervisor.id,
+            discipulador_id: supervisor.discipuladorId,
+            data_ocorreu: { gte: period.start, lte: period.end },
+          },
+          select: { data_ocorreu: true },
+          orderBy: [{ data_ocorreu: "desc" }],
+        });
 
-      // 3) Discipulados no período para esses discípulos (tabela discipulado)
-      const discipulados = discipuloIds.length
-        ? await prisma.discipulado.findMany({
-            where: {
-              usuario_id: { in: discipuloIds },
-              discipulador_id: supervisor_id,
-              data_ocorreu: {
-                gte: firstDayOfMonth,
-                lte: end,
-              },
+        discipuladorShape = [
+          {
+            user_discipulador: {
+              id: discipuladorUser?.id ?? supervisor.discipuladorId,
+              first_name: discipuladorUser?.first_name ?? "",
             },
-            select: {
-              usuario_id: true,
-              data_ocorreu: true,
-            },
-            orderBy: [{ data_ocorreu: "desc" }],
-          })
-        : [];
-
-      // 4) Indexa por usuário
-      const byUser = new Map<string, Date[]>();
-      for (const d of discipulados) {
-        const list = byUser.get(d.usuario_id) ?? [];
-        list.push(d.data_ocorreu);
-        byUser.set(d.usuario_id, list);
+            _count: { discipulado: discipuladosDoSupervisor.length },
+            discipulado: discipuladosDoSupervisor.map((d) => ({
+              data_ocorreu: d.data_ocorreu.toISOString(),
+            })),
+          },
+        ];
       }
 
-      // 5) Monta o campo "discipulos" no SHAPE esperado
-      const discipulosShape = discipulosAtuais.map((u) => {
-        const datas = byUser.get(u.id) ?? [];
-        return {
-          user_discipulos: {
-            id: u.id,
-            first_name: u.first_name,
-            image_url: u.image_url ?? "",
-          },
-          _count: {
-            discipulado: datas.length,
-          },
-          discipulado: datas.map((dt) => ({
-            data_ocorreu: dt.toISOString(),
-          })),
-        };
-      });
+      // discípulos atuais do supervisor (lista por discipuladorId)
+      const discipulosAtuais = await this.getCurrentDisciplesOf(
+        prisma,
+        supervisor.id,
+      );
 
-      // 6) Retorna no formato final esperado: data: User[] (array)
+      const pairs = discipulosAtuais.map((d: UserMini) => ({
+        usuario_id: d.id,
+        discipulador_id: supervisor.id,
+      }));
+
+      const discipulados = await this.getDiscipuladosForPairsInPeriod(
+        prisma,
+        pairs,
+        period,
+      );
+      const byPair = this.buildCountAndDatesIndex(discipulados);
+
+      const discipulosShape: DisciplosShape[] = discipulosAtuais.map(
+        (u: UserMini) => {
+          const datas = byPair.get(`${u.id}|${supervisor.id}`) ?? [];
+          return {
+            user_discipulos: {
+              id: u.id,
+              first_name: u.first_name,
+              image_url: u.image_url ?? "",
+            },
+            _count: { discipulado: datas.length },
+            discipulado: datas.map((dt) => ({
+              data_ocorreu: dt.toISOString(),
+            })),
+          };
+        },
+      );
+
       return [
         {
-          ...supervisor,
+          id: supervisor.id,
+          first_name: supervisor.first_name,
+          cargo_de_lideranca: supervisor.cargo_de_lideranca,
+          discipulador: discipuladorShape,
           discipulos: discipulosShape,
         },
       ];
@@ -734,6 +602,10 @@ class RegisterDiscipuladoRepositorie {
     }
   }
 
+  // =========================
+  // Rota: allmemberscell/existing-register (AJUSTADO: atual por discipuladorId)
+  // Mantém retorno igual ao que você já manda (celula->membros->discipulador[])
+  // =========================
   async findAllMembersCellForPeriod({
     cell_id,
     firstDayOfMonth,
@@ -744,93 +616,88 @@ class RegisterDiscipuladoRepositorie {
     lastDayOfMonth: Date;
   }) {
     const prisma = createPrismaInstance();
-    // console.log('cell_id', cell_id)
-    // console.log('firstDayOfMonth', firstDayOfMonth)
-    // console.log('lastDayOfMonth', lastDayOfMonth)
+    const period = toPeriod(firstDayOfMonth, lastDayOfMonth);
+
     try {
-      const lastDayOfMonthPlusOneDay = dayjs(lastDayOfMonth).add(1, "day");
+      // 1) Membros da célula + discipuladorId (atual)
       const result = await prisma.celula.findMany({
-        where: {
-          id: cell_id,
-          // membros: {
-          //   some: {
-          //     discipulos: {
-          //       some: {
-          //         discipulado: {
-          //           some: {
-          //             AND: [
-          //               { data_ocorreu: { gte: firstDayOfMonth } },
-          //               { data_ocorreu: { lte: lastDayOfMonth } }
-          //             ]
-          //           }
-          //         }
-          //       }
-          //     }
-          //   }
-          // }
-        },
+        where: { id: cell_id },
         select: {
           membros: {
             select: {
               id: true,
               first_name: true,
               image_url: true,
-              cargo_de_lideranca: {
-                select: {
-                  id: true,
-                  nome: true,
-                },
-              },
-              discipulador: {
-                select: {
-                  user_discipulador: {
-                    select: {
-                      id: true,
-                      first_name: true,
-                      image_url: true,
-                    },
-                  },
-                  _count: {
-                    select: {
-                      discipulado: {
-                        where: {
-                          data_ocorreu: {
-                            gte: firstDayOfMonth,
-                            lte: lastDayOfMonthPlusOneDay.toISOString(),
-                          },
-                        },
-                      },
-                    },
-                  },
-                  discipulado: {
-                    // select: {
-                    //   data_ocorreu: true
-                    // }
-                    where: {
-                      data_ocorreu: {
-                        gte: firstDayOfMonth,
-                        lte: lastDayOfMonthPlusOneDay.toISOString(),
-                      },
-                    },
-                  },
-                },
-              },
+              discipuladorId: true,
+              cargo_de_lideranca: { select: { id: true, nome: true } },
             },
           },
         },
       });
 
-      // const quantidadeDiscipuladoRealizado = result.length
-      // const discipuladosRealizados = result
+      const celula = result[0];
+      if (!celula) return [];
 
-      // return { quantidadeDiscipuladoRealizado, discipuladosRealizados };
-      // console.log('result', result)
-      return result;
+      const membros = celula.membros;
+
+      // 2) Carrega dados dos discipuladores atuais em batch
+      const discipuladorIds = Array.from(
+        new Set(membros.map((m) => m.discipuladorId).filter(Boolean)),
+      ) as string[];
+      const discipuladores = await this.getUsersByIds(prisma, discipuladorIds);
+      const discipuladorById = new Map<UUID, UserMini>(
+        discipuladores.map((u: UserMini) => [u.id, u]),
+      );
+
+      // 3) Busca discipulados do período apenas dos pares atuais
+      const pairs = membros
+        .filter((m) => !!m.discipuladorId)
+        .map((m) => ({ usuario_id: m.id, discipulador_id: m.discipuladorId! }));
+
+      const discipulados = await this.getDiscipuladosForPairsInPeriod(
+        prisma,
+        pairs,
+        period,
+      );
+      const byPair = this.buildCountAndDatesIndex(discipulados);
+
+      // 4) Monta o mesmo shape do front: membro.discipulador: [{ user_discipulador, _count, discipulado[] }]
+      const membrosComDiscipulador = membros.map((m) => {
+        if (!m.discipuladorId) {
+          return { ...m, discipulador: [] };
+        }
+
+        const u = discipuladorById.get(m.discipuladorId);
+        const datas = byPair.get(`${m.id}|${m.discipuladorId}`) ?? [];
+
+        return {
+          ...m,
+          discipulador: [
+            {
+              user_discipulador: {
+                id: u?.id ?? m.discipuladorId,
+                first_name: u?.first_name ?? "",
+                image_url: u?.image_url ?? "",
+              },
+              _count: { discipulado: datas.length },
+              discipulado: datas.map((dt) => ({
+                data_ocorreu: dt.toISOString(),
+              })),
+            },
+          ],
+        };
+      });
+
+      // mantém o mesmo formato que você retornava: [{ membros: [...] }]
+      return [{ membros: membrosComDiscipulador }];
     } finally {
       await disconnectPrisma();
     }
   }
 
+  // =========================
+  // findAllForPeriod (AJUSTADO: só atual pelo discipulador_id informado)
+  // =========================
   async findAllForPeriod({
     usuario_id,
     discipulador_id,
@@ -843,93 +710,109 @@ class RegisterDiscipuladoRepositorie {
     lastDayOfMonth: Date;
   }) {
     const prisma = createPrismaInstance();
+    const period = toPeriod(firstDayOfMonth, lastDayOfMonth);
 
     try {
-      const lastDayOfMonthPlusOneDay = dayjs(lastDayOfMonth).add(1, "day");
-      const result = await prisma.discipulado.findMany({
-        where: {
-          usuario_id: usuario_id,
-          data_ocorreu: {
-            gte: firstDayOfMonth,
-            lte: lastDayOfMonthPlusOneDay.toISOString(),
-          },
-        },
-        select: {
-          discipulado_id: true,
-          data_ocorreu: true,
-        },
+      // valida o "atual": o usuário precisa ter discipuladorId == discipulador_id
+      // (se você não quiser bloquear, pode só usar isso como filtro extra)
+      const user = await prisma.user.findUnique({
+        where: { id: usuario_id },
+        select: { discipuladorId: true },
       });
 
-      const quantidadeDiscipuladoRealizado = result.length;
-      const discipuladosRealizados = result;
+      const discipuladorAtual = user?.discipuladorId;
+      if (!discipuladorAtual || discipuladorAtual !== discipulador_id) {
+        // retorna vazio (mantém shape) para não misturar histórico
+        return {
+          quantidadeDiscipuladoRealizado: 0,
+          discipuladosRealizados: [],
+        };
+      }
 
-      return { quantidadeDiscipuladoRealizado, discipuladosRealizados };
+      const result = await prisma.discipulado.findMany({
+        where: {
+          usuario_id,
+          discipulador_id, // <- ESSENCIAL (antes faltava)
+          data_ocorreu: { gte: period.start, lte: period.end },
+        },
+        select: { discipulado_id: true, data_ocorreu: true },
+      });
+
+      return {
+        quantidadeDiscipuladoRealizado: result.length,
+        discipuladosRealizados: result,
+      };
     } finally {
       await disconnectPrisma();
     }
   }
 
+  // =========================
+  // createRegisterDiscipulado (opcional: validar atual)
+  // =========================
   async createRegisterDiscipulado(
     RegisterDiscipuladoDataForm: dataSchemaCreateDiscipulado,
   ) {
     const prisma = createPrismaInstance();
-
     const { usuario_id, discipulador_id, data_ocorreu } =
       RegisterDiscipuladoDataForm;
 
-    // const dataOcorreuIso = data_ocorreu.toDateString()
-    const dateFinally = new Date(data_ocorreu);
+    try {
+      // Opcional (recomendado): garantir que está registrando no discipulador ATUAL
+      const user = await prisma.user.findUnique({
+        where: { id: usuario_id },
+        select: { discipuladorId: true },
+      });
 
-    const result = await prisma.discipulado.create({
-      data: {
-        usuario_id: usuario_id,
-        discipulador_id: discipulador_id,
-        data_ocorreu: dateFinally,
-      },
-    });
-    await disconnectPrisma();
-    return result;
+      if (!user?.discipuladorId || user.discipuladorId !== discipulador_id) {
+        // evita registrar histórico / inconsistência
+        throw new Error(
+          "Discipulador informado não é o discipulador atual do usuário.",
+        );
+      }
+
+      const dateFinally = new Date(data_ocorreu);
+
+      return await prisma.discipulado.create({
+        data: {
+          usuario_id,
+          discipulador_id,
+          data_ocorreu: dateFinally,
+        },
+      });
+    } finally {
+      await disconnectPrisma();
+    }
   }
 
+  // =========================
+  // Presença (não muda)
+  // =========================
   async updatePresencaCulto(
     id: string,
     presencaCultoDataForm: PresencaCultoData,
   ) {
     const prisma = createPrismaInstance();
+    try {
+      const { membro, ...presencaCultoData } = presencaCultoDataForm;
 
-    const { membro, ...presencaCultoData } = presencaCultoDataForm;
-    const result = await prisma.presencaCulto.update({
-      where: {
-        id: id,
-      },
-      data: {
-        ...presencaCultoData,
-        membro: {
-          connect: {
-            id: membro,
-          },
+      return await prisma.presencaCulto.update({
+        where: { id },
+        data: {
+          ...presencaCultoData,
+          membro: { connect: { id: membro } },
+          presenca_culto: { connect: { id: presencaCultoData.presenca_culto } },
         },
-        presenca_culto: {
-          connect: {
-            id: presencaCultoData.presenca_culto,
-          },
-        },
-      },
-    });
-    await disconnectPrisma();
-    return result;
+      });
+    } finally {
+      await disconnectPrisma();
+    }
   }
 
   async deletePresencaCulto(id: string) {
     const prisma = createPrismaInstance();
-
     try {
-      const result = await prisma.presencaCulto.delete({
-        where: {
-          id: id,
-        },
-      });
-      return result;
+      return await prisma.presencaCulto.delete({ where: { id } });
     } finally {
       await disconnectPrisma();
     }
