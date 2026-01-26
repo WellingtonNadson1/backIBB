@@ -3,7 +3,7 @@ import dayjs from "dayjs";
 import timezone from "dayjs/plugin/timezone";
 import utc from "dayjs/plugin/utc";
 import { ReuniaoCelulaData } from "../../Controllers/ReuniaoCelula";
-import { createPrismaInstance, disconnectPrisma } from "../../services/prisma";
+import { createPrismaInstance } from "../../services/prisma";
 
 interface ReuniaoCelulaResult {
   data_reuniao: string;
@@ -39,11 +39,11 @@ class ReuniaoCelulaRepositorie {
         ReuniaoCelulaResult[]
       >`SELECT * FROM reuniao_celula WHERE DATE(data_reuniao) = DATE(${data_reuniao}) AND "celulaId" = ${celula}`;
       console.log("QUERY Retorno: ", query);
-      await disconnectPrisma();
+
       return query;
     } else {
       // Trate o caso em que prisma é undefined, se necessário
-      await disconnectPrisma();
+
       return [];
     }
   }
@@ -54,6 +54,8 @@ class ReuniaoCelulaRepositorie {
         id: true,
         data_reuniao: true,
         status: true,
+        visitantes: true,
+        almas_ganhas: true,
         presencas_membros_reuniao_celula: {
           select: {
             status: true,
@@ -74,7 +76,7 @@ class ReuniaoCelulaRepositorie {
         },
       },
     });
-    await disconnectPrisma();
+
     return result;
   }
 
@@ -102,6 +104,8 @@ class ReuniaoCelulaRepositorie {
         id: true,
         data_reuniao: true,
         status: true,
+        visitantes: true,
+        almas_ganhas: true,
         presencas_membros_reuniao_celula: {
           select: {
             status: true,
@@ -122,18 +126,22 @@ class ReuniaoCelulaRepositorie {
         },
       },
     });
-    await disconnectPrisma();
+
     return result;
   }
 
   async findById(id: string) {
     const result = await prisma?.reuniaoCelula.findUnique({
-      where: {
-        id: id,
-      },
+      where: { id },
       select: {
+        id: true,
         data_reuniao: true,
         status: true,
+
+        // ✅ ADICIONAR
+        visitantes: true,
+        almas_ganhas: true,
+
         presencas_membros_reuniao_celula: {
           select: {
             status: true,
@@ -154,7 +162,7 @@ class ReuniaoCelulaRepositorie {
         },
       },
     });
-    await disconnectPrisma();
+
     return result;
   }
 
@@ -187,7 +195,7 @@ class ReuniaoCelulaRepositorie {
         },
       },
     });
-    await disconnectPrisma();
+
     return result;
   }
 
@@ -217,19 +225,19 @@ class ReuniaoCelulaRepositorie {
         data: {
           presencas_membros_reuniao_celula: {
             connect: presencas_membros_reuniao_celula.map(
-              (reuniaoCelulaId) => ({ id: reuniaoCelulaId })
+              (reuniaoCelulaId) => ({ id: reuniaoCelulaId }),
             ),
           },
         },
       });
     }
-    await disconnectPrisma();
+
     return reuniaoCelula;
   }
 
   async updateReuniaoCelula(
     id: string,
-    reuniaoCelulaDataForm: ReuniaoCelulaData
+    reuniaoCelulaDataForm: ReuniaoCelulaData,
   ) {
     const {
       presencas_membros_reuniao_celula,
@@ -278,7 +286,7 @@ class ReuniaoCelulaRepositorie {
       },
       data: updateReuniaoCelulaInput,
     });
-    await disconnectPrisma();
+
     return result;
   }
 
@@ -288,7 +296,7 @@ class ReuniaoCelulaRepositorie {
         id: id,
       },
     });
-    await disconnectPrisma();
+
     return result;
   }
 }

@@ -1,7 +1,7 @@
-import { PrismaClient } from "@prisma/client";
 import { AulaEscolaData } from "../../Controllers/Escola/AulaEscola";
+import { createPrismaInstance } from "../../services/prisma";
 
-const prisma = new PrismaClient();
+const prisma = createPrismaInstance();
 
 class AulaEscolaRepositorie {
   async findAll() {
@@ -55,7 +55,9 @@ class AulaEscolaRepositorie {
           },
         },
         presencas: {
-          connect: presencas ? presencas.map((presencaId) => ({ id: presencaId })) : [],
+          connect: presencas
+            ? presencas.map((presencaId) => ({ id: presencaId }))
+            : [],
         },
       },
     });
@@ -75,7 +77,9 @@ class AulaEscolaRepositorie {
           },
         },
         presencas: {
-          connect: presencas ? presencas.map((presencaId) => ({ id: presencaId })) : [],
+          connect: presencas
+            ? presencas.map((presencaId) => ({ id: presencaId }))
+            : [],
         },
       },
     });

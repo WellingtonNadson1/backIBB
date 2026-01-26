@@ -4,32 +4,40 @@ import PresencaReuniaoCelulaController from "../../Controllers/PresencaReuniaoCe
 const routerPresencaReuniaCelula = async (fastify: FastifyInstance) => {
   fastify.get(
     "/presencareuniaocelulas/cell-metrics",
-    PresencaReuniaoCelulaController.getCellMetrics
+    PresencaReuniaoCelulaController.getCellMetrics,
   );
   fastify.get("/presencareuniaocelulas", PresencaReuniaoCelulaController.index);
   fastify.get(
     "/presencareuniaocelulas/:id",
-    PresencaReuniaoCelulaController.show
+    PresencaReuniaoCelulaController.show,
   );
   fastify.post(
     "/presencareuniaocelulas",
-    PresencaReuniaoCelulaController.store
+    PresencaReuniaoCelulaController.store,
   );
   fastify.post(
     "/presencareuniaocelulas/newroute",
-    PresencaReuniaoCelulaController.newstore
+    PresencaReuniaoCelulaController.newstore,
+  );
+  fastify.post(
+    "/presencareuniaocelulas/idempotent",
+    PresencaReuniaoCelulaController.createManyIdempotent,
+  );
+  fastify.get(
+    "/presencareuniaocelulas/byreuniao/:reuniaoId",
+    PresencaReuniaoCelulaController.listByReuniao,
   );
   fastify.get(
     "/presencareuniaocelulas/isregister/:id",
-    PresencaReuniaoCelulaController.isregister
+    PresencaReuniaoCelulaController.isregister,
   );
   fastify.delete(
     "/presencareuniaocelulas/:id",
-    PresencaReuniaoCelulaController.delete
+    PresencaReuniaoCelulaController.delete,
   );
   fastify.put(
     "/presencareuniaocelulas/:id",
-    PresencaReuniaoCelulaController.update
+    PresencaReuniaoCelulaController.update,
   );
 };
 

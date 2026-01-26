@@ -1,6 +1,7 @@
-import { Prisma, PrismaClient, Role } from "@prisma/client";
+import { Prisma, Role } from "@prisma/client";
+import { createPrismaInstance } from "../../services/prisma";
 
-const prisma = new PrismaClient();
+const prisma = createPrismaInstance();
 
 // ===== Utils (UTC) =====
 type ChartCultoPoint = {
@@ -15,7 +16,7 @@ type ChartCultoPoint = {
 
 function startOfDayUTC(d: Date) {
   return new Date(
-    Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate())
+    Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate()),
   );
 }
 
@@ -61,7 +62,7 @@ const ELIGIBLE_MEMBER_ROLES: Role[] = [
 // Constrói: ARRAY['MEMBER'::"Role",'USERLIDER'::"Role", ...]
 const ELIGIBLE_ROLES_SQL = Prisma.sql`ARRAY[${Prisma.join(
   ELIGIBLE_MEMBER_ROLES.map((r) => Prisma.sql`${r}::"Role"`),
-  ", "
+  ", ",
 )}]`;
 
 export class CentralDashboardRepository {
@@ -182,7 +183,7 @@ export class CentralDashboardRepository {
       .filter(
         (c) =>
           !c.reunioes_celula[0]?.data_reuniao ||
-          c.reunioes_celula[0].data_reuniao < cutoff
+          c.reunioes_celula[0].data_reuniao < cutoff,
       )
       .map((c) => ({
         id: c.id,
@@ -207,7 +208,7 @@ export class CentralDashboardRepository {
 
       if (cultoSemanalId) {
         presConditions.push(
-          Prisma.sql`ci."cultoSemanalId" = ${cultoSemanalId}`
+          Prisma.sql`ci."cultoSemanalId" = ${cultoSemanalId}`,
         );
       }
       if (supervisaoId) {
@@ -313,11 +314,11 @@ export class CentralDashboardRepository {
       meetingsByDay.set(key, (meetingsByDay.get(key) ?? 0) + 1);
       visitantesByDay.set(
         key,
-        (visitantesByDay.get(key) ?? 0) + Number(r.visitantes ?? 0)
+        (visitantesByDay.get(key) ?? 0) + Number(r.visitantes ?? 0),
       );
       almasByDay.set(
         key,
-        (almasByDay.get(key) ?? 0) + Number(r.almas_ganhas ?? 0)
+        (almasByDay.get(key) ?? 0) + Number(r.almas_ganhas ?? 0),
       );
     }
 

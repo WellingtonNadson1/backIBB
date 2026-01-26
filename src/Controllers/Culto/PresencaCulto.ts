@@ -2,6 +2,7 @@ import dayjs from "dayjs";
 import { FastifyReply, FastifyRequest } from "fastify";
 import { Input, array, boolean, object, string } from "valibot";
 import { PresencaCultoRepositorie } from "../../Repositories/Culto";
+import { PresencaCultoSpeedSchema } from "./schemas";
 
 type CultoIndividual = {
   startDate: Date;
@@ -16,9 +17,25 @@ const PresencaCultoDataNewSchema = object({
     object({
       id: string(),
       status: boolean(), //Pode ter um status (presente, ausente, justificado, etc.)
-    })
+    }),
   ),
 });
+
+function nowMs() {
+  return Number(process.hrtime.bigint() / BigInt(1_000_000));
+}
+
+function isPrismaError(e: any) {
+  return e && typeof e === "object" && typeof e.code === "string";
+}
+
+function safeJson(obj: unknown) {
+  try {
+    return JSON.stringify(obj);
+  } catch {
+    return "[unserializable]";
+  }
+}
 
 export type PresencaCultoDataNew = Input<typeof PresencaCultoDataNewSchema>;
 
@@ -61,7 +78,7 @@ class PresencaCultoController {
     request: FastifyRequest<{
       Params: PresencaCultoParams;
     }>,
-    reply: FastifyReply
+    reply: FastifyReply,
   ) {
     const id = request.params.id;
     const presencaCulto = await PresencaCultoRepositorie.findById(id);
@@ -81,7 +98,7 @@ class PresencaCultoController {
         startDate,
         endDate,
         superVisionId,
-        cargoLideranca
+        cargoLideranca,
       );
 
     if (!resultRelatorioCultos) {
@@ -127,12 +144,12 @@ class PresencaCultoController {
       culto.presencas_culto
         .filter(
           (presenca) =>
-            presenca.membro?.supervisao_pertence?.id === params.supervisaoId
+            presenca.membro?.supervisao_pertence?.id === params.supervisaoId,
         )
         .map((presenca) => ({
           culto,
           membro: presenca.membro,
-        }))
+        })),
     );
 
     console.log(resultRelatorioCultos);
@@ -151,47 +168,158 @@ class PresencaCultoController {
   }
 
   async storeRefactored(request: FastifyRequest, reply: FastifyReply) {
+    const reqId = (request as any).id ?? "no-request-id";
+    const t0 = nowMs();
+
+    // ✅ 2) Validar
+    const parsed = PresencaCultoSpeedSchema.safeParse(request.body);
+    if (!parsed.success) {
+      console.error(
+        `[PresencaCultoSpeed][${reqId}] Payload inválido`,
+        parsed.error.flatten(),
+      );
+
+      return reply.code(400).send({
+        message: "Payload inválido",
+        issues: parsed.error.flatten(),
+      });
+    }
+
+    const { presence_culto, membro } = parsed.data;
+
+    // ✅ 3) Deduplicar por id (se o front mandar repetido, não explode e não gera ruído)
+    const uniqueById = Array.from(
+      new Map(membro.map((m) => [m.id, m])).values(),
+    );
+
+    // ✅ 4) Logs iniciais (úteis)
+    console.log(`[PresencaCultoSpeed][${reqId}] START`);
+    console.log(
+      `[PresencaCultoSpeed][${reqId}] presence_culto=${presence_culto}`,
+    );
+    console.log(
+      `[PresencaCultoSpeed][${reqId}] membros (raw=${membro.length} unique=${uniqueById.length}) ids=${safeJson(
+        uniqueById.map((m) => m.id),
+      )}`,
+    );
+
     try {
-      const presencaCultoDataForm = request.body as PresencaCultoDataNew;
-      const { presence_culto, membro } = presencaCultoDataForm;
+      const membrosIds = uniqueById.map((m) => m.id);
 
-      const membrosIds = membro.map((m) => m.id);
-
-      // Consulta em lote
+      // 5) Consulta em lote (quem já existe)
+      const tFind0 = nowMs();
       const membrosJaRegistrados =
         await PresencaCultoRepositorie.findPresencasRegistradas(
           presence_culto,
-          membrosIds
+          membrosIds,
         );
+      const tFind1 = nowMs();
 
-      // Filtra quem ainda não está registrado
-      const membrosParaRegistrar = membro.filter(
-        (m) => !membrosJaRegistrados.includes(m.id)
+      console.log(
+        `[PresencaCultoSpeed][${reqId}] findPresencasRegistradas: ${membrosJaRegistrados.length} encontrados em ${
+          tFind1 - tFind0
+        }ms`,
       );
 
-      // Registra em lote quem não estava
+      // 6) Filtrar quem falta
+      const jaSet = new Set(membrosJaRegistrados);
+      const membrosParaRegistrar = uniqueById.filter((m) => !jaSet.has(m.id));
+
+      console.log(
+        `[PresencaCultoSpeed][${reqId}] membrosParaRegistrar=${membrosParaRegistrar.length} ids=${safeJson(
+          membrosParaRegistrar.map((m) => m.id),
+        )}`,
+      );
+
+      // 7) Registrar em lote
+      let createManyCount = 0;
       if (membrosParaRegistrar.length > 0) {
-        await PresencaCultoRepositorie.createPresencaCultoNew({
+        const tCreate0 = nowMs();
+        const res = await PresencaCultoRepositorie.createPresencaCultoNew({
           presence_culto,
           membro: membrosParaRegistrar,
         });
+        const tCreate1 = nowMs();
+
+        // seu repo retorna createMany result (com count)
+        createManyCount = (res as any)?.count ?? 0;
+
+        console.log(
+          `[PresencaCultoSpeed][${reqId}] createMany: count=${createManyCount} em ${tCreate1 - tCreate0}ms (skipDuplicates=true)`,
+        );
+      } else {
+        console.log(
+          `[PresencaCultoSpeed][${reqId}] createMany: pulado (todos já registrados)`,
+        );
       }
 
-      // Monta resultado de todos
-      const resultados = membro.map((m) => ({
+      // 8) Resultado final (opcional: reconsultar para confirmar)
+      const tAfter0 = nowMs();
+      const registradosDepois =
+        await PresencaCultoRepositorie.findPresencasRegistradas(
+          presence_culto,
+          membrosIds,
+        );
+      const tAfter1 = nowMs();
+
+      console.log(
+        `[PresencaCultoSpeed][${reqId}] confirm registradosDepois=${registradosDepois.length} em ${tAfter1 - tAfter0}ms`,
+      );
+
+      // 9) Status por membro (com base no BEFORE; se quiser base no AFTER, eu te ajusto)
+      const resultados = uniqueById.map((m) => ({
         membro: m.id,
-        status: membrosJaRegistrados.includes(m.id)
-          ? "já registrado"
-          : "registrado",
+        status: jaSet.has(m.id) ? "já registrado" : "registrado",
+        payload_status: m.status, // ajuda debug (o boolean que veio do front)
       }));
 
+      const t1 = nowMs();
+      console.log(`[PresencaCultoSpeed][${reqId}] DONE totalTime=${t1 - t0}ms`);
+
       return reply.code(201).send({
+        cultoIndividualId: presence_culto,
+        totalRecebidos: membro.length,
+        totalUnicos: uniqueById.length,
+        totalJaRegistrados: membrosJaRegistrados.length,
+        totalCriados: createManyCount,
+        totalRegistradosDepois: registradosDepois.length,
+        registrados: registradosDepois,
         resultados,
         message: "Processamento concluído.",
       });
     } catch (error: any) {
-      console.error(error);
-      return reply.code(400).send(error.message || "Erro interno do servidor");
+      // ✅ Tratamento melhor de erros do Prisma
+      if (isPrismaError(error)) {
+        // P2002: Unique constraint failed
+        if (error.code === "P2002") {
+          console.error(
+            `[PresencaCultoSpeed][${reqId}] Prisma P2002 (unique)`,
+            error,
+          );
+          return reply.code(409).send({
+            message: "Presença já registrada (unique).",
+            details: error.meta ?? undefined,
+          });
+        }
+
+        // P2003: Foreign key constraint failed
+        if (error.code === "P2003") {
+          console.error(
+            `[PresencaCultoSpeed][${reqId}] Prisma P2003 (FK)`,
+            error,
+          );
+          return reply.code(400).send({
+            message:
+              "IDs inválidos: culto ou membro não existem (violação de chave estrangeira).",
+            details: error.meta ?? undefined,
+          });
+        }
+      }
+
+      console.error(`[PresencaCultoSpeed][${reqId}] ERRO`, error);
+      return reply.code(500).send({
+        message: "Erro interno do servidor",
+      });
     }
   }
 
@@ -228,7 +356,7 @@ class PresencaCultoController {
     request: FastifyRequest<{
       Params: PresencaCultoParams;
     }>,
-    reply: FastifyReply
+    reply: FastifyReply,
   ) {
     const id = request.params.id;
     const presencaCultoDataForm = request.body as PresencaCultoData;
@@ -236,7 +364,7 @@ class PresencaCultoController {
       id,
       {
         ...presencaCultoDataForm,
-      }
+      },
     );
     return reply.code(202).send(presencaCulto);
   }
@@ -245,7 +373,7 @@ class PresencaCultoController {
     request: FastifyRequest<{
       Params: PresencaCultoParams;
     }>,
-    reply: FastifyReply
+    reply: FastifyReply,
   ) {
     const id = request.params.id;
     await PresencaCultoRepositorie.deletePresencaCulto(id);

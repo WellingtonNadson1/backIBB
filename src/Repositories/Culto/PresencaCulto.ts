@@ -6,7 +6,7 @@ import {
   PresencaCultoData,
   PresencaCultoDataNew,
 } from "../../Controllers/Culto/PresencaCulto";
-import { createPrismaInstance, disconnectPrisma } from "../../services/prisma";
+import { createPrismaInstance } from "../../services/prisma";
 
 dayjs.extend(utc);
 dayjs.extend(timezone);
@@ -23,7 +23,7 @@ class PresencaCultoRepositorie {
     startDate: Date,
     endDate: Date,
     superVisionId: string,
-    cargoLideranca: string[]
+    cargoLideranca: string[],
   ) {
     try {
       const prisma = createPrismaInstance();
@@ -84,7 +84,7 @@ class PresencaCultoRepositorie {
         await CultoIndividualRepositorie.findAllIntervall(
           startDate,
           endDate,
-          superVisionId
+          superVisionId,
         );
 
       const totalCultosPeriodo = cultosIndividuaisForDate.totalCultosPeriodo;
@@ -108,14 +108,14 @@ class PresencaCultoRepositorie {
                 dataPresenca.isAfter(dayjs(dataInicio).utcOffset(0)) &&
                 dataPresenca.isBefore(dayjs(dataFim).utcOffset(0))
               );
-            }
+            },
           );
 
           const quantidadeCultosPresentes = presencasFiltradas.reduce(
             (total, presente) => {
               return total + (presente.status === true ? 1 : 0);
             },
-            0
+            0,
           );
 
           const quantidadeCultosPresentePrimicia = presencasFiltradas.reduce(
@@ -129,7 +129,7 @@ class PresencaCultoRepositorie {
                   : 0)
               );
             },
-            0
+            0,
           );
 
           const quantidadeCultosPresenteDomingoSacrificio =
@@ -155,7 +155,7 @@ class PresencaCultoRepositorie {
                   : 0)
               );
             },
-            0
+            0,
           );
 
           const quantidadeCultosPresenteSabado = presencasFiltradas.reduce(
@@ -169,7 +169,7 @@ class PresencaCultoRepositorie {
                   : 0)
               );
             },
-            0
+            0,
           );
 
           const quantidadeCultosPresenteDomingoManha =
@@ -291,7 +291,7 @@ class PresencaCultoRepositorie {
             presencasFiltradas,
             cultos: cultos,
           };
-        }
+        },
       );
 
       return membrosCompareceramCultosFiltrados;
@@ -299,7 +299,6 @@ class PresencaCultoRepositorie {
       console.error("Erro:", error);
       return "Erro interno do servidor";
     } finally {
-      await disconnectPrisma();
     }
   }
 
@@ -345,7 +344,6 @@ class PresencaCultoRepositorie {
       console.log(result);
       return result;
     } finally {
-      await disconnectPrisma();
     }
   }
 
@@ -377,7 +375,6 @@ class PresencaCultoRepositorie {
 
       return result;
     } finally {
-      await disconnectPrisma();
     }
   }
 
@@ -394,7 +391,6 @@ class PresencaCultoRepositorie {
       },
     });
 
-    await disconnectPrisma();
     return result.map((r) => r.userId);
   }
 
@@ -418,7 +414,7 @@ class PresencaCultoRepositorie {
             },
           });
           return result;
-        })
+        }),
       );
 
       // Filtra os resultados para excluir nulos (caso não haja registro para um membro específico)
@@ -476,7 +472,7 @@ class PresencaCultoRepositorie {
         presenca_culto: true,
       },
     });
-    await disconnectPrisma();
+
     return result;
   }
 
@@ -504,7 +500,7 @@ class PresencaCultoRepositorie {
         presenca_culto: true,
       },
     });
-    await disconnectPrisma();
+
     return result;
   }
 
@@ -524,45 +520,32 @@ class PresencaCultoRepositorie {
         presenca_culto: true,
       },
     });
-    await disconnectPrisma();
+
     return result;
   }
 
   async createPresencaCultoNew(presencaCultoDataForm: PresencaCultoDataNew) {
     const prisma = createPrismaInstance();
-
     try {
       const { membro, presence_culto } = presencaCultoDataForm;
 
-      if (!membro || membro.length === 0) {
-        // Não há nada para registrar
-        return [];
-      }
+      const dataBrasil = dayjs().tz("America/Sao_Paulo").toDate();
 
-      const dataBrasil = dayjs().tz("America/Sao_Paulo");
-      const date_create = dataBrasil.format("YYYY-MM-DDTHH:mm:ss.SSS[Z]");
-      const dataBrasilDate = new Date(date_create);
+      const res = await prisma.presencaCulto.createMany({
+        data: membro.map((m) => ({
+          cultoIndividualId: presence_culto,
+          userId: m.id,
+          status: m.status, // boolean direto
+          date_create: dataBrasil,
+          date_update: dataBrasil,
+        })),
+        // se houver unique no banco, isso evita crash
+        skipDuplicates: true,
+      });
 
-      const result = await prisma.$transaction(
-        membro.map(({ id, status }) =>
-          prisma.presencaCulto.create({
-            data: {
-              presenca_culto: { connect: { id: presence_culto } },
-              membro: { connect: { id } },
-              status: Boolean(status),
-              date_create: dataBrasilDate,
-              date_update: dataBrasilDate,
-            },
-          })
-        )
-      );
-
-      return result;
-    } catch (error) {
-      console.error("Erro ao criar presenças:", error);
-      throw error;
+      console.log("createMany.count", res.count);
+      return res;
     } finally {
-      await disconnectPrisma();
     }
   }
 
@@ -592,13 +575,13 @@ class PresencaCultoRepositorie {
         date_update: date_update,
       },
     });
-    await disconnectPrisma();
+
     return result;
   }
 
   async updatePresencaCulto(
     id: string,
-    presencaCultoDataForm: PresencaCultoData
+    presencaCultoDataForm: PresencaCultoData,
   ) {
     const prisma = createPrismaInstance();
 
@@ -621,7 +604,7 @@ class PresencaCultoRepositorie {
         },
       },
     });
-    await disconnectPrisma();
+
     return result;
   }
 
@@ -636,7 +619,6 @@ class PresencaCultoRepositorie {
       });
       return result;
     } finally {
-      await disconnectPrisma();
     }
   }
 }

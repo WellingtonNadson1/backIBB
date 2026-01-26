@@ -1,4 +1,4 @@
-import { createPrismaInstance, disconnectPrisma } from "../../services/prisma";
+import { createPrismaInstance } from "../../services/prisma";
 
 class LicoesCelulaRepositorie {
   async findById(id: string) {
@@ -23,8 +23,6 @@ class LicoesCelulaRepositorie {
           data_termino: true,
         },
       });
-
-      await disconnectPrisma();
 
       return allLicoes;
     } catch (error) {
@@ -54,11 +52,9 @@ class LicoesCelulaRepositorie {
         },
       });
       console.log("temaMonth", temaMonth);
-      await disconnectPrisma();
 
       return temaMonth;
     } catch (error) {
-      await disconnectPrisma();
       console.error("Ocorreu um erro ao buscar o tema", error);
       return error;
     }

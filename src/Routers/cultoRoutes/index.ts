@@ -1,8 +1,8 @@
 // routes/cultoRoutes.ts
-import { PrismaClient } from "@prisma/client";
 import { FastifyInstance } from "fastify";
+import { createPrismaInstance } from "../../services/prisma";
 
-const prisma = new PrismaClient();
+const prisma = createPrismaInstance();
 
 export async function cultoRoutes(app: FastifyInstance) {
   app.get("/cultos/semanais", async () => {

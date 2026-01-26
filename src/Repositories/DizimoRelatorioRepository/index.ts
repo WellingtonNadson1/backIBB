@@ -2,10 +2,10 @@ import {
   Dizimo,
   EventoContribuicao,
   Prisma,
-  PrismaClient,
   TipoPagamento,
 } from "@prisma/client";
 import { endOfMonth, startOfMonth, subMonths } from "date-fns";
+import { createPrismaInstance } from "../../services/prisma";
 
 type LiderPorSupervisaoDTO = {
   supervisaoId: string;
@@ -81,7 +81,7 @@ type DizimoRelatorioDetalhadoResponse = {
 
 type TipoRelatorio = "SUPERVISAO" | "CELULA" | "FUNCAO" | "STATUS";
 
-const prisma = new PrismaClient();
+const prisma = createPrismaInstance();
 
 export class DizimoRelatorioRepository {
   async findRelatorioDetalhadoPorFuncao(params: {
@@ -169,12 +169,12 @@ export class DizimoRelatorioRepository {
       // pega lista de contribuições do período
       const contribs =
         tipoFinanceiro === "DIZIMO"
-          ? (u as any).Dizimo ?? []
-          : (u as any).Oferta ?? [];
+          ? ((u as any).Dizimo ?? [])
+          : ((u as any).Oferta ?? []);
 
       const totalValor = contribs.reduce(
         (acc: number, c: any) => acc + Number(c.valor ?? 0),
-        0
+        0,
       );
 
       const totalLancamentos = contribs.length;
@@ -308,7 +308,7 @@ export class DizimoRelatorioRepository {
 
           const totalValor = membro.Dizimo.reduce(
             (acc, d) => acc + Number(d.valor ?? 0),
-            0
+            0,
           );
           const totalLancamentos = membro.Dizimo.length;
           const temRegistro = totalLancamentos > 0;
@@ -432,7 +432,7 @@ export class DizimoRelatorioRepository {
 
         const totalValor = membro.Dizimo.reduce(
           (acc, d) => acc + Number(d.valor ?? 0),
-          0
+          0,
         );
         const totalLancamentos = membro.Dizimo.length;
         const temRegistro = totalLancamentos > 0;
@@ -582,7 +582,7 @@ export class DizimoRelatorioRepository {
   }
 
   async createMany(
-    data: Prisma.DizimoCreateManyInput[]
+    data: Prisma.DizimoCreateManyInput[],
   ): Promise<Prisma.BatchPayload> {
     return await prisma.dizimo.createMany({
       data,
@@ -591,7 +591,7 @@ export class DizimoRelatorioRepository {
   }
 
   async create(
-    data: Prisma.DizimoCreateInput | Prisma.DizimoUncheckedCreateInput
+    data: Prisma.DizimoCreateInput | Prisma.DizimoUncheckedCreateInput,
   ): Promise<Dizimo> {
     return await prisma.dizimo.create({ data });
   }
@@ -732,7 +732,7 @@ export class DizimoRelatorioRepository {
   async findByIdSupervisao(
     id: string,
     dataInicio: string,
-    dataFim: string
+    dataFim: string,
   ): Promise<Dizimo[] | null> {
     return await prisma.dizimo.findMany({
       where: {

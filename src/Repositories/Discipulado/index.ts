@@ -3,7 +3,7 @@ import timezone from "dayjs/plugin/timezone";
 import utc from "dayjs/plugin/utc";
 import { PresencaCultoData } from "../../Controllers/Culto/PresencaCulto";
 import { dataSchemaCreateDiscipulado } from "../../Controllers/Discipulado/schema";
-import { createPrismaInstance, disconnectPrisma } from "../../services/prisma";
+import { createPrismaInstance } from "../../services/prisma";
 
 dayjs.extend(utc);
 dayjs.extend(timezone);
@@ -225,7 +225,6 @@ class RegisterDiscipuladoRepositorie {
 
       return [{ id: supervisao.id, nome: supervisao.nome, membros }];
     } finally {
-      await disconnectPrisma();
     }
   }
 
@@ -256,7 +255,6 @@ class RegisterDiscipuladoRepositorie {
         totalDiscipulados,
       };
     } finally {
-      await disconnectPrisma();
     }
   }
 
@@ -357,7 +355,6 @@ class RegisterDiscipuladoRepositorie {
       // mantém o “array de supervisao” como antes (seu código retornava um array)
       return [{ membros: membrosComDiscipuladorShape }];
     } finally {
-      await disconnectPrisma();
     }
   }
 
@@ -394,7 +391,6 @@ class RegisterDiscipuladoRepositorie {
         },
       });
     } finally {
-      await disconnectPrisma();
     }
   }
 
@@ -419,7 +415,6 @@ class RegisterDiscipuladoRepositorie {
         },
       });
     } finally {
-      await disconnectPrisma();
     }
   }
 
@@ -451,7 +446,6 @@ class RegisterDiscipuladoRepositorie {
         },
       });
     } finally {
-      await disconnectPrisma();
     }
   }
 
@@ -474,7 +468,6 @@ class RegisterDiscipuladoRepositorie {
         },
       });
     } finally {
-      await disconnectPrisma();
     }
   }
 
@@ -486,7 +479,6 @@ class RegisterDiscipuladoRepositorie {
         select: { id: true, status: true, presenca_culto: true },
       });
     } finally {
-      await disconnectPrisma();
     }
   }
 
@@ -598,7 +590,6 @@ class RegisterDiscipuladoRepositorie {
         },
       ];
     } finally {
-      await disconnectPrisma();
     }
   }
 
@@ -691,7 +682,6 @@ class RegisterDiscipuladoRepositorie {
       // mantém o mesmo formato que você retornava: [{ membros: [...] }]
       return [{ membros: membrosComDiscipulador }];
     } finally {
-      await disconnectPrisma();
     }
   }
 
@@ -743,7 +733,6 @@ class RegisterDiscipuladoRepositorie {
         discipuladosRealizados: result,
       };
     } finally {
-      await disconnectPrisma();
     }
   }
 
@@ -781,7 +770,6 @@ class RegisterDiscipuladoRepositorie {
         },
       });
     } finally {
-      await disconnectPrisma();
     }
   }
 
@@ -805,7 +793,6 @@ class RegisterDiscipuladoRepositorie {
         },
       });
     } finally {
-      await disconnectPrisma();
     }
   }
 
@@ -814,7 +801,6 @@ class RegisterDiscipuladoRepositorie {
     try {
       return await prisma.presencaCulto.delete({ where: { id } });
     } finally {
-      await disconnectPrisma();
     }
   }
 }

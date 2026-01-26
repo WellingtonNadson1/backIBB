@@ -1,5 +1,4 @@
 // Repositories/SupervisorDashboardRepository.ts
-import { PrismaClient } from "@prisma/client";
 import {
   endOfDay,
   startOfDay,
@@ -9,6 +8,7 @@ import {
   endOfMonth,
 } from "date-fns";
 import { utcToZonedTime, zonedTimeToUtc } from "date-fns-tz";
+import { createPrismaInstance } from "../../services/prisma";
 
 // ================= Helpers (Timezone) =================
 const TZ = "America/Sao_Paulo";
@@ -31,7 +31,7 @@ function getSaoPauloRangeNow() {
   return { now, nowSP, inicioHojeUTC, fimHojeUTC, inicioMesUTC, fimMesUTC };
 }
 
-const prisma = new PrismaClient();
+const prisma = createPrismaInstance();
 
 type Params = { supervisorId: string; inicio: Date; fim: Date };
 
@@ -119,7 +119,7 @@ export class SupervisorDashboardRepository {
     const primeiroCultoHojeId = cultosHoje[0]?.id ?? null;
 
     const membrosIds = supervisao.celulas.flatMap((c) =>
-      c.membros.map((m) => m.id)
+      c.membros.map((m) => m.id),
     );
 
     /**
@@ -143,7 +143,7 @@ export class SupervisorDashboardRepository {
     const registradosCultoSet = new Set(
       presencasCultoHojeRegistradas
         .map((p) => p.userId)
-        .filter(Boolean) as string[]
+        .filter(Boolean) as string[],
     );
 
     // ================= Discipulados 30d =================
@@ -202,7 +202,7 @@ export class SupervisorDashboardRepository {
       if (!p.userId) continue;
       presencasMesPorMembro.set(
         p.userId,
-        (presencasMesPorMembro.get(p.userId) ?? 0) + 1
+        (presencasMesPorMembro.get(p.userId) ?? 0) + 1,
       );
     }
 
@@ -282,11 +282,11 @@ export class SupervisorDashboardRepository {
 
       const liderId = c.lider?.id ?? null;
       const discipuladosSet = liderId
-        ? discipuladosPorLider.get(liderId) ?? new Set()
+        ? (discipuladosPorLider.get(liderId) ?? new Set())
         : new Set<string>();
 
       const membrosSemDiscipulado30d = c.membros.filter(
-        (m) => !discipuladosSet.has(m.id)
+        (m) => !discipuladosSet.has(m.id),
       ).length;
 
       membrosSemDiscipulado30dTotal += membrosSemDiscipulado30d;
@@ -330,7 +330,7 @@ export class SupervisorDashboardRepository {
         }, 0);
 
         freqCultoMesPct = Math.round(
-          (somaPresencasCelula / (membrosTotal * totalCultosMes)) * 100
+          (somaPresencasCelula / (membrosTotal * totalCultosMes)) * 100,
         );
       }
 
@@ -409,7 +409,7 @@ export class SupervisorDashboardRepository {
     });
 
     const mesRef = `${nowSP.getFullYear()}-${String(
-      nowSP.getMonth() + 1
+      nowSP.getMonth() + 1,
     ).padStart(2, "0")}`;
 
     if (!supervisao) {
@@ -423,7 +423,7 @@ export class SupervisorDashboardRepository {
     });
 
     const membrosIds = supervisao.celulas.flatMap((c) =>
-      c.membros.map((m) => m.id)
+      c.membros.map((m) => m.id),
     );
 
     const presencasMes = membrosIds.length
@@ -586,12 +586,12 @@ export class SupervisorDashboardRepository {
 
     const totalCelulas = supervisao.celulas.length;
     const celulasCriticas = celulasDTO.filter(
-      (c) => c.status === "CRITICA"
+      (c) => c.status === "CRITICA",
     ).length;
     const semReuniao7d = celulasDTO.filter((c) => c.diasSemReuniao >= 7).length;
     const pendenciasHoje = celulasDTO.reduce(
       (acc, c) => acc + (c.pendenciasHoje ?? 0),
-      0
+      0,
     );
 
     return {
@@ -692,7 +692,7 @@ export class SupervisorDashboardRepository {
       });
 
       const registrados = new Set(
-        presencasCultoHoje.map((p) => p.userId).filter(Boolean) as string[]
+        presencasCultoHoje.map((p) => p.userId).filter(Boolean) as string[],
       );
 
       precisaCultoHoje = registrados.size !== membrosTotal;
@@ -710,10 +710,10 @@ export class SupervisorDashboardRepository {
       : [];
 
     const discipuladosSet = new Set(
-      discipuladosRecentes.map((d) => d.usuario_id)
+      discipuladosRecentes.map((d) => d.usuario_id),
     );
     const membrosSemDiscipulado = celula.membros.filter(
-      (m) => !discipuladosSet.has(m.id)
+      (m) => !discipuladosSet.has(m.id),
     );
     const semDiscipulado = membrosSemDiscipulado.length;
     const semDiscipuladoPct = membrosTotal
@@ -762,7 +762,7 @@ export class SupervisorDashboardRepository {
       });
 
       cultoMesPresencaMediaPct = Math.round(
-        pctList.reduce((acc, x) => acc + x.pct, 0) / pctList.length
+        pctList.reduce((acc, x) => acc + x.pct, 0) / pctList.length,
       );
 
       membrosBaixaFrequencia = pctList
@@ -804,7 +804,7 @@ export class SupervisorDashboardRepository {
 
     const ultimasReunioes = celula.reunioes_celula.map((r) => {
       const presentes = r.presencas_membros_reuniao_celula.filter(
-        (p) => p.status
+        (p) => p.status,
       ).length;
       const total = membrosTotal || 0;
       const pct = total ? Math.round((presentes / total) * 100) : 0;
@@ -852,7 +852,7 @@ export class SupervisorDashboardRepository {
         cultoMes: {
           mesRef: `${hoje.getFullYear()}-${String(hoje.getMonth() + 1).padStart(
             2,
-            "0"
+            "0",
           )}`,
           totalCultosMes,
           presencaMediaPct: cultoMesPresencaMediaPct,

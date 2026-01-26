@@ -1,7 +1,8 @@
 import { PrismaClient } from "@prisma/client";
 import { TrumaEscolaData } from "../../Controllers/Escola/TurmaEscola";
+import { createPrismaInstance } from "../../services/prisma";
 
-const prisma = new PrismaClient();
+const prisma = createPrismaInstance();
 
 class TurmaEscolaRepositorie {
   async findAll() {
@@ -56,7 +57,9 @@ class TurmaEscolaRepositorie {
           connect: alunos ? alunos.map((alunoId) => ({ id: alunoId })) : [],
         },
         aulas_marcadas: {
-          connect: aulas_marcadas ? aulas_marcadas.map((aulaId) => ({ id: aulaId })) : [],
+          connect: aulas_marcadas
+            ? aulas_marcadas.map((aulaId) => ({ id: aulaId }))
+            : [],
         },
       },
     });
@@ -79,7 +82,9 @@ class TurmaEscolaRepositorie {
           connect: alunos?.map((alunoId) => ({ id: alunoId })),
         },
         aulas_marcadas: {
-          connect: aulas_marcadas ? aulas_marcadas.map((aulaId) => ({ id: aulaId })) : [],
+          connect: aulas_marcadas
+            ? aulas_marcadas.map((aulaId) => ({ id: aulaId }))
+            : [],
         },
       },
     });

@@ -1,7 +1,7 @@
-import { PrismaClient } from "@prisma/client";
 import { EscolaData } from "../../Controllers/Escola/Escola";
+import { createPrismaInstance } from "../../services/prisma";
 
-const prisma = new PrismaClient();
+const prisma = createPrismaInstance();
 
 class EscolaRepositorie {
   async findAll() {

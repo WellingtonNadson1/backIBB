@@ -1,5 +1,5 @@
 import { FastifyInstance, FastifyReply, FastifyRequest } from "fastify";
-import { createPrismaInstance, disconnectPrisma } from "../../services/prisma";
+import { createPrismaInstance } from "../../services/prisma";
 import dayjs from "dayjs";
 import { CultoIndividualForDate } from "../../Controllers/Culto/CultoIndividual";
 import { CultoIndividualRepositorie } from "../../Repositories/Culto";
@@ -74,7 +74,7 @@ const routerRelatorioPresencaCulto = async (fastify: FastifyInstance) => {
           await CultoIndividualRepositorie.findAllIntervall(
             startDate,
             endDate,
-            superVisionId
+            superVisionId,
           );
 
         const totalCultosPeriodo = cultosIndividuaisForDate.totalCultosPeriodo;
@@ -98,14 +98,14 @@ const routerRelatorioPresencaCulto = async (fastify: FastifyInstance) => {
                   dataPresenca.isAfter(dayjs(dataInicio).utcOffset(0)) &&
                   dataPresenca.isBefore(dayjs(dataFim).utcOffset(0))
                 );
-              }
+              },
             );
 
             const quantidadeCultosPresentes = presencasFiltradas.reduce(
               (total, presente) => {
                 return total + (presente.status === true ? 1 : 0);
               },
-              0
+              0,
             );
 
             const quantidadeCultosPresentePrimicia = presencasFiltradas.reduce(
@@ -119,7 +119,7 @@ const routerRelatorioPresencaCulto = async (fastify: FastifyInstance) => {
                     : 0)
                 );
               },
-              0
+              0,
             );
 
             const quantidadeCultosPresenteDomingoSacrificio =
@@ -145,7 +145,7 @@ const routerRelatorioPresencaCulto = async (fastify: FastifyInstance) => {
                     : 0)
                 );
               },
-              0
+              0,
             );
 
             const quantidadeCultosPresenteSabado = presencasFiltradas.reduce(
@@ -159,7 +159,7 @@ const routerRelatorioPresencaCulto = async (fastify: FastifyInstance) => {
                     : 0)
                 );
               },
-              0
+              0,
             );
 
             const quantidadeCultosPresenteDomingoManha =
@@ -269,10 +269,8 @@ const routerRelatorioPresencaCulto = async (fastify: FastifyInstance) => {
       } catch (error) {
         console.error("Erro:", error);
         reply.status(500).send("Erro interno do servidor");
-      } finally {
-        await disconnectPrisma();
       }
-    }
+    },
   );
 };
 

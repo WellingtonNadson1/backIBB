@@ -1,5 +1,4 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { PrismaClient } from "@prisma/client";
 import {
   endOfDay,
   endOfMonth,
@@ -7,7 +6,7 @@ import {
   startOfMonth,
   subDays,
 } from "date-fns";
-import { createPrismaInstance, disconnectPrisma } from "../../services/prisma";
+import { createPrismaInstance } from "../../services/prisma";
 import { utcToZonedTime, zonedTimeToUtc } from "date-fns-tz";
 
 // Helpers
@@ -28,7 +27,7 @@ function getSaoPauloRangeNow() {
   return { now, nowSP, inicioHojeUTC, fimHojeUTC, inicioMesUTC, fimMesUTC };
 }
 
-const prisma = new PrismaClient();
+const prisma = createPrismaInstance();
 
 /** ================= DTOs ================= */
 
@@ -130,7 +129,7 @@ type FrequenciaCultosMesDTO = {
 
 export class LiderDashboardRepository {
   async getDashboardByLider(
-    liderId: string
+    liderId: string,
   ): Promise<LiderDashboardDTO | null> {
     const { nowSP, inicioHojeUTC, fimHojeUTC, inicioMesUTC, fimMesUTC } =
       getSaoPauloRangeNow();
@@ -205,7 +204,7 @@ export class LiderDashboardRepository {
       if (!ultimaReuniao) return undefined;
 
       const presentes = ultimaReuniao.presencas_membros_reuniao_celula.filter(
-        (p) => p.status === true
+        (p) => p.status === true,
       ).length;
 
       const percentual =
@@ -378,11 +377,11 @@ export class LiderDashboardRepository {
     });
 
     const discipuladosSet = new Set(
-      discipuladosRecentes.map((d) => d.usuario_id)
+      discipuladosRecentes.map((d) => d.usuario_id),
     );
 
     const membrosSemDiscipulado = celula.membros.filter(
-      (m) => !discipuladosSet.has(m.id)
+      (m) => !discipuladosSet.has(m.id),
     );
 
     if (membrosSemDiscipulado.length > 0) {
@@ -462,7 +461,7 @@ export class LiderDashboardRepository {
   }
 
   async getFrequenciaCultosMesPorCelula(
-    params: Params
+    params: Params,
   ): Promise<FrequenciaCultosMesDTO> {
     const prisma = createPrismaInstance();
 
@@ -481,7 +480,7 @@ export class LiderDashboardRepository {
       if (!lider?.celulaId || !lider?.celula) {
         return {
           mesRef: `${inicio.getFullYear()}-${String(
-            inicio.getMonth() + 1
+            inicio.getMonth() + 1,
           ).padStart(2, "0")}`,
           totalCultosMes: 0,
           celula: { id: "", nome: "Sem célula" },
@@ -533,14 +532,15 @@ export class LiderDashboardRepository {
 
       return {
         mesRef: `${inicio.getFullYear()}-${String(
-          inicio.getMonth() + 1
+          inicio.getMonth() + 1,
         ).padStart(2, "0")}`,
         totalCultosMes,
         celula: { id: lider.celula.id, nome: lider.celula.nome },
         membros: membrosDTO,
       };
-    } finally {
-      await disconnectPrisma();
+    } catch (error) {
+      console.error("Erro:", error);
+      throw error;
     }
   }
 }

@@ -1,11 +1,12 @@
-import { Oferta, Prisma, PrismaClient } from "@prisma/client";
+import { Oferta, Prisma } from "@prisma/client";
 import { endOfMonth, startOfMonth, subMonths } from "date-fns";
+import { createPrismaInstance } from "../../services/prisma";
 
-const prisma = new PrismaClient();
+const prisma = createPrismaInstance();
 
 export class OfertaRelatorioRepository {
   async createMany(
-    data: Omit<Oferta, "id" | "date_create" | "date_update">[]
+    data: Omit<Oferta, "id" | "date_create" | "date_update">[],
   ): Promise<Prisma.BatchPayload> {
     return await prisma.oferta.createMany({
       data,
@@ -14,7 +15,7 @@ export class OfertaRelatorioRepository {
   }
 
   async create(
-    data: Omit<Oferta, "id" | "date_create" | "date_update">
+    data: Omit<Oferta, "id" | "date_create" | "date_update">,
   ): Promise<Oferta> {
     return await prisma.oferta.create({ data });
   }
@@ -64,10 +65,10 @@ export class OfertaRelatorioRepository {
       ]);
 
     console.log(
-      `Usuários que ofertaram no último mês: ${usuariosUltimoMes.length}`
+      `Usuários que ofertaram no último mês: ${usuariosUltimoMes.length}`,
     );
     console.log(
-      `Usuários que ofertaram no mês atual até hoje: ${usuariosMesAtual.length}`
+      `Usuários que ofertaram no mês atual até hoje: ${usuariosMesAtual.length}`,
     );
     // const dizimistasUltimoMes = await prisma.oferta.groupBy({
     //   by: ["userId"],
@@ -143,7 +144,7 @@ export class OfertaRelatorioRepository {
   async findByIdSupervisao(
     id: string,
     dataInicio: string,
-    dataFim: string
+    dataFim: string,
   ): Promise<Oferta[] | null> {
     return await prisma.oferta.findMany({
       where: {

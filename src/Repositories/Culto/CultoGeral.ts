@@ -1,9 +1,8 @@
 import { Prisma } from "@prisma/client";
 import { CultoGeralData } from "../../Controllers/Culto/CultoGeral";
-import { createPrismaInstance, disconnectPrisma } from "../../services/prisma";
+import { createPrismaInstance } from "../../services/prisma";
 
-const prisma = createPrismaInstance()
-
+const prisma = createPrismaInstance();
 
 type UpdateCultoGeralInput = Prisma.CultoGeralUpdateInput & {
   lista_cultos_semanais?: { connect: { id: string } }[];
@@ -28,7 +27,6 @@ class CultoGeralRepositorie {
         },
       },
     });
-    await disconnectPrisma()
   }
 
   async findById(id: string) {
@@ -47,7 +45,6 @@ class CultoGeralRepositorie {
         },
       },
     });
-    await disconnectPrisma()
   }
 
   async createCultoGeral(cultoGeralDataForm: CultoGeralData) {
@@ -61,13 +58,16 @@ class CultoGeralRepositorie {
       await prisma?.cultoGeral.update({
         where: { id: cultoGeral.id },
         data: {
-          lista_cultos_semanais: { connect: lista_cultos_semanais.map((escolaId) => ({ id: escolaId })) },
+          lista_cultos_semanais: {
+            connect: lista_cultos_semanais.map((escolaId) => ({
+              id: escolaId,
+            })),
+          },
         },
       });
     }
-    await disconnectPrisma()
 
-    return cultoGeral
+    return cultoGeral;
   }
 
   async updateCultoGerala(id: string, cultoGeralDataForm: CultoGeralData) {
@@ -78,11 +78,13 @@ class CultoGeralRepositorie {
     };
 
     if (lista_cultos_semanais !== undefined) {
-      updateCultoGeralInput.lista_cultos_semanais = lista_cultos_semanais.map((cultoGeralId) => ({
-        connect: {
-          id: cultoGeralId,
-        },
-      })) as CultoGeralConnect[];
+      updateCultoGeralInput.lista_cultos_semanais = lista_cultos_semanais.map(
+        (cultoGeralId) => ({
+          connect: {
+            id: cultoGeralId,
+          },
+        }),
+      ) as CultoGeralConnect[];
     }
 
     return await prisma?.cultoGeral.update({

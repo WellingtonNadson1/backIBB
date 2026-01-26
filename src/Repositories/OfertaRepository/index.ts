@@ -1,7 +1,8 @@
 // OfertaRepository.ts
-import { Oferta, Prisma, PrismaClient } from "@prisma/client";
+import { Oferta, Prisma } from "@prisma/client";
+import { createPrismaInstance } from "../../services/prisma";
 
-const prisma = new PrismaClient();
+const prisma = createPrismaInstance();
 
 type OfertaWithUserAndCelula = Prisma.OfertaGetPayload<{
   include: {
@@ -34,7 +35,7 @@ type OfertaWithUserAndCelula = Prisma.OfertaGetPayload<{
 
 export class OfertaRepository {
   async createMany(
-    data: Prisma.OfertaCreateManyInput[]
+    data: Prisma.OfertaCreateManyInput[],
   ): Promise<Prisma.BatchPayload> {
     return await prisma.oferta.createMany({
       data,
@@ -48,7 +49,7 @@ export class OfertaRepository {
 
   async findAll(
     page: number = 1,
-    limit: number = 20
+    limit: number = 20,
   ): Promise<OfertaWithUserAndCelula[]> {
     const skip = (page - 1) * limit;
     return await prisma.oferta.findMany({
@@ -91,7 +92,7 @@ export class OfertaRepository {
 
   async update(
     id: string,
-    data: Prisma.OfertaUncheckedUpdateInput
+    data: Prisma.OfertaUncheckedUpdateInput,
   ): Promise<Oferta | null> {
     return await prisma.oferta.update({ where: { id }, data });
   }

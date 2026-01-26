@@ -1,7 +1,7 @@
 // import { PrismaClient } from "@prisma/client";
 // import { ParticipacaoData } from "../Controllers/ParticipacaoController";
 
-// const prisma = new PrismaClient();
+// const prisma = createPrismaInstance();;
 
 // class ParticipacaoRepositorie {
 //   async findAll() {

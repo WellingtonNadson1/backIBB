@@ -1,7 +1,7 @@
 import { CargosliderancaData } from "../Controllers/CargosliderancaController";
-import { createPrismaInstance, disconnectPrisma } from "../services/prisma";
+import { createPrismaInstance } from "../services/prisma";
 
-const prisma = createPrismaInstance()
+const prisma = createPrismaInstance();
 
 class CargosliderancaRepositorie {
   async findAll() {
@@ -13,15 +13,15 @@ class CargosliderancaRepositorie {
           select: {
             id: true,
             first_name: true,
-          }
+          },
         },
-      }
+      },
     });
-    await disconnectPrisma()
+
     return result;
   }
 
-  async findById(id: string){
+  async findById(id: string) {
     const cargoLiderancaExistById = await prisma?.cargoDeLideranca.findUnique({
       where: {
         id: id,
@@ -34,30 +34,33 @@ class CargosliderancaRepositorie {
             id: true,
             first_name: true,
             image_url: true,
-          }
+          },
         },
-      }
-    })
-    await disconnectPrisma()
-    return cargoLiderancaExistById
+      },
+    });
+
+    return cargoLiderancaExistById;
   }
 
   async createCargoslideranca(cargoLiderancaDataForm: CargosliderancaData) {
-    const { nome, membros } = cargoLiderancaDataForm
+    const { nome, membros } = cargoLiderancaDataForm;
     const result = await prisma?.cargoDeLideranca.create({
       data: {
         nome,
         membros: {
-          connect: membros.map((membroId) => ({id: membroId}))
+          connect: membros.map((membroId) => ({ id: membroId })),
         },
       },
     });
-    await disconnectPrisma()
+
     return result;
   }
 
-  async updateCargoslideranca(id: string, cargoLiderancaDataForm: CargosliderancaData) {
-    const { nome, membros } = cargoLiderancaDataForm
+  async updateCargoslideranca(
+    id: string,
+    cargoLiderancaDataForm: CargosliderancaData,
+  ) {
+    const { nome, membros } = cargoLiderancaDataForm;
     const result = await prisma?.cargoDeLideranca.update({
       where: {
         id: id,
@@ -65,11 +68,11 @@ class CargosliderancaRepositorie {
       data: {
         nome,
         membros: {
-          connect: membros.map((membroId) => ({id: membroId}))
+          connect: membros.map((membroId) => ({ id: membroId })),
         },
       },
     });
-    await disconnectPrisma()
+
     return result;
   }
 
@@ -79,7 +82,7 @@ class CargosliderancaRepositorie {
         id: id,
       },
     });
-    await disconnectPrisma()
+
     return result;
   }
 }

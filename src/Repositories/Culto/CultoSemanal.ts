@@ -1,6 +1,6 @@
 import { Prisma } from "@prisma/client";
 import { CultoSemanalData } from "../../Controllers/Culto/CultoSemanal";
-import { createPrismaInstance, disconnectPrisma } from "../../services/prisma";
+import { createPrismaInstance } from "../../services/prisma";
 
 const prisma = createPrismaInstance();
 
@@ -29,7 +29,7 @@ class CultoSemanalRepositorie {
       },
       orderBy: { nome: "asc" },
     });
-    await disconnectPrisma();
+
     return result;
   }
 
@@ -50,7 +50,7 @@ class CultoSemanalRepositorie {
         },
       },
     });
-    await disconnectPrisma();
+
     return result;
   }
 
@@ -80,7 +80,7 @@ class CultoSemanalRepositorie {
         },
       });
     }
-    await disconnectPrisma();
+
     return cultoSemanal;
   }
 
@@ -113,7 +113,7 @@ class CultoSemanalRepositorie {
       },
       data: updateCultoSemanalInput,
     });
-    await disconnectPrisma();
+
     return result;
   }
 
@@ -123,7 +123,7 @@ class CultoSemanalRepositorie {
         id: id,
       },
     });
-    await disconnectPrisma();
+
     return result;
   }
 }

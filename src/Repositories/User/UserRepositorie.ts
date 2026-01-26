@@ -1,7 +1,6 @@
 import { Prisma } from "@prisma/client";
-import dayjs from "dayjs";
 import { UserData, UserDataUpdate } from "../../Controllers/User/schema";
-import { createPrismaInstance, disconnectPrisma } from "../../services/prisma";
+import { createPrismaInstance } from "../../services/prisma";
 
 type UpdateUserInput = Prisma.UserUpdateInput & {
   connect?: {
@@ -64,7 +63,7 @@ class UserRepositorie {
     ]);
     const almasGanhasNoAno = almasGanhasAno[0].reduce(
       (total, reuniao) => total + (reuniao.almas_ganhas ?? 0),
-      0
+      0,
     );
 
     // DEFINE O INÍCIO DO ANO PASSADO
@@ -78,7 +77,7 @@ class UserRepositorie {
       23,
       59,
       59,
-      999
+      999,
     );
 
     // BUSCA ALMAS GANHAS NO ANO PASSADO
@@ -98,19 +97,19 @@ class UserRepositorie {
 
     const almasGanhasNoAnoPassado = almasGanhasAnoPassado[0].reduce(
       (total, reuniao) => total + (reuniao.almas_ganhas ?? 0),
-      0
+      0,
     );
 
     // DEFINE O INÍCIO E FIM DO MÊS ATUAL
     const startOfMonth = new Date(
       new Date().getFullYear(),
       new Date().getMonth(),
-      1
+      1,
     );
     const endOfMonth = new Date(
       new Date().getFullYear(),
       new Date().getMonth() + 1,
-      0
+      0,
     );
 
     const almasGanhasMes = await prisma?.$transaction([
@@ -121,7 +120,7 @@ class UserRepositorie {
             lt: new Date(
               endOfMonth.getFullYear(),
               endOfMonth.getMonth(),
-              endOfMonth.getDate() + 1
+              endOfMonth.getDate() + 1,
             ),
           },
         },
@@ -133,19 +132,19 @@ class UserRepositorie {
 
     const almasGanhasNoMes = almasGanhasMes[0].reduce(
       (total, reuniao) => total + (reuniao.almas_ganhas ?? 0),
-      0
+      0,
     );
 
     // DEFINE O INÍCIO E FIM DO MÊS PASSADO
     const startOfLastMonth = new Date(
       new Date().getFullYear(),
       new Date().getMonth() - 1,
-      1
+      1,
     );
     const endOfLastMonth = new Date(
       new Date().getFullYear(),
       new Date().getMonth(),
-      0
+      0,
     );
 
     const almasGanhasMesPassado = await prisma.$transaction([
@@ -156,7 +155,7 @@ class UserRepositorie {
             lt: new Date(
               endOfLastMonth.getFullYear(),
               endOfLastMonth.getMonth(),
-              endOfLastMonth.getDate() + 1
+              endOfLastMonth.getDate() + 1,
             ),
           },
         },
@@ -168,7 +167,7 @@ class UserRepositorie {
 
     const almasGanhasNoMesPassado = almasGanhasMesPassado[0].reduce(
       (total, reuniao) => total + (reuniao.almas_ganhas ?? 0),
-      0
+      0,
     );
 
     // Busca todas as reuniões do ano com data e almas ganhas
@@ -249,8 +248,6 @@ class UserRepositorie {
       prisma?.cargoDeLideranca.findMany(),
     ]);
 
-    await disconnectPrisma();
-
     return {
       combinedData,
       almasGanhasNoMes,
@@ -330,7 +327,6 @@ class UserRepositorie {
       },
     });
 
-    await disconnectPrisma();
     return result;
   }
 
@@ -395,7 +391,6 @@ class UserRepositorie {
         total: discipulos.length,
       };
     } finally {
-      await disconnectPrisma();
     }
   }
 
@@ -509,7 +504,6 @@ class UserRepositorie {
         discipulosAtuaisPreview: amostraMap.get(s.id) ?? [],
       }));
     } finally {
-      await disconnectPrisma();
     }
   }
 
@@ -575,7 +569,6 @@ class UserRepositorie {
       },
     });
 
-    await disconnectPrisma();
     return result;
   }
 
@@ -596,7 +589,6 @@ class UserRepositorie {
       },
     });
 
-    await disconnectPrisma();
     return result;
   }
 
@@ -618,7 +610,6 @@ class UserRepositorie {
       },
     });
 
-    await disconnectPrisma();
     return result;
   }
 
@@ -639,7 +630,6 @@ class UserRepositorie {
       },
     });
 
-    await disconnectPrisma();
     return result;
   }
 
@@ -709,13 +699,11 @@ class UserRepositorie {
       },
     });
 
-    await disconnectPrisma();
-
     const normalized = result.map((u) => {
       const discipulador_atual = u.discipuladorId
-        ? u.discipulador.find(
-            (d) => d.user_discipulador?.id === u.discipuladorId
-          )?.user_discipulador ?? null
+        ? (u.discipulador.find(
+            (d) => d.user_discipulador?.id === u.discipuladorId,
+          )?.user_discipulador ?? null)
         : null;
 
       return {
@@ -794,7 +782,6 @@ class UserRepositorie {
       },
     });
 
-    await disconnectPrisma();
     return result;
   }
 
@@ -867,7 +854,6 @@ class UserRepositorie {
       },
     });
 
-    await disconnectPrisma();
     return result;
   }
 
@@ -938,7 +924,6 @@ class UserRepositorie {
       },
     });
 
-    await disconnectPrisma();
     return result;
   }
 
@@ -1026,7 +1011,6 @@ class UserRepositorie {
       await this.ensureDiscipuladorRelation(user.id, user.discipuladorId);
     }
 
-    await disconnectPrisma();
     return user;
   }
 
@@ -1111,7 +1095,7 @@ class UserRepositorie {
             });
             if (!discipuladorExists) {
               throw new Error(
-                `Discipulador com ID ${discipuladorId} não encontrado`
+                `Discipulador com ID ${discipuladorId} não encontrado`,
               );
             }
 
@@ -1211,11 +1195,10 @@ class UserRepositorie {
         data: updateUserInput,
       });
 
-      await disconnectPrisma();
       return result;
     } catch (error) {
       console.error(error);
-      await disconnectPrisma();
+
       throw error;
     }
   }
@@ -1240,7 +1223,6 @@ class UserRepositorie {
         },
       });
     } finally {
-      await disconnectPrisma();
     }
   }
 
@@ -1267,7 +1249,6 @@ class UserRepositorie {
 
       return { message: "Satus Atualizado com Sucesso!" };
     } finally {
-      await disconnectPrisma();
     }
   }
 
@@ -1314,7 +1295,6 @@ class UserRepositorie {
       console.error("Error updating discipuladorId:", error);
       throw error;
     } finally {
-      await disconnectPrisma();
     }
   }
 
@@ -1323,7 +1303,7 @@ class UserRepositorie {
     if (!prisma) throw new Error("Prisma instance is null");
 
     const result = await prisma?.user.delete({ where: { id } });
-    await disconnectPrisma();
+
     return result;
   }
 }

@@ -1,5 +1,5 @@
 import { SupervisaoData } from "../Controllers/SupervisaoController";
-import { createPrismaInstance, disconnectPrisma } from "../services/prisma";
+import { createPrismaInstance } from "../services/prisma";
 
 const prisma = createPrismaInstance();
 
@@ -22,7 +22,7 @@ class SupervisiaoRepositorie {
 
     const totalMembros = membrosPorSupervisao.reduce(
       (acc, s) => acc + s.totalMembros,
-      0
+      0,
     );
     const mediaMembrosPorSupervisao = membrosPorSupervisao.length
       ? totalMembros / membrosPorSupervisao.length
@@ -54,7 +54,6 @@ class SupervisiaoRepositorie {
       quantidade: c.membros.length,
     }));
 
-    await disconnectPrisma();
     return result;
   }
 
@@ -91,7 +90,7 @@ class SupervisiaoRepositorie {
       const quantidadeCelulas = supervisao.celulas.length;
       const quantidadeMembros = supervisao.celulas.reduce(
         (total, celula) => total + celula._count.membros,
-        0
+        0,
       );
 
       return {
@@ -104,7 +103,6 @@ class SupervisiaoRepositorie {
       };
     });
 
-    await disconnectPrisma();
     return formatted;
   }
 
@@ -146,7 +144,7 @@ class SupervisiaoRepositorie {
         },
       },
     });
-    await disconnectPrisma();
+
     return supervisaoExistById;
   }
 
@@ -169,7 +167,7 @@ class SupervisiaoRepositorie {
         },
       },
     });
-    await disconnectPrisma();
+
     return result;
   }
 
@@ -195,7 +193,7 @@ class SupervisiaoRepositorie {
         },
       },
     });
-    await disconnectPrisma();
+
     return result;
   }
 
@@ -205,7 +203,7 @@ class SupervisiaoRepositorie {
         id: id,
       },
     });
-    await disconnectPrisma();
+
     return result;
   }
 }

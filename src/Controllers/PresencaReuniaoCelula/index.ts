@@ -2,6 +2,7 @@ import { FastifyReply, FastifyRequest } from "fastify";
 import { Input, boolean, object, string } from "valibot";
 import { z } from "zod";
 import PresencaReuniaoCelulaRepositorie from "../../Repositories/PresencaReuniaoCelula";
+import { UpsertPresencaReuniaoCelulaSchema } from "../../Repositories/PresencaReuniaoCelula/schemas";
 
 const PresencaReuniaoCelulaDataSchema = object({
   status: boolean(),
@@ -19,7 +20,7 @@ const NewPresencaReuniaoCelulaDataSchema = z.object({
     z.object({
       id: z.string(),
       status: z.boolean(), //Pode ter um status (presente, ausente, justificado, etc.)
-    })
+    }),
   ),
 });
 
@@ -51,26 +52,21 @@ class PresencaReuniaoCelulaController {
   }
 
   async isregister(
-    request: FastifyRequest<{
-      Params: PresencaReuniaoCelulaParams;
-    }>,
-    reply: FastifyReply
+    request: FastifyRequest<{ Params: PresencaReuniaoCelulaParams }>,
+    reply: FastifyReply,
   ) {
     const { id } = request.params;
-    console.log("Id mandado do front", id);
-    const presencasReuniaoCelula =
-      await PresencaReuniaoCelulaRepositorie.findPresenceRegistered(id);
-    if (!presencasReuniaoCelula) {
-      return reply.code(404).send({ message: "Presença not found!" });
-    }
-    return reply.code(200).send(presencasReuniaoCelula);
+
+    const exists = await PresencaReuniaoCelulaRepositorie.existsByReuniaoId(id);
+
+    return reply.code(200).send({ exists });
   }
 
   async show(
     request: FastifyRequest<{
       Params: PresencaReuniaoCelulaParams;
     }>,
-    reply: FastifyReply
+    reply: FastifyReply,
   ) {
     const id = request.params.id;
     const presencasReuniaoCelula =
@@ -92,7 +88,7 @@ class PresencaReuniaoCelulaController {
         {
           which_reuniao_celula: which_reuniao_celula,
           membro: membro,
-        }
+        },
       );
 
       if (existingPresenca) {
@@ -113,44 +109,77 @@ class PresencaReuniaoCelulaController {
 
   async newstore(request: FastifyRequest, reply: FastifyReply) {
     try {
-      const presencasReuniaoCelulaDataForm =
-        request.body as NewPresencaReuniaoCelulaDataSchema;
+      const body = NewPresencaReuniaoCelulaDataSchema.parse(request.body);
 
-      const { which_reuniao_celula, membro } = presencasReuniaoCelulaDataForm;
-      // Verifique se já existe uma presença registrada para o membro e culto
-      const existingPresenca = await PresencaReuniaoCelulaRepositorie.findFirst(
-        {
-          which_reuniao_celula: which_reuniao_celula,
-          membro: membro[0].id,
-        }
-      );
+      const result =
+        await PresencaReuniaoCelulaRepositorie.createManyIdempotent(body);
 
-      if (existingPresenca) {
-        return reply
-          .code(409)
-          .send({ message: "Presença de Célula já registrada para hoje!" });
-      }
-
-      const presencaCelula =
-        await PresencaReuniaoCelulaRepositorie.createNewPresencaReuniaCelula({
-          ...presencasReuniaoCelulaDataForm,
-        });
-
-      return reply.code(201).send({
-        presencaCelula,
-        message: "Presença Registrada!",
+      return reply.code(200).send({
+        message: "Processado com sucesso",
+        ...result, // { total, created, skipped }
       });
     } catch (error: any) {
-      console.error(error); // Log o erro no console para depuração
-      return reply.code(400).send(error.message || "Erro interno do servidor");
+      return reply
+        .code(400)
+        .send({ message: error?.message ?? "Erro ao processar presença" });
     }
+  }
+
+  async createManyIdempotent(request: FastifyRequest, reply: FastifyReply) {
+    try {
+      const body = UpsertPresencaReuniaoCelulaSchema.parse(request.body);
+
+      const exists = await PresencaReuniaoCelulaRepositorie.existsByReuniaoId(
+        body.which_reuniao_celula,
+      );
+
+      // ✅ regra: se já existe e não autorizou retificação -> BLOQUEIA
+      if (exists && !body.allowUpdate) {
+        return reply.code(409).send({
+          message:
+            "Presença já cadastrada. Ative o modo Retificar para alterar.",
+          exists: true,
+        });
+      }
+
+      const result =
+        await PresencaReuniaoCelulaRepositorie.upsertManyIdempotent(body);
+
+      return reply.code(200).send({
+        message: "Processado com sucesso",
+        exists,
+        ...result,
+      });
+    } catch (error: any) {
+      if (error?.name === "ZodError") {
+        return reply
+          .code(400)
+          .send({ message: "Payload inválido", issues: error.flatten() });
+      }
+      return reply
+        .code(400)
+        .send({ message: error?.message ?? "Erro ao processar presença" });
+    }
+  }
+
+  async listByReuniao(
+    request: FastifyRequest<{ Params: { reuniaoId: string } }>,
+    reply: FastifyReply,
+  ) {
+    const { reuniaoId } = request.params;
+
+    const rows =
+      await PresencaReuniaoCelulaRepositorie.listByReuniaoId(reuniaoId);
+
+    return reply.code(200).send({ items: rows });
+    // items: [{ userId, status }]
   }
 
   async update(
     request: FastifyRequest<{
       Params: PresencaReuniaoCelulaParams;
     }>,
-    reply: FastifyReply
+    reply: FastifyReply,
   ) {
     const id = request.params.id;
     const presencaReuniaoCelulaDataForm =
@@ -166,7 +195,7 @@ class PresencaReuniaoCelulaController {
     request: FastifyRequest<{
       Params: PresencaReuniaoCelulaParams;
     }>,
-    reply: FastifyReply
+    reply: FastifyReply,
   ) {
     const id = request.params.id;
     await PresencaReuniaoCelulaRepositorie.deletePresencaReuniaoCelula(id);

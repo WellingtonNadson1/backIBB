@@ -1,7 +1,7 @@
 import dayjs from "dayjs";
 import { FastifyInstance, FastifyReply, FastifyRequest } from "fastify";
 import { CultoIndividualForDate } from "../../Controllers/Culto/CultoIndividual";
-import { createPrismaInstance, disconnectPrisma } from "../../services/prisma";
+import { createPrismaInstance } from "../../services/prisma";
 
 const routerRelatorioPresencaCelula = async (fastify: FastifyInstance) => {
   fastify.post(
@@ -68,10 +68,8 @@ const routerRelatorioPresencaCelula = async (fastify: FastifyInstance) => {
       } catch (error) {
         console.error("Erro:", error);
         reply.status(500).send("Erro interno do servidor");
-      } finally {
-        await disconnectPrisma();
       }
-    }
+    },
   );
 };
 

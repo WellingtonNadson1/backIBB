@@ -3,27 +3,12 @@ import dayjs from "dayjs";
 import timezone from "dayjs/plugin/timezone";
 import utc from "dayjs/plugin/utc";
 import { TAgenda } from "../../Controllers/Agenda";
-import { createPrismaInstance, disconnectPrisma } from "../../services/prisma";
-
-interface ReuniaoCelulaResult {
-  data_reuniao: string;
-  celula: string;
-  status: string;
-  presencas_membros_reuniao_celula: null | any; // Substitua 'any' pelo tipo apropriado se possível
-}
+import { createPrismaInstance } from "../../services/prisma";
 
 const prisma = createPrismaInstance();
 
 dayjs.extend(utc);
 dayjs.extend(timezone);
-
-type UpdateReuniaCelulaInput = Prisma.ReuniaoCelulaUpdateInput & {
-  presencas_membros_reuniao_celula?: { connect: { id: string } }[];
-};
-
-interface ReuniaCelulaConnect {
-  connect: { id: string };
-}
 
 class AgendaRepositorie {
   // async reuniaoCelulaExist({
@@ -39,11 +24,11 @@ class AgendaRepositorie {
   //       ReuniaoCelulaResult[]
   //     >`SELECT * FROM reuniao_celula WHERE DATE(data_reuniao) = DATE(${data_reuniao}) AND "celulaId" = ${celula}`;
   //     console.log("QUERY Retorno: ", query);
-  //     await disconnectPrisma();
+  //
   //     return query;
   //   } else {
   //     // Trate o caso em que prisma é undefined, se necessário
-  //     await disconnectPrisma();
+  //
   //     return [];
   //   }
   // }
@@ -59,7 +44,7 @@ class AgendaRepositorie {
         data_termino: true,
       },
     });
-    await disconnectPrisma();
+
     return result;
   }
 
@@ -79,7 +64,7 @@ class AgendaRepositorie {
         data_termino: true,
       },
     });
-    await disconnectPrisma();
+
     return result;
   }
 
@@ -122,7 +107,7 @@ class AgendaRepositorie {
   //       },
   //     },
   //   });
-  //   await disconnectPrisma();
+  //
   //   return result;
   // }
 
@@ -154,7 +139,7 @@ class AgendaRepositorie {
   //       },
   //     },
   //   });
-  //   await disconnectPrisma();
+  //
   //   return result;
   // }
 
@@ -187,7 +172,7 @@ class AgendaRepositorie {
   //       },
   //     },
   //   });
-  //   await disconnectPrisma();
+  //
   //   return result;
   // }
 
@@ -204,10 +189,10 @@ class AgendaRepositorie {
           title: reuniaoCelulaDataForm.title,
           description: reuniaoCelulaDataForm.description,
           data_inicio: new Date(
-            reuniaoCelulaDataForm.date.from as unknown as string
+            reuniaoCelulaDataForm.date.from as unknown as string,
           ),
           data_termino: new Date(
-            reuniaoCelulaDataForm.date.to as unknown as string
+            reuniaoCelulaDataForm.date.to as unknown as string,
           ),
         },
       });
@@ -254,7 +239,6 @@ class AgendaRepositorie {
       },
     });
 
-    await disconnectPrisma();
     return result;
   }
 
@@ -273,7 +257,6 @@ class AgendaRepositorie {
       },
     });
 
-    await disconnectPrisma();
     return result;
   }
 
@@ -283,7 +266,7 @@ class AgendaRepositorie {
         id: id,
       },
     });
-    await disconnectPrisma();
+
     return result;
   }
 }

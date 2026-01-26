@@ -3,9 +3,7 @@ generator client {
 }
 
 datasource db {
-  provider  = "postgresql"
-  url       = env("DATABASE_URL")
-  directUrl = env("DIRECT_URL")
+  provider = "postgresql"
 }
 
 model AulaEscola {
@@ -20,14 +18,16 @@ model AulaEscola {
 }
 
 model PresencaCulto {
-  id                String           @id @default(uuid())
+  id                String          @id @default(uuid())
   status            Boolean
-  userId            String?
-  cultoIndividualId String?
-  date_create       DateTime         @default(now())
-  date_update       DateTime         @updatedAt
-  presenca_culto    CultoIndividual? @relation(fields: [cultoIndividualId], references: [id], onDelete: Cascade)
-  membro            User?            @relation(fields: [userId], references: [id])
+  userId            String
+  cultoIndividualId String
+  date_create       DateTime        @default(now())
+  date_update       DateTime        @updatedAt
+  presenca_culto    CultoIndividual @relation(fields: [cultoIndividualId], references: [id], onDelete: Cascade)
+  membro            User            @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: NoAction)
+
+  @@unique([cultoIndividualId, userId], map: "PresencaCulto_culto_user_unique")
 }
 
 model PresencaEscola {
@@ -42,14 +42,16 @@ model PresencaEscola {
 }
 
 model PresencaReuniaoCelula {
-  id                   String         @id @default(uuid())
+  id                   String        @id @default(uuid())
   status               Boolean
-  userId               String?
-  reuniaoCelulaId      String?
-  date_create          DateTime       @default(now())
-  date_update          DateTime       @updatedAt
-  which_reuniao_celula ReuniaoCelula? @relation(fields: [reuniaoCelulaId], references: [id], onDelete: Cascade)
-  membro               User?          @relation(fields: [userId], references: [id])
+  userId               String
+  reuniaoCelulaId      String
+  date_create          DateTime      @default(now())
+  date_update          DateTime      @updatedAt
+  which_reuniao_celula ReuniaoCelula @relation(fields: [reuniaoCelulaId], references: [id], onDelete: Cascade)
+  membro               User          @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: NoAction)
+
+  @@unique([reuniaoCelulaId, userId], map: "PresencaReuniaoCelula_reuniao_user_unique")
 }
 
 model RoleNew {
@@ -85,9 +87,9 @@ model Celula {
   bairro          String?
   supervisao      Supervisao      @relation(fields: [supervisaoId], references: [id])
   lider           User?           @relation("LiderCelula", fields: [userId], references: [id])
+  ofertas         Oferta[]
   reunioes_celula ReuniaoCelula[]
   membros         User[]
-  ofertas         Oferta[]
 
   @@map("celula")
 }
@@ -268,68 +270,38 @@ model Supervisao {
   @@map("supervisao")
 }
 
-enum EventoContribuicao {
-  CULTO
-  CELULA
-  CAMPANHA_PROJETO
-  SECRETARIA
-  PRIMICIA
-  OUTRO
-}
-
-enum TipoPagamento {
-  DINHEIRO
-  PIX
-  TRANSFERENCIA
-  CARTAO_CREDITO
-  CARTAO_DEBITO
-  BOLETO
-  OUTRO
-}
-
 model Dizimo {
-  id           String   @id @default(uuid())
-  valor        Decimal?
-  data_dizimou DateTime
-  date_create  DateTime @default(now())
-  date_update  DateTime @updatedAt
-
-  userId String?
-  user   User?   @relation(fields: [userId], references: [id])
-
+  id                String             @id @default(uuid())
+  valor             Decimal?
+  data_dizimou      DateTime
+  date_create       DateTime           @default(now())
+  date_update       DateTime           @updatedAt
+  userId            String?
   cultoIndividualId String?
-  cultoIndividual   CultoIndividual? @relation(fields: [cultoIndividualId], references: [id])
-
-  // 🔽 NOVO
-  evento        EventoContribuicao @default(CULTO)
-  tipoPagamento TipoPagamento      @default(PIX)
-
-  descricao String?
+  descricao         String?
+  evento            EventoContribuicao @default(CULTO)
+  tipoPagamento     TipoPagamento      @default(PIX)
+  cultoIndividual   CultoIndividual?   @relation(fields: [cultoIndividualId], references: [id])
+  user              User?              @relation(fields: [userId], references: [id])
 
   @@map("dizimo")
 }
 
 model Oferta {
-  id           String   @id @default(uuid())
-  valor        Decimal?
-  data_ofertou DateTime
-  date_create  DateTime @default(now())
-  date_update  DateTime @updatedAt
-
-  userId String?
-  user   User?   @relation(fields: [userId], references: [id])
-
+  id                String             @id @default(uuid())
+  valor             Decimal?
+  data_ofertou      DateTime
+  date_create       DateTime           @default(now())
+  date_update       DateTime           @updatedAt
+  userId            String?
   cultoIndividualId String?
-  cultoIndividual   CultoIndividual? @relation(fields: [cultoIndividualId], references: [id])
-
-  celulaId String?
-  celula   Celula? @relation(fields: [celulaId], references: [id])
-
-  // 🔽 NOVO
-  evento        EventoContribuicao @default(CELULA) // se quiser default pra oferta
-  tipoPagamento TipoPagamento      @default(PIX)
-
-  descricao String?
+  descricao         String?
+  celulaId          String?
+  evento            EventoContribuicao @default(CELULA)
+  tipoPagamento     TipoPagamento      @default(PIX)
+  celula            Celula?            @relation(fields: [celulaId], references: [id])
+  cultoIndividual   CultoIndividual?   @relation(fields: [cultoIndividualId], references: [id])
+  user              User?              @relation(fields: [userId], references: [id])
 
   @@map("oferta")
 }
@@ -463,6 +435,25 @@ model user_roles {
   user    User    @relation(fields: [user_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
 
   @@id([user_id, role_id])
+}
+
+enum EventoContribuicao {
+  CULTO
+  CELULA
+  CAMPANHA_PROJETO
+  SECRETARIA
+  PRIMICIA
+  OUTRO
+}
+
+enum TipoPagamento {
+  DINHEIRO
+  PIX
+  TRANSFERENCIA
+  CARTAO_CREDITO
+  CARTAO_DEBITO
+  BOLETO
+  OUTRO
 }
 
 enum Role {

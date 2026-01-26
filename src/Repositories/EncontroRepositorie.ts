@@ -1,7 +1,7 @@
 import { EncontroData } from "../Controllers/EncontroController";
-import { createPrismaInstance, disconnectPrisma } from "../services/prisma";
+import { createPrismaInstance } from "../services/prisma";
 
-const prisma = createPrismaInstance()
+const prisma = createPrismaInstance();
 
 class EncontroRepositorie {
   async findAll() {
@@ -14,15 +14,15 @@ class EncontroRepositorie {
           select: {
             id: true,
             first_name: true,
-          }
+          },
         },
-      }
-    })
-    await disconnectPrisma()
-    return result
+      },
+    });
+
+    return result;
   }
 
-  async findById(id: string){
+  async findById(id: string) {
     const result = await prisma?.encontros.findUnique({
       where: {
         id: id,
@@ -35,31 +35,32 @@ class EncontroRepositorie {
           select: {
             id: true,
             first_name: true,
-          }
+          },
         },
-      }
-    })
-    await disconnectPrisma()
-    return result
+      },
+    });
+
+    return result;
   }
 
   async createEncontro(eencontroDataForm: EncontroData) {
-    const { participantes, ...EncontroData } = eencontroDataForm
+    const { participantes, ...EncontroData } = eencontroDataForm;
     const result = await prisma?.encontros.create({
       data: {
         ...EncontroData,
         participantes: {
-          connect: participantes ? participantes.map((membroId) => ({id: membroId})) : []
-
+          connect: participantes
+            ? participantes.map((membroId) => ({ id: membroId }))
+            : [],
         },
       },
-    })
-    await disconnectPrisma()
-    return result
+    });
+
+    return result;
   }
 
   async updateEncontro(id: string, escolaDataForm: EncontroData) {
-    const { participantes, ...EncontroData } = escolaDataForm
+    const { participantes, ...EncontroData } = escolaDataForm;
     const result = await prisma?.encontros.update({
       where: {
         id: id,
@@ -67,13 +68,12 @@ class EncontroRepositorie {
       data: {
         ...EncontroData,
         participantes: {
-          connect: participantes?.map((membroId) => ({id: membroId}))
-
+          connect: participantes?.map((membroId) => ({ id: membroId })),
         },
       },
-    })
-    await disconnectPrisma()
-    return result
+    });
+
+    return result;
   }
 
   async deleteEncontro(id: string) {
@@ -81,9 +81,9 @@ class EncontroRepositorie {
       where: {
         id: id,
       },
-    })
-    await disconnectPrisma()
-    return result
+    });
+
+    return result;
   }
 }
 

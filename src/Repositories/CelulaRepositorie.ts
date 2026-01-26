@@ -1,6 +1,6 @@
 import { Prisma } from "@prisma/client";
 import { CelulaData, CelulaDataForm } from "../Controllers/CelulaController";
-import { createPrismaInstance, disconnectPrisma } from "../services/prisma";
+import { createPrismaInstance } from "../services/prisma";
 import { CultoIndividualRepositorie } from "./Culto";
 
 function getStartOfDay(date: Date): Date {
@@ -17,14 +17,14 @@ function getEndOfDay(date: Date): Date {
 
 function getStartOfMonth(date: Date): Date {
   const startOfMonth = new Date(
-    Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), 1)
+    Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), 1),
   );
   return startOfMonth;
 }
 
 function getEndOfMonth(date: Date): Date {
   const endOfMonth = new Date(
-    Date.UTC(date.getUTCFullYear(), date.getUTCMonth() + 1, 0, 23, 59, 59, 999)
+    Date.UTC(date.getUTCFullYear(), date.getUTCMonth() + 1, 0, 23, 59, 59, 999),
   );
   return endOfMonth;
 }
@@ -44,7 +44,6 @@ class CelulaRepositorie {
       },
     });
 
-    await disconnectPrisma();
     return celulas;
   }
 
@@ -87,7 +86,7 @@ class CelulaRepositorie {
         bairro: true,
       },
     });
-    await disconnectPrisma();
+
     return result;
   }
 
@@ -200,7 +199,6 @@ class CelulaRepositorie {
       },
     });
 
-    await disconnectPrisma();
     return result;
   }
 
@@ -219,7 +217,7 @@ class CelulaRepositorie {
     const cultosIndividuaisPerPeriod =
       await CultoIndividualRepositorie.findPerPeriodDetails(
         startOfMonth,
-        endOfDay
+        endOfDay,
       );
     console.log("todayDate", todayDate);
     console.log("startOfMonth", startOfMonth);
@@ -347,8 +345,6 @@ class CelulaRepositorie {
       },
     });
 
-    await disconnectPrisma();
-
     // Preparando o resultado
     const membrosComCultos = result?.membros.map((membro) => ({
       id: membro.id,
@@ -359,11 +355,11 @@ class CelulaRepositorie {
       situacao_no_reino: membro.situacao_no_reino?.nome,
       total_cultos: cultosIndividuaisPerPeriod.length,
       cultos_status_true: membro.presencas_cultos.filter(
-        (culto) => culto.status
+        (culto) => culto.status,
       ).length,
       total_celulas: result.reunioes_celula.length,
       celulas_status_true: membro.presencas_reuniao_celula.filter(
-        (celula) => celula.status
+        (celula) => celula.status,
       ).length,
     }));
 
@@ -487,7 +483,6 @@ class CelulaRepositorie {
       },
     });
 
-    await disconnectPrisma();
     console.log(result?.membros[0].presencas_cultos);
     return result;
   }
@@ -523,7 +518,7 @@ class CelulaRepositorie {
         },
       },
     });
-    await disconnectPrisma();
+
     return result;
   }
 
@@ -565,10 +560,10 @@ class CelulaRepositorie {
       const newMemberIds = newData.membros;
 
       const membersToAdd = newMemberIds.filter(
-        (mid) => !currentMemberIds.includes(mid)
+        (mid) => !currentMemberIds.includes(mid),
       );
       const membersToRemove = currentMemberIds.filter(
-        (mid) => !newMemberIds.includes(mid)
+        (mid) => !newMemberIds.includes(mid),
       );
 
       updateData.membros = {
@@ -582,7 +577,6 @@ class CelulaRepositorie {
       data: updateData,
     });
 
-    await disconnectPrisma();
     return updatedCelula;
   }
 
@@ -595,7 +589,6 @@ class CelulaRepositorie {
       data: { date_que_ocorre: newDate },
     });
 
-    await disconnectPrisma();
     return updated;
   }
 
@@ -610,7 +603,7 @@ class CelulaRepositorie {
         id: id,
       },
     });
-    await disconnectPrisma();
+
     return result;
   }
 }

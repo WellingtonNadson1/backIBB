@@ -1,7 +1,7 @@
 import { Prisma } from "@prisma/client";
 import dayjs from "dayjs";
 import { CultoIndividualData } from "../../Controllers/Culto/CultoIndividual";
-import { createPrismaInstance, disconnectPrisma } from "../../services/prisma";
+import { createPrismaInstance } from "../../services/prisma";
 
 type UpdateCultoIndividualInput = Prisma.CultoIndividualUpdateInput & {
   presencas_culto?: { connect: { id: string } }[];
@@ -86,7 +86,7 @@ class CultoIndividualRepositorie {
           data: c.data_inicio_culto.toISOString(),
           presentes: c.presencas_culto.length,
           culto_semana: c.culto_semana?.nome,
-        }))
+        })),
       );
 
       if (!cultos.length) {
@@ -104,7 +104,7 @@ class CultoIndividualRepositorie {
       cultos.forEach((culto) => {
         const presentes = culto.presencas_culto.length;
         const dataFormatada = dayjs(culto.data_inicio_culto).format(
-          "DD/MM/YYYY"
+          "DD/MM/YYYY",
         );
         const cultoData: CultoData = {
           nome: culto.culto_semana?.nome || "Culto Sem Nome",
@@ -137,7 +137,7 @@ class CultoIndividualRepositorie {
       // Ordenar por data
       Object.keys(attendanceData).forEach((key) => {
         attendanceData[key as CultoTipo].sort((a, b) =>
-          dayjs(b.data, "DD/MM/YYYY").diff(dayjs(a.data, "DD/MM/YYYY"))
+          dayjs(b.data, "DD/MM/YYYY").diff(dayjs(a.data, "DD/MM/YYYY")),
         );
       });
 
@@ -154,7 +154,6 @@ class CultoIndividualRepositorie {
 
       return attendanceData;
     } finally {
-      await disconnectPrisma();
     }
   }
 
@@ -295,14 +294,14 @@ class CultoIndividualRepositorie {
 
   //     return attendanceData;
   //   } finally {
-  //     await disconnectPrisma();
+  //
   //   }
   // }
 
   async findAllIntervall(
     startDate: Date,
     endDate: Date,
-    superVisionId: string
+    superVisionId: string,
   ) {
     const dataFim = dayjs(endDate).endOf("day").toISOString();
     const prisma = createPrismaInstance();
@@ -441,7 +440,6 @@ class CultoIndividualRepositorie {
         totalCultosPeriodo: totalCultosPeriodo,
       };
     } finally {
-      await disconnectPrisma();
     }
   }
 
@@ -484,16 +482,16 @@ class CultoIndividualRepositorie {
       // Agrupamento dos dados
       const resultado = tipos.map((tipo) => {
         const cultosDoTipo = cultos.filter(
-          (c) => c.culto_semana?.nome === tipo
+          (c) => c.culto_semana?.nome === tipo,
         );
         return {
           tipo,
           cultos: cultosDoTipo.map((culto) => {
             const presentes = culto.presencas_culto.filter(
-              (p) => p.status
+              (p) => p.status,
             ).length;
             const ausentes = culto.presencas_culto.filter(
-              (p) => !p.status
+              (p) => !p.status,
             ).length;
 
             return {
@@ -507,7 +505,6 @@ class CultoIndividualRepositorie {
       console.log("resultado: ", resultado);
       return resultado;
     } finally {
-      await disconnectPrisma();
     }
   }
 
@@ -561,7 +558,6 @@ class CultoIndividualRepositorie {
       });
       return result;
     } finally {
-      await disconnectPrisma();
     }
   }
 
@@ -593,7 +589,6 @@ class CultoIndividualRepositorie {
       });
       return result;
     } finally {
-      await disconnectPrisma();
     }
   }
 
@@ -625,7 +620,6 @@ class CultoIndividualRepositorie {
       });
       return result;
     } finally {
-      await disconnectPrisma();
     }
   }
 
@@ -664,7 +658,6 @@ class CultoIndividualRepositorie {
       });
       return result;
     } finally {
-      await disconnectPrisma();
     }
   }
 
@@ -711,13 +704,12 @@ class CultoIndividualRepositorie {
 
       return cultoIndividual;
     } finally {
-      await disconnectPrisma();
     }
   }
 
   async updateCultoIndividual(
     id: string,
-    cultoIndividualDataForm: CultoIndividualData
+    cultoIndividualDataForm: CultoIndividualData,
   ) {
     const prisma = createPrismaInstance();
     try {
@@ -744,7 +736,7 @@ class CultoIndividualRepositorie {
             connect: {
               id: presencaCultoId,
             },
-          })
+          }),
         ) as CultoIndividualConnect[];
       }
       const result = await prisma?.cultoIndividual.update({
@@ -756,7 +748,6 @@ class CultoIndividualRepositorie {
 
       return result;
     } finally {
-      await disconnectPrisma();
     }
   }
 
@@ -771,7 +762,6 @@ class CultoIndividualRepositorie {
       });
       return result;
     } finally {
-      await disconnectPrisma();
     }
   }
 
@@ -806,7 +796,6 @@ class CultoIndividualRepositorie {
 
       return cultos;
     } finally {
-      await disconnectPrisma();
     }
   }
 }

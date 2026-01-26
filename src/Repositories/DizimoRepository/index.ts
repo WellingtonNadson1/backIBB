@@ -1,7 +1,8 @@
 // DizimoRepository.ts
-import { Dizimo, Prisma, PrismaClient } from "@prisma/client";
+import { Dizimo, Prisma } from "@prisma/client";
+import { createPrismaInstance } from "../../services/prisma";
 
-const prisma = new PrismaClient();
+const prisma = createPrismaInstance();
 
 type DizimoWithUser = Prisma.DizimoGetPayload<{
   include: {
@@ -22,7 +23,7 @@ type DizimoWithUser = Prisma.DizimoGetPayload<{
 
 export class DizimoRepository {
   async createMany(
-    data: Prisma.DizimoCreateManyInput[]
+    data: Prisma.DizimoCreateManyInput[],
   ): Promise<Prisma.BatchPayload> {
     return await prisma.dizimo.createMany({
       data,
@@ -36,7 +37,7 @@ export class DizimoRepository {
 
   async findAll(
     page: number = 1,
-    limit: number = 20
+    limit: number = 20,
   ): Promise<{
     data: DizimoWithUser[];
     meta: {
@@ -91,7 +92,7 @@ export class DizimoRepository {
 
   async update(
     id: string,
-    data: Prisma.DizimoUncheckedUpdateInput
+    data: Prisma.DizimoUncheckedUpdateInput,
   ): Promise<Dizimo | null> {
     // OBS: prisma.dizimo.update lança erro se não encontrar.
     // Se você realmente quiser null quando não encontrar, tem que tratar isso no controller.

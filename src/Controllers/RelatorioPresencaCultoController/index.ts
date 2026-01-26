@@ -5,10 +5,10 @@ import { PresencaCultoRepositorie } from "../../Repositories/Culto";
 import { TDocumentDefinitions } from "pdfmake/interfaces";
 import PdfPrinter from "pdfmake";
 import dayjs from "dayjs";
-import { PrismaClient } from "@prisma/client";
 import { Writable } from "stream";
+import { createPrismaInstance } from "../../services/prisma";
 
-const prisma = new PrismaClient();
+const prisma = createPrismaInstance();
 
 const RelatorioPresencaCultoDataSchema = object({
   status: boolean(),
@@ -96,7 +96,7 @@ class RelatorioPresencaCultoController {
     request: FastifyRequest<{
       Params: RelatorioPresencaCultoParams;
     }>,
-    reply: FastifyReply
+    reply: FastifyReply,
   ) {
     const id = request.params.id;
     const presencasReuniaoCelula = await PresencaCultoRepositorie.findById(id);

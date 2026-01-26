@@ -1,8 +1,8 @@
-import { PrismaClient } from "@prisma/client";
 import dayjs from "dayjs";
 import { PresencaAulaData } from "../../Controllers/Escola/PresencaAula";
+import { createPrismaInstance } from "../../services/prisma";
 
-const prisma = new PrismaClient();
+const prisma = createPrismaInstance();
 
 class PresencaAulaRepositorie {
   async findAll() {
@@ -31,8 +31,8 @@ class PresencaAulaRepositorie {
 
   async createPresencaAula(presencaAulaDataForm: PresencaAulaData) {
     const { aluno, aula_presenca_qual_escola, status } = presencaAulaDataForm;
-    const dataBrasil = dayjs().tz('America/Sao_Paulo');
-    const date_create = dataBrasil.format('YYYY-MM-DDTHH:mm:ss.SSS[Z]')
+    const dataBrasil = dayjs().tz("America/Sao_Paulo");
+    const date_create = dataBrasil.format("YYYY-MM-DDTHH:mm:ss.SSS[Z]");
     const dataBrasilDate = new Date(date_create);
     const date_update = dataBrasilDate;
     return await prisma.presencaEscola.create({
@@ -41,20 +41,21 @@ class PresencaAulaRepositorie {
         aluno: {
           connect: {
             id: aluno,
-          }
+          },
         },
         aula_presenca_qual_escola: {
           connect: {
             id: aula_presenca_qual_escola,
-          }
+          },
         },
-        date_update
+        date_update,
       },
     });
   }
 
   async updatePresencaAula(id: string, presencaAulaDataForm: PresencaAulaData) {
-    const { aluno, aula_presenca_qual_escola, ...PresencaAulaData } = presencaAulaDataForm;
+    const { aluno, aula_presenca_qual_escola, ...PresencaAulaData } =
+      presencaAulaDataForm;
     return await prisma.presencaEscola.update({
       where: {
         id: id,
@@ -64,12 +65,12 @@ class PresencaAulaRepositorie {
         aluno: {
           connect: {
             id: aluno,
-          }
+          },
         },
         aula_presenca_qual_escola: {
           connect: {
             id: aula_presenca_qual_escola,
-          }
+          },
         },
       },
     });

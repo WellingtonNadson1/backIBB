@@ -3,7 +3,8 @@ import timezone from "dayjs/plugin/timezone";
 import utc from "dayjs/plugin/utc";
 import { z } from "zod";
 import { PresencaReuniaoCelulaData } from "../../Controllers/PresencaReuniaoCelula";
-import { createPrismaInstance, disconnectPrisma } from "../../services/prisma";
+import { createPrismaInstance } from "../../services/prisma";
+import { UpsertPresencaReuniaoCelulaInput } from "./schemas";
 
 dayjs.extend(utc);
 dayjs.extend(timezone);
@@ -14,7 +15,7 @@ const PresencaNewReuniaoCelulaSchema = z.object({
     z.object({
       id: z.string(),
       status: z.boolean(), //Pode ter um status (presente, ausente, justificado, etc.)
-    })
+    }),
   ),
 });
 
@@ -45,7 +46,7 @@ class PresencaReuniaoCelulaRepositorie {
     const totalReunioes = reunioes.length;
     const totalVisitantes = reunioes.reduce(
       (sum, r) => sum + (r.visitantes ?? 0),
-      0
+      0,
     );
     const mediaVisitantes = totalReunioes ? totalVisitantes / totalReunioes : 0;
     console.log("totalCelulasAtivas: ", totalCelulasAtivas);
@@ -77,7 +78,7 @@ class PresencaReuniaoCelulaRepositorie {
         which_reuniao_celula: true,
       },
     });
-    await disconnectPrisma();
+
     return result;
   }
 
@@ -103,8 +104,16 @@ class PresencaReuniaoCelulaRepositorie {
         which_reuniao_celula: true,
       },
     });
-    await disconnectPrisma();
+
     return result;
+  }
+
+  async existsByReuniaoId(reuniaoId: string) {
+    const count = await prisma.presencaReuniaoCelula.count({
+      where: { reuniaoCelulaId: reuniaoId },
+    });
+
+    return count > 0;
   }
 
   async findFirst({
@@ -136,7 +145,7 @@ class PresencaReuniaoCelulaRepositorie {
         which_reuniao_celula: true,
       },
     });
-    await disconnectPrisma();
+
     return result;
   }
 
@@ -162,12 +171,12 @@ class PresencaReuniaoCelulaRepositorie {
         which_reuniao_celula: true,
       },
     });
-    await disconnectPrisma();
+
     return result;
   }
 
   async createPresencaReuniaCelula(
-    presencaCultoDataForm: PresencaReuniaoCelulaData
+    presencaCultoDataForm: PresencaReuniaoCelulaData,
   ) {
     const { membro, which_reuniao_celula, status } = presencaCultoDataForm;
     const dataBrasil = dayjs().tz("America/Sao_Paulo");
@@ -191,12 +200,86 @@ class PresencaReuniaoCelulaRepositorie {
         date_update: date_update,
       },
     });
-    await disconnectPrisma();
+
     return result;
   }
 
+  async createManyIdempotent(data: PresencaNewReuniaoCelula) {
+    const { which_reuniao_celula, membro } = data;
+
+    const userIds = membro.map((m) => m.id);
+
+    // 1) quais já existem?
+    const existing = await prisma.presencaReuniaoCelula.findMany({
+      where: {
+        reuniaoCelulaId: which_reuniao_celula,
+        userId: { in: userIds },
+      },
+      select: { userId: true },
+    });
+
+    const existingSet = new Set(existing.map((e) => e.userId));
+
+    // 2) filtra só os que faltam
+    const toCreate = membro
+      .filter((m) => !existingSet.has(m.id))
+      .map((m) => ({
+        reuniaoCelulaId: which_reuniao_celula,
+        userId: m.id,
+        status: Boolean(m.status),
+        // se seus campos date_create/date_update são @default(now()),
+        // você nem precisa mandar. Se quiser mandar, use new Date()
+      }));
+
+    // 3) cria em lote (não explode se duplicar por corrida)
+    // (skipDuplicates depende do Prisma/DB — em Postgres funciona bem)
+    if (toCreate.length > 0) {
+      await prisma.presencaReuniaoCelula.createMany({
+        data: toCreate,
+        skipDuplicates: true,
+      });
+    }
+
+    return {
+      total: membro.length,
+      created: toCreate.length,
+      skipped: membro.length - toCreate.length,
+    };
+  }
+
+  async upsertManyIdempotent(data: UpsertPresencaReuniaoCelulaInput) {
+    const { which_reuniao_celula, membro } = data;
+    const now = new Date();
+
+    await prisma.$transaction(async (tx) => {
+      for (const m of membro) {
+        await tx.presencaReuniaoCelula.upsert({
+          where: {
+            reuniaoCelulaId_userId: {
+              reuniaoCelulaId: which_reuniao_celula,
+              userId: m.id,
+            },
+          },
+          create: {
+            reuniaoCelulaId: which_reuniao_celula,
+            userId: m.id,
+            status: Boolean(m.status),
+            date_create: now,
+            date_update: now,
+          },
+          update: {
+            status: Boolean(m.status),
+            date_update: now,
+          },
+        });
+      }
+    });
+
+    return { total: membro.length, upserted: membro.length };
+  }
+
   async createNewPresencaReuniaCelula(
-    presencaNewReuniaoDataForm: PresencaNewReuniaoCelula
+    presencaNewReuniaoDataForm: PresencaNewReuniaoCelula,
   ) {
     const prisma = createPrismaInstance();
 
@@ -224,16 +307,25 @@ class PresencaReuniaoCelulaRepositorie {
             date_create: dataBrasilDate,
             date_update: date_update,
           },
-        })
-      )
+        }),
+      ),
     );
-    await disconnectPrisma();
+
     return result;
+  }
+
+  async listByReuniaoId(reuniaoId: string) {
+    const rows = await prisma.presencaReuniaoCelula.findMany({
+      where: { reuniaoCelulaId: reuniaoId },
+      select: { userId: true, status: true },
+    });
+
+    return rows;
   }
 
   async updatePresencaReuniaoCelula(
     id: string,
-    presencaReuniaoCelulaDataForm: PresencaReuniaoCelulaData
+    presencaReuniaoCelulaDataForm: PresencaReuniaoCelulaData,
   ) {
     const { membro, ...presencaReuniaoCelulaData } =
       presencaReuniaoCelulaDataForm;
@@ -255,7 +347,7 @@ class PresencaReuniaoCelulaRepositorie {
         },
       },
     });
-    await disconnectPrisma();
+
     return result;
   }
 
@@ -265,7 +357,7 @@ class PresencaReuniaoCelulaRepositorie {
         id: id,
       },
     });
-    await disconnectPrisma();
+
     return result;
   }
 }

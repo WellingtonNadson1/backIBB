@@ -110,11 +110,25 @@ app.addHook("onRequest", async (request, reply) => {
   request.prisma = createPrismaInstance();
 });
 
-app.addHook("onResponse", async (request, reply) => {
-  if (request.prisma) {
-    await disconnectPrisma();
+const shutdown = async (signal: string) => {
+  try {
+    app.log.info({ signal }, "Encerrando servidor...");
+    await app.close(); // para de aceitar novas requests
+  } catch (err) {
+    app.log.error(err, "Erro ao fechar Fastify");
   }
-});
+
+  try {
+    await disconnectPrisma(); // ✅ aqui sim é o lugar certo
+  } catch (err) {
+    app.log.error(err, "Erro ao desconectar Prisma");
+  } finally {
+    process.exit(0);
+  }
+};
+
+process.on("SIGINT", () => shutdown("SIGINT"));
+process.on("SIGTERM", () => shutdown("SIGTERM"));
 
 const start = async () => {
   try {
