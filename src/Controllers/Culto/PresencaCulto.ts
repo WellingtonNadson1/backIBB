@@ -3,6 +3,7 @@ import { FastifyReply, FastifyRequest } from "fastify";
 import { Input, array, boolean, object, string } from "valibot";
 import { PresencaCultoRepositorie } from "../../Repositories/Culto";
 import { PresencaCultoSpeedSchema } from "./schemas";
+import z from "zod";
 
 type CultoIndividual = {
   startDate: Date;
@@ -51,6 +52,11 @@ interface PresencaCultoParams {
   id: string;
   lider: string;
   culto: string;
+}
+
+interface PresencaCultoByCelulaParams {
+  culto: string;
+  celulaId: string;
 }
 
 interface RelatorioCultosParams {
@@ -165,6 +171,17 @@ class PresencaCultoController {
       return reply.code(404).send({ message: "Presença not Register!" });
     }
     return reply.code(200).send(presencaCultoIsRegister);
+  }
+
+  async detailsByCultoAndCelula(request: FastifyRequest, reply: FastifyReply) {
+    const { culto, celulaId } = request.params as PresencaCultoByCelulaParams;
+    const res = await PresencaCultoRepositorie.findDetailsByCultoAndCelula(
+      culto,
+      celulaId,
+    );
+
+    // ✅ NÃO retorna 404 — isso evita “isError” e melhora UX
+    return reply.code(200).send(res);
   }
 
   async storeRefactored(request: FastifyRequest, reply: FastifyReply) {
@@ -321,6 +338,32 @@ class PresencaCultoController {
         message: "Erro interno do servidor",
       });
     }
+  }
+
+  async idempotent(request: FastifyRequest, reply: FastifyReply) {
+    const parsed = PresencaCultoSpeedSchema.extend({
+      allowUpdate: z.boolean().optional(),
+    }) // se for zod
+      .safeParse(request.body);
+
+    if (!parsed.success) {
+      return reply
+        .code(400)
+        .send({ message: "Payload inválido", issues: parsed.error.flatten() });
+    }
+
+    const { presence_culto, membro, allowUpdate = false } = parsed.data;
+
+    const res = await PresencaCultoRepositorie.upsertManyByCulto({
+      presence_culto,
+      allowUpdate,
+      membro,
+    });
+
+    return reply.code(200).send({
+      ...res,
+      message: allowUpdate ? "Retificação salva." : "Registro salvo.",
+    });
   }
 
   async store(request: FastifyRequest, reply: FastifyReply) {

@@ -524,6 +524,33 @@ class PresencaCultoRepositorie {
     return result;
   }
 
+  // repo
+  // PresencaCultoRepositorie.ts
+  async findDetailsByCultoAndCelula(cultoId: string, celulaId: string) {
+    const prisma = createPrismaInstance();
+
+    const items = await prisma.presencaCulto.findMany({
+      where: {
+        cultoIndividualId: cultoId,
+        membro: { celulaId }, // ✅ aqui é a chave
+      },
+      select: {
+        userId: true,
+        status: true,
+        date_update: true,
+      },
+    });
+
+    return {
+      exists: items.length > 0,
+      items,
+      lastUpdate: items.reduce<Date | null>(
+        (acc, it) => (!acc || it.date_update > acc ? it.date_update : acc),
+        null,
+      ),
+    };
+  }
+
   async createPresencaCultoNew(presencaCultoDataForm: PresencaCultoDataNew) {
     const prisma = createPrismaInstance();
     try {
@@ -577,6 +604,64 @@ class PresencaCultoRepositorie {
     });
 
     return result;
+  }
+
+  async upsertManyByCulto(input: {
+    presence_culto: string;
+    allowUpdate: boolean;
+    membro: { id: string; status: boolean }[];
+  }) {
+    const prisma = createPrismaInstance();
+    const { presence_culto, allowUpdate, membro } = input;
+
+    const dataBrasil = dayjs().tz("America/Sao_Paulo").toDate();
+
+    const uniqueById = Array.from(
+      new Map(membro.map((m) => [m.id, m])).values(),
+    );
+    const ids = uniqueById.map((m) => m.id);
+
+    const existing = await prisma.presencaCulto.findMany({
+      where: { cultoIndividualId: presence_culto, userId: { in: ids } },
+      select: { userId: true },
+    });
+
+    const existingSet = new Set(existing.map((e) => e.userId));
+    const toCreate = uniqueById.filter((m) => !existingSet.has(m.id));
+    const toUpdate = uniqueById.filter((m) => existingSet.has(m.id));
+
+    const createRes =
+      toCreate.length > 0
+        ? await prisma.presencaCulto.createMany({
+            data: toCreate.map((m) => ({
+              cultoIndividualId: presence_culto,
+              userId: m.id,
+              status: m.status,
+              date_create: dataBrasil,
+              date_update: dataBrasil,
+            })),
+            skipDuplicates: true,
+          })
+        : { count: 0 };
+
+    let updatedCount = 0;
+    if (allowUpdate && toUpdate.length > 0) {
+      const ops = toUpdate.map((m) =>
+        prisma.presencaCulto.updateMany({
+          where: { cultoIndividualId: presence_culto, userId: m.id },
+          data: { status: m.status, date_update: dataBrasil },
+        }),
+      );
+
+      const results = await prisma.$transaction(ops);
+      updatedCount = results.reduce((acc, r) => acc + (r?.count ?? 0), 0);
+    }
+
+    return {
+      totalUnique: uniqueById.length,
+      createdCount: createRes.count,
+      updatedCount,
+    };
   }
 
   async updatePresencaCulto(
