@@ -29,6 +29,12 @@ const routerPresencaCulto = async (fastify: FastifyInstance) => {
     `/presencacultosbycelula/:culto/:celulaId`,
     PresencaCultoController.detailsByCultoAndCelula,
   );
+  // routerPresencaCulto.ts
+  fastify.get(
+    `/presencacultosbyuser/:culto/:userId`,
+    PresencaCultoController.detailsByCultoAndUser,
+  );
+
   fastify.post("/presencacultos", PresencaCultoController.store);
   fastify.delete("/presencacultos/:id", PresencaCultoController.delete);
   fastify.put("/presencacultos/:id", PresencaCultoController.update);

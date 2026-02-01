@@ -5,6 +5,11 @@ import { PresencaCultoRepositorie } from "../../Repositories/Culto";
 import { PresencaCultoSpeedSchema } from "./schemas";
 import z from "zod";
 
+interface PresencaCultoByUserParams {
+  culto: string;
+  userId: string;
+}
+
 type CultoIndividual = {
   startDate: Date;
   endDate: Date;
@@ -181,6 +186,21 @@ class PresencaCultoController {
     );
 
     // ✅ NÃO retorna 404 — isso evita “isError” e melhora UX
+    return reply.code(200).send(res);
+  }
+
+  async detailsByCultoAndUser(
+    request: FastifyRequest<{ Params: PresencaCultoByUserParams }>,
+    reply: FastifyReply,
+  ) {
+    const { culto, userId } = request.params;
+
+    const res = await PresencaCultoRepositorie.findDetailsByCultoAndUser(
+      culto,
+      userId,
+    );
+
+    // ✅ não retorna 404
     return reply.code(200).send(res);
   }
 

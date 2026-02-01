@@ -551,6 +551,32 @@ class PresencaCultoRepositorie {
     };
   }
 
+  // PresencaCultoRepositorie.ts
+  async findDetailsByCultoAndUser(cultoId: string, userId: string) {
+    const prisma = createPrismaInstance();
+
+    const items = await prisma.presencaCulto.findMany({
+      where: {
+        cultoIndividualId: cultoId,
+        userId: userId, // ✅ aqui agora é por usuário
+      },
+      select: {
+        userId: true,
+        status: true,
+        date_update: true,
+      },
+    });
+
+    return {
+      exists: items.length > 0,
+      items,
+      lastUpdate: items.reduce<Date | null>(
+        (acc, it) => (!acc || it.date_update > acc ? it.date_update : acc),
+        null,
+      ),
+    };
+  }
+
   async createPresencaCultoNew(presencaCultoDataForm: PresencaCultoDataNew) {
     const prisma = createPrismaInstance();
     try {
