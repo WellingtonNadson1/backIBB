@@ -10,6 +10,7 @@ import {
   dataSchemaCreateDiscipuladoCell,
   dataSchemaCreateDiscipuladoSupervisor,
 } from "./schema";
+import { getMonthPeriodSP } from "../../utils/getMonthPeriodSP";
 
 class RegisterDiscipuladoController {
   // Fazendo uso do Fastify
@@ -42,7 +43,7 @@ class RegisterDiscipuladoController {
     request: FastifyRequest<{
       Params: PresencaCultoParams;
     }>,
-    reply: FastifyReply
+    reply: FastifyReply,
   ) {
     const id = request.params.id;
     const presencaCulto = await RegisterDiscipuladoRepositorie.findById(id);
@@ -55,7 +56,7 @@ class RegisterDiscipuladoController {
   // Relatorio de presenca nos cultos
   async discipuladosRelatorioSupervisor(
     request: FastifyRequest,
-    reply: FastifyReply
+    reply: FastifyReply,
   ) {
     const { startDate, endDate, superVisionId, cargoLiderancaId } =
       request.body as CultoIndividual;
@@ -65,7 +66,7 @@ class RegisterDiscipuladoController {
         startDate,
         endDate,
         superVisionId,
-        cargoLiderancaId
+        cargoLiderancaId,
       );
 
     if (!resultRelatorioCultos) {
@@ -94,12 +95,12 @@ class RegisterDiscipuladoController {
       culto.presencas_culto
         .filter(
           (presenca) =>
-            presenca.membro?.supervisao_pertence?.id === params.supervisaoId
+            presenca.membro?.supervisao_pertence?.id === params.supervisaoId,
         )
         .map((presenca) => ({
           culto,
           membro: presenca.membro,
-        }))
+        })),
     );
 
     console.log(resultRelatorioCultos);
@@ -112,7 +113,7 @@ class RegisterDiscipuladoController {
     request: FastifyRequest<{
       Params: PresencaDiscipuladoParams;
     }>,
-    reply: FastifyReply
+    reply: FastifyReply,
   ) {
     try {
       const { startDate, endDate, superVisionId } =
@@ -125,7 +126,7 @@ class RegisterDiscipuladoController {
 
       const resultRelatorioCultos =
         await RegisterDiscipuladoRepositorie.discipuladosRelatorioSupervisao(
-          params
+          params,
         );
 
       if (!resultRelatorioCultos) {
@@ -154,7 +155,7 @@ class RegisterDiscipuladoController {
 
   async isMembersDiscipuladoSupervisorRegister(
     request: FastifyRequest,
-    reply: FastifyReply
+    reply: FastifyReply,
   ) {
     // console.log('request', request.body)
     try {
@@ -167,12 +168,12 @@ class RegisterDiscipuladoController {
       const firstDayOfMonth = new Date(
         dataOcorreu.getFullYear(),
         dataOcorreu.getMonth(),
-        1
+        1,
       );
       const lastDayOfMonth = new Date(
         dataOcorreu.getFullYear(),
         dataOcorreu.getMonth() + 1,
-        0
+        0,
       );
 
       // Verifique se já existe discipulados registrados para o membro
@@ -192,36 +193,22 @@ class RegisterDiscipuladoController {
   }
 
   async isMembersCellRegister(request: FastifyRequest, reply: FastifyReply) {
-    // console.log('request', request.body)
     try {
-      const registerDiscipuladoDataCellForm =
+      const { cell_id, data_ocorreu } =
         request.body as dataSchemaCreateDiscipuladoCell;
 
-      const { cell_id, data_ocorreu } = registerDiscipuladoDataCellForm;
-      const dataOcorreu = new Date(data_ocorreu);
-      const firstDayOfMonth = new Date(
-        dataOcorreu.getFullYear(),
-        dataOcorreu.getMonth(),
-        1
-      );
-      const lastDayOfMonth = new Date(
-        dataOcorreu.getFullYear(),
-        dataOcorreu.getMonth() + 1,
-        0
-      );
+      const { start, end } = getMonthPeriodSP(data_ocorreu);
 
-      // Verifique se já existe discipulados registrados para o membro
       const existingTwoRegister =
         await RegisterDiscipuladoRepositorie.findAllMembersCellForPeriod({
           cell_id,
-          firstDayOfMonth,
-          lastDayOfMonth,
+          firstDayOfMonth: start,
+          lastDayOfMonth: end,
         });
-      console.log("existingTwoRegister", existingTwoRegister);
 
       return reply.code(200).send(existingTwoRegister);
     } catch (error: any) {
-      console.error(error); // Log o erro no console para depuração
+      console.error(error);
       return reply.code(400).send(error.message || "Erro interno do servidor");
     }
   }
@@ -237,12 +224,12 @@ class RegisterDiscipuladoController {
       const firstDayOfMonth = new Date(
         dataOcorreu.getFullYear(),
         dataOcorreu.getMonth(),
-        1
+        1,
       );
       const lastDayOfMonth = new Date(
         dataOcorreu.getFullYear(),
         dataOcorreu.getMonth() + 1,
-        0
+        0,
       );
 
       // Verifique se já existe discipulados registrados para o membro
@@ -263,34 +250,18 @@ class RegisterDiscipuladoController {
 
   async store(request: FastifyRequest, reply: FastifyReply) {
     try {
-      const registerDiscipuladoDataForm =
+      const { usuario_id, discipulador_id, data_ocorreu } =
         request.body as dataSchemaCreateDiscipulado;
 
-      const { usuario_id, discipulador_id, data_ocorreu } =
-        registerDiscipuladoDataForm;
-      const dataOcorreu = new Date(data_ocorreu);
-      const firstDayOfMonth = new Date(
-        dataOcorreu.getFullYear(),
-        dataOcorreu.getMonth(),
-        1
-      );
-      const lastDayOfMonth = new Date(
-        dataOcorreu.getFullYear(),
-        dataOcorreu.getMonth() + 1,
-        0
-      );
+      const { start, end } = getMonthPeriodSP(data_ocorreu);
 
-      // Verifique se já existe discipulados registrados para o membro
       const existingTwoRegister =
         await RegisterDiscipuladoRepositorie.findAllForPeriod({
           usuario_id,
           discipulador_id,
-          firstDayOfMonth,
-          lastDayOfMonth,
+          firstDayOfMonth: start,
+          lastDayOfMonth: end,
         });
-      console.log("firstDayOfMonth", firstDayOfMonth);
-      console.log("lastDayOfMonth", lastDayOfMonth);
-      console.log("existingTwoRegister", existingTwoRegister);
 
       if (existingTwoRegister.quantidadeDiscipuladoRealizado >= 2) {
         return reply.code(409).send({
@@ -298,7 +269,6 @@ class RegisterDiscipuladoController {
         });
       }
 
-      // Se não, crie o registro
       const registerDiscipulado =
         await RegisterDiscipuladoRepositorie.createRegisterDiscipulado({
           usuario_id,
@@ -308,7 +278,7 @@ class RegisterDiscipuladoController {
 
       return reply.code(201).send(registerDiscipulado);
     } catch (error: any) {
-      console.error(error); // Log o erro no console para depuração
+      console.error(error);
       return reply.code(400).send(error.message || "Erro interno do servidor");
     }
   }
@@ -317,7 +287,7 @@ class RegisterDiscipuladoController {
     request: FastifyRequest<{
       Params: PresencaCultoParams;
     }>,
-    reply: FastifyReply
+    reply: FastifyReply,
   ) {
     const id = request.params.id;
     const presencaCultoDataForm = request.body as PresencaCultoData;
@@ -332,7 +302,7 @@ class RegisterDiscipuladoController {
     request: FastifyRequest<{
       Params: PresencaCultoParams;
     }>,
-    reply: FastifyReply
+    reply: FastifyReply,
   ) {
     const id = request.params.id;
     await RegisterDiscipuladoRepositorie.deletePresencaCulto(id);

@@ -45,8 +45,8 @@ function endOfDay(d: Date) {
   return dayjs(d).endOf("day").toDate();
 }
 
-function toPeriod(firstDayOfMonth: Date, lastDayOfMonth: Date): Period {
-  return { start: firstDayOfMonth, end: endOfDay(lastDayOfMonth) };
+function toPeriod(start: Date, end: Date): Period {
+  return { start, end };
 }
 
 class RegisterDiscipuladoRepositorie {
