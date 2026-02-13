@@ -1,4 +1,4 @@
-import { Prisma, Role } from "@prisma/client";
+import { Prisma } from "@prisma/client";
 import { FastifyReply, FastifyRequest } from "fastify";
 import { z } from "zod";
 import { createPrismaInstance } from "../../services/prisma";
@@ -31,13 +31,66 @@ const assignSetorBulkBodySchema = z.object({
   celulaIds: z.array(z.string().uuid()).min(1),
 });
 
-async function isAdminUser(userId: string) {
+const ADMIN_CELULA_ROLES = new Set(["ADMIN", "USERCENTRAL", "USER_CENTRAL"]);
+
+function normalizeRoleName(value: string | null | undefined) {
+  if (!value) return null;
+  const normalized = value
+    .trim()
+    .toUpperCase()
+    .replace(/[\s-]+/g, "_")
+    .replace(/__+/g, "_");
+
+  return normalized.length > 0 ? normalized : null;
+}
+
+async function getRequesterRoles(userId: string) {
   const user = await prisma.user.findUnique({
     where: { id: userId },
-    select: { role: true },
+    select: {
+      role: true,
+      user_roles: {
+        select: {
+          rolenew: {
+            select: {
+              name: true,
+            },
+          },
+        },
+      },
+    },
   });
 
-  return user?.role === Role.ADMIN;
+  const roles = new Set<string>();
+  const primaryRole = normalizeRoleName(user?.role);
+  if (primaryRole) {
+    roles.add(primaryRole);
+  }
+
+  for (const roleLink of user?.user_roles ?? []) {
+    const roleName = normalizeRoleName(roleLink.rolenew?.name ?? null);
+    if (roleName) {
+      roles.add(roleName);
+    }
+  }
+
+  return roles;
+}
+
+async function hasAnyRole(userId: string, allowedRoles: Set<string>) {
+  const requesterRoles = await getRequesterRoles(userId);
+
+  for (const role of requesterRoles) {
+    if (allowedRoles.has(role)) {
+      return true;
+    }
+  }
+
+  return false;
+}
+
+async function canManageAdminCelula(userId: string) {
+  return hasAnyRole(userId, ADMIN_CELULA_ROLES);
 }
 
 function handleKnownErrors(reply: FastifyReply, error: unknown) {
@@ -65,8 +118,10 @@ export class AdminCelulaController {
       return reply.status(401).send({ error: "Não autorizado" });
     }
 
-    if (!(await isAdminUser(requesterId))) {
-      return reply.status(403).send({ error: "Acesso restrito a ADMIN" });
+    if (!(await canManageAdminCelula(requesterId))) {
+      return reply
+        .status(403)
+        .send({ error: "Acesso restrito a ADMIN/USERCENTRAL" });
     }
 
     const parsedParams = paramsSchema.safeParse(request.params);
@@ -105,8 +160,10 @@ export class AdminCelulaController {
       return reply.status(401).send({ error: "Não autorizado" });
     }
 
-    if (!(await isAdminUser(requesterId))) {
-      return reply.status(403).send({ error: "Acesso restrito a ADMIN" });
+    if (!(await canManageAdminCelula(requesterId))) {
+      return reply
+        .status(403)
+        .send({ error: "Acesso restrito a ADMIN/USERCENTRAL" });
     }
 
     const parsedParams = paramsSchema.safeParse(request.params);
@@ -136,8 +193,10 @@ export class AdminCelulaController {
       return reply.status(401).send({ error: "Não autorizado" });
     }
 
-    if (!(await isAdminUser(requesterId))) {
-      return reply.status(403).send({ error: "Acesso restrito a ADMIN" });
+    if (!(await canManageAdminCelula(requesterId))) {
+      return reply
+        .status(403)
+        .send({ error: "Acesso restrito a ADMIN/USERCENTRAL" });
     }
 
     const parsedQuery = listUnassignedQuerySchema.safeParse(request.query);
@@ -171,8 +230,10 @@ export class AdminCelulaController {
       return reply.status(401).send({ error: "Não autorizado" });
     }
 
-    if (!(await isAdminUser(requesterId))) {
-      return reply.status(403).send({ error: "Acesso restrito a ADMIN" });
+    if (!(await canManageAdminCelula(requesterId))) {
+      return reply
+        .status(403)
+        .send({ error: "Acesso restrito a ADMIN/USERCENTRAL" });
     }
 
     const parsedBody = assignSetorBulkBodySchema.safeParse(request.body);
