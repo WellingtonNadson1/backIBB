@@ -10,6 +10,12 @@ import {
   dataSchemaCreateDiscipuladoCell,
   dataSchemaCreateDiscipuladoSupervisor,
 } from "./schema";
+import { createPrismaInstance } from "../../services/prisma";
+import {
+  resolveEffectiveCoverageNodeId,
+  resolveReportNodeId,
+  resolveSetorIdsForNode,
+} from "../../services/SupervisaoCoverageService";
 import { getMonthPeriodSP } from "../../utils/getMonthPeriodSP";
 
 class RegisterDiscipuladoController {
@@ -58,15 +64,50 @@ class RegisterDiscipuladoController {
     request: FastifyRequest,
     reply: FastifyReply,
   ) {
-    const { startDate, endDate, superVisionId, cargoLiderancaId } =
-      request.body as CultoIndividual;
+    const payload = request.body as CultoIndividual & {
+      nodeId?: string;
+      supervisionNodeId?: string;
+      supervisaoId?: string;
+    };
+    const requesterId = request.user?.id;
+    if (!requesterId) {
+      return reply.status(401).send({ error: "Não autorizado" });
+    }
+
+    const { startDate, endDate, cargoLiderancaId } = payload;
+    const requestedNodeId = resolveReportNodeId(payload);
+
+    const prisma = createPrismaInstance();
+    const coverageNodeId = await resolveEffectiveCoverageNodeId(
+      {
+        requesterUserId: requesterId,
+        requestedNodeId,
+      },
+      prisma,
+    );
+
+    if (!coverageNodeId) {
+      return reply.status(403).send({
+        error: "Usuário sem supervisão vinculada para o escopo do relatório.",
+      });
+    }
+
+    const coverageSetorIds = await resolveSetorIdsForNode(coverageNodeId, prisma);
+    const legacySuperVisionId =
+      typeof payload.superVisionId === "string" && payload.superVisionId.trim()
+        ? payload.superVisionId
+        : coverageNodeId;
 
     const resultRelatorioCultos =
       await RegisterDiscipuladoRepositorie.discipuladosSupervisorRelatorios(
         startDate,
         endDate,
-        superVisionId,
+        legacySuperVisionId,
         cargoLiderancaId,
+        {
+          coverageNodeId,
+          coverageSetorIds,
+        },
       );
 
     if (!resultRelatorioCultos) {
@@ -116,12 +157,48 @@ class RegisterDiscipuladoController {
     reply: FastifyReply,
   ) {
     try {
-      const { startDate, endDate, superVisionId } =
-        (await request.body) as PresencaDiscipuladoParams;
+      const payload = (await request.body) as PresencaDiscipuladoParams & {
+        nodeId?: string;
+        supervisionNodeId?: string;
+        supervisaoId?: string;
+      };
+      const requesterId = request.user?.id;
+      if (!requesterId) {
+        return reply.status(401).send({ error: "Não autorizado" });
+      }
+
+      const { startDate, endDate } = payload;
+      const requestedNodeId = resolveReportNodeId(payload);
+
+      const prisma = createPrismaInstance();
+      const coverageNodeId = await resolveEffectiveCoverageNodeId(
+        {
+          requesterUserId: requesterId,
+          requestedNodeId,
+        },
+        prisma,
+      );
+
+      if (!coverageNodeId) {
+        return reply.status(403).send({
+          error: "Usuário sem supervisão vinculada para o escopo do relatório.",
+        });
+      }
+
+      const coverageSetorIds = await resolveSetorIdsForNode(
+        coverageNodeId,
+        prisma,
+      );
+      const legacySuperVisionId =
+        typeof payload.superVisionId === "string" && payload.superVisionId.trim()
+          ? payload.superVisionId
+          : coverageNodeId;
+
       const params = {
         startDate,
         endDate,
-        superVisionId,
+        superVisionId: legacySuperVisionId,
+        coverageSetorIds,
       };
 
       const resultRelatorioCultos =

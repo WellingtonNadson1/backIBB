@@ -1,4 +1,4 @@
-import bcrypt from "bcrypt";
+import bcrypt from "bcryptjs";
 import { FastifyReply, FastifyRequest } from "fastify";
 import UserRepositorie from "../../Repositories/User/UserRepositorie";
 import {
@@ -32,14 +32,13 @@ class UserController {
   // Get all users in a Id Supervision
   async indexDiscipulosSupervisor(
     request: FastifyRequest,
-    reply: FastifyReply
+    reply: FastifyReply,
   ) {
     try {
       const userDataForm = request.body as any;
       console.log("userDataForm Supervisor", userDataForm);
-      const users = await UserRepositorie.findAllDiscipulosSupervisor(
-        userDataForm
-      );
+      const users =
+        await UserRepositorie.findAllDiscipulosSupervisor(userDataForm);
       return reply.code(200).send(users);
     } catch (error) {
       return reply.code(500).send({ error: "Internal Server Error" });
@@ -49,14 +48,13 @@ class UserController {
   // Get all users in a Id Supervision
   async indexDiscipuladoSupervisorSupervisao(
     request: FastifyRequest,
-    reply: FastifyReply
+    reply: FastifyReply,
   ) {
     try {
       const userDataForm = request.body as any;
       console.log("userDataForm", userDataForm);
-      const users = await UserRepositorie.findAllDiscipulosSupervisores(
-        userDataForm
-      );
+      const users =
+        await UserRepositorie.findAllDiscipulosSupervisores(userDataForm);
       return reply.code(200).send(users);
     } catch (error) {
       return reply.code(500).send({ error: "Internal Server Error" });
@@ -116,7 +114,7 @@ class UserController {
   // Get all users available for disciplado
   async indexDiscipuladosAvailable(
     request: FastifyRequest,
-    reply: FastifyReply
+    reply: FastifyReply,
   ) {
     try {
       const users = await UserRepositorie.findAllDiscipuladosAvailable();
@@ -129,7 +127,7 @@ class UserController {
   // Show a user by ID in a cell
   async showcell(
     request: FastifyRequest<{ Params: UserParams }>,
-    reply: FastifyReply
+    reply: FastifyReply,
   ) {
     try {
       const id = request.params.id;
@@ -146,7 +144,7 @@ class UserController {
   // Show a user by ID
   async show(
     request: FastifyRequest<{ Params: UserParams }>,
-    reply: FastifyReply
+    reply: FastifyReply,
   ) {
     try {
       const id = request.params.id;
@@ -214,7 +212,7 @@ class UserController {
   // Update a user
   async update(
     request: FastifyRequest<{ Params: UserParams }>,
-    reply: FastifyReply
+    reply: FastifyReply,
   ) {
     try {
       const id = request.params.id;
@@ -270,7 +268,7 @@ class UserController {
   // Update discipulador ID
   async updateDiscipulo(
     request: FastifyRequest<{ Params: UserParams }>,
-    reply: FastifyReply
+    reply: FastifyReply,
   ) {
     try {
       const { id, discipuladorId } = request.body as any;
@@ -279,7 +277,7 @@ class UserController {
         console.log("discipuladorId", discipuladorId);
         const result = await UserRepositorie.updateDiscipuladorId(
           id,
-          discipuladorId
+          discipuladorId,
         );
         return reply.code(200).send(result);
       }
@@ -294,7 +292,7 @@ class UserController {
   // Delete a user
   async delete(
     request: FastifyRequest<{ Params: UserParams }>,
-    reply: FastifyReply
+    reply: FastifyReply,
   ) {
     try {
       const id = request.params.id;

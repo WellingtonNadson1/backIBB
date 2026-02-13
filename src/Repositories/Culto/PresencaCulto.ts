@@ -22,11 +22,19 @@ class PresencaCultoRepositorie {
   async cultosRelatoriosSupervisor(
     startDate: Date,
     endDate: Date,
-    superVisionId: string,
+    supervisionScopeIds: string[],
     cargoLideranca: string[],
   ) {
     try {
       const prisma = createPrismaInstance();
+      const coverageIds = Array.from(
+        new Set(
+          (supervisionScopeIds ?? [])
+            .filter((id): id is string => typeof id === "string")
+            .map((id) => id.trim())
+            .filter((id) => id.length > 0),
+        ),
+      );
 
       const dataInicio = dayjs(startDate).toISOString();
       const dataFim = dayjs(endDate).endOf("day").toISOString();
@@ -34,7 +42,7 @@ class PresencaCultoRepositorie {
       // Consulta para buscar membros da supervisão que compareceram aos cultos no intervalo de tempo
       const membrosCompareceramCultos = await prisma?.user.findMany({
         where: {
-          supervisaoId: superVisionId,
+          supervisaoId: { in: coverageIds },
           cargoDeLiderancaId: {
             in: cargoLideranca,
           },
@@ -84,7 +92,7 @@ class PresencaCultoRepositorie {
         await CultoIndividualRepositorie.findAllIntervall(
           startDate,
           endDate,
-          superVisionId,
+          coverageIds,
         );
 
       const totalCultosPeriodo = cultosIndividuaisForDate.totalCultosPeriodo;

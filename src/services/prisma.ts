@@ -80,7 +80,12 @@ const createPrismaInstance = () => {
  * ⚠️ Só usar no shutdown do servidor.
  * NÃO chame em cada repository.
  */
+let disconnecting = false;
+
 const disconnectPrisma = async () => {
+  if (disconnecting) return;
+  disconnecting = true;
+
   console.log("[Prisma] Disconnect solicitado");
 
   try {

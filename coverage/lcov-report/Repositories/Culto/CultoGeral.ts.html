@@ -23,9 +23,9 @@
         <div class='clearfix'>
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">26.66% </span>
+                <span class="strong">25.23% </span>
                 <span class="quiet">Statements</span>
-                <span class='fraction'>28/105</span>
+                <span class='fraction'>27/107</span>
             </div>
         
             
@@ -44,9 +44,9 @@
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">26.66% </span>
+                <span class="strong">25.23% </span>
                 <span class="quiet">Lines</span>
-                <span class='fraction'>28/105</span>
+                <span class='fraction'>27/107</span>
             </div>
         
             
@@ -57,7 +57,7 @@
         <template id="filterTemplate">
             <div class="quiet">
                 Filter:
-                <input oninput="onInput()" type="search" id="fileSearch">
+                <input type="search" id="fileSearch">
             </div>
         </template>
     </div>
@@ -168,7 +168,9 @@
 <a name='L103'></a><a href='#L103'>103</a>
 <a name='L104'></a><a href='#L104'>104</a>
 <a name='L105'></a><a href='#L105'>105</a>
-<a name='L106'></a><a href='#L106'>106</a></td><td class="line-coverage quiet"><span class="cline-any cline-yes">1x</span>
+<a name='L106'></a><a href='#L106'>106</a>
+<a name='L107'></a><a href='#L107'>107</a>
+<a name='L108'></a><a href='#L108'>108</a></td><td class="line-coverage quiet"><span class="cline-any cline-yes">1x</span>
 <span class="cline-any cline-yes">1x</span>
 <span class="cline-any cline-yes">1x</span>
 <span class="cline-any cline-yes">1x</span>
@@ -184,27 +186,6 @@
 <span class="cline-any cline-yes">1x</span>
 <span class="cline-any cline-yes">1x</span>
 <span class="cline-any cline-yes">1x</span>
-<span class="cline-any cline-yes">1x</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-yes">1x</span>
-<span class="cline-any cline-yes">1x</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
@@ -237,10 +218,33 @@
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-yes">1x</span>
+<span class="cline-any cline-yes">1x</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-yes">1x</span>
 <span class="cline-any cline-yes">1x</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
@@ -275,10 +279,9 @@
 <span class="cline-any cline-yes">1x</span>
 <span class="cline-any cline-neutral">&nbsp;</span></td><td class="text"><pre class="prettyprint lang-js">import { Prisma } from "@prisma/client";
 import { CultoGeralData } from "../../Controllers/Culto/CultoGeral";
-import { createPrismaInstance, disconnectPrisma } from "../../services/prisma";
+import { createPrismaInstance } from "../../services/prisma";
 &nbsp;
-const prisma = createPrismaInstance()
-&nbsp;
+const prisma = createPrismaInstance();
 &nbsp;
 type UpdateCultoGeralInput = Prisma.CultoGeralUpdateInput &amp; {
   lista_cultos_semanais?: { connect: { id: string } }[];
@@ -303,7 +306,6 @@ class CultoGeralRepositorie {
 <span class="cstat-no" title="statement not covered" >        },</span>
 <span class="cstat-no" title="statement not covered" >      },</span>
 <span class="cstat-no" title="statement not covered" >    });</span>
-<span class="cstat-no" title="statement not covered" >    await disconnectPrisma()</span>
 <span class="cstat-no" title="statement not covered" >  }</span>
 &nbsp;
 <span class="fstat-no" title="function not covered" >  async findById(id: string) {</span>
@@ -322,7 +324,6 @@ class CultoGeralRepositorie {
 <span class="cstat-no" title="statement not covered" >        },</span>
 <span class="cstat-no" title="statement not covered" >      },</span>
 <span class="cstat-no" title="statement not covered" >    });</span>
-<span class="cstat-no" title="statement not covered" >    await disconnectPrisma()</span>
 <span class="cstat-no" title="statement not covered" >  }</span>
 &nbsp;
 <span class="fstat-no" title="function not covered" >  async createCultoGeral(cultoGeralDataForm: CultoGeralData) {</span>
@@ -336,13 +337,16 @@ class CultoGeralRepositorie {
 <span class="cstat-no" title="statement not covered" >      await prisma?.cultoGeral.update({</span>
 <span class="cstat-no" title="statement not covered" >        where: { id: cultoGeral.id },</span>
 <span class="cstat-no" title="statement not covered" >        data: {</span>
-<span class="cstat-no" title="statement not covered" >          lista_cultos_semanais: { connect: lista_cultos_semanais.map((escolaId) =&gt; ({ id: escolaId })) },</span>
+<span class="cstat-no" title="statement not covered" >          lista_cultos_semanais: {</span>
+<span class="cstat-no" title="statement not covered" >            connect: lista_cultos_semanais.map((escolaId) =&gt; ({</span>
+<span class="cstat-no" title="statement not covered" >              id: escolaId,</span>
+<span class="cstat-no" title="statement not covered" >            })),</span>
+<span class="cstat-no" title="statement not covered" >          },</span>
 <span class="cstat-no" title="statement not covered" >        },</span>
 <span class="cstat-no" title="statement not covered" >      });</span>
 <span class="cstat-no" title="statement not covered" >    }</span>
-<span class="cstat-no" title="statement not covered" >    await disconnectPrisma()</span>
 <span class="cstat-no" title="statement not covered" ></span>
-<span class="cstat-no" title="statement not covered" >    return cultoGeral</span>
+<span class="cstat-no" title="statement not covered" >    return cultoGeral;</span>
 <span class="cstat-no" title="statement not covered" >  }</span>
 &nbsp;
 <span class="fstat-no" title="function not covered" >  async updateCultoGerala(id: string, cultoGeralDataForm: CultoGeralData) {</span>
@@ -353,11 +357,13 @@ class CultoGeralRepositorie {
 <span class="cstat-no" title="statement not covered" >    };</span>
 <span class="cstat-no" title="statement not covered" ></span>
 <span class="cstat-no" title="statement not covered" >    if (lista_cultos_semanais !== undefined) {</span>
-<span class="cstat-no" title="statement not covered" >      updateCultoGeralInput.lista_cultos_semanais = lista_cultos_semanais.map((cultoGeralId) =&gt; ({</span>
-<span class="cstat-no" title="statement not covered" >        connect: {</span>
-<span class="cstat-no" title="statement not covered" >          id: cultoGeralId,</span>
-<span class="cstat-no" title="statement not covered" >        },</span>
-<span class="cstat-no" title="statement not covered" >      })) as CultoGeralConnect[];</span>
+<span class="cstat-no" title="statement not covered" >      updateCultoGeralInput.lista_cultos_semanais = lista_cultos_semanais.map(</span>
+<span class="cstat-no" title="statement not covered" >        (cultoGeralId) =&gt; ({</span>
+<span class="cstat-no" title="statement not covered" >          connect: {</span>
+<span class="cstat-no" title="statement not covered" >            id: cultoGeralId,</span>
+<span class="cstat-no" title="statement not covered" >          },</span>
+<span class="cstat-no" title="statement not covered" >        }),</span>
+<span class="cstat-no" title="statement not covered" >      ) as CultoGeralConnect[];</span>
 <span class="cstat-no" title="statement not covered" >    }</span>
 <span class="cstat-no" title="statement not covered" ></span>
 <span class="cstat-no" title="statement not covered" >    return await prisma?.cultoGeral.update({</span>
@@ -385,7 +391,7 @@ export default new CultoGeralRepositorie();
             <div class='footer quiet pad2 space-top1 center small'>
                 Code coverage generated by
                 <a href="https://istanbul.js.org/" target="_blank" rel="noopener noreferrer">istanbul</a>
-                at 2023-11-25T15:26:45.849Z
+                at 2026-02-13T04:29:36.389Z
             </div>
         <script src="../../prettify.js"></script>
         <script>

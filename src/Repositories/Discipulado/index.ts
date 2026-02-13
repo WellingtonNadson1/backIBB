@@ -122,6 +122,40 @@ class RegisterDiscipuladoRepositorie {
     return byPair;
   }
 
+  private sanitizeScopeIds(rawIds: unknown[] | undefined): string[] {
+    if (!rawIds) {
+      return [];
+    }
+
+    return Array.from(
+      new Set(
+        rawIds
+          .filter((id): id is string => typeof id === "string")
+          .map((id) => id.trim())
+          .filter((id) => id.length > 0),
+      ),
+    );
+  }
+
+  private resolveCoverageSetorIds(params: {
+    explicitCoverageSetorIds?: string[];
+    legacySuperVisionId: string;
+  }): string[] {
+    const explicitCoverageSetorIds = this.sanitizeScopeIds(
+      params.explicitCoverageSetorIds,
+    );
+
+    if (explicitCoverageSetorIds.length > 0) {
+      return explicitCoverageSetorIds;
+    }
+
+    if (params.explicitCoverageSetorIds) {
+      return [];
+    }
+
+    return this.sanitizeScopeIds([params.legacySuperVisionId]);
+  }
+
   // =========================
   // Relatório Supervisor (já estava no caminho certo)
   // =========================
@@ -130,6 +164,10 @@ class RegisterDiscipuladoRepositorie {
     endDate: Date,
     superVisionId: string,
     cargoLiderancaId: string[],
+    options?: {
+      coverageNodeId?: string;
+      coverageSetorIds?: string[];
+    },
   ) {
     const prisma = createPrismaInstance();
     const period: Period = {
@@ -138,13 +176,30 @@ class RegisterDiscipuladoRepositorie {
     };
 
     try {
-      const supervisao = await prisma.supervisao.findUnique({
-        where: { id: superVisionId },
+      const coverageSetorIds = this.resolveCoverageSetorIds({
+        explicitCoverageSetorIds: options?.coverageSetorIds,
+        legacySuperVisionId: superVisionId,
+      });
+      const scopeNodeId = options?.coverageNodeId ?? superVisionId;
+
+      const supervisionNode = await prisma.supervisao.findUnique({
+        where: { id: scopeNodeId },
         select: {
           id: true,
           nome: true,
-          membros: {
-            where: { cargoDeLiderancaId: { in: cargoLiderancaId } },
+        },
+      });
+
+      if (!supervisionNode) return [];
+
+      const supervisors = coverageSetorIds.length
+        ? await prisma.user.findMany({
+            where: {
+              supervisaoId: { in: coverageSetorIds },
+              ...(cargoLiderancaId?.length
+                ? { cargoDeLiderancaId: { in: cargoLiderancaId } }
+                : {}),
+            },
             select: {
               id: true,
               first_name: true,
@@ -159,32 +214,36 @@ class RegisterDiscipuladoRepositorie {
               supervisao_pertence: { select: { id: true, nome: true } },
             },
             orderBy: [{ first_name: "asc" }],
-          },
-        },
-      });
+          })
+        : [];
 
-      if (!supervisao) return [];
-
-      const supervisorIds = supervisao.membros.map((m) => m.id);
+      const supervisorIds = supervisors.map((m) => m.id);
       if (!supervisorIds.length) {
-        return [{ id: supervisao.id, nome: supervisao.nome, membros: [] }];
+        return [
+          {
+            id: supervisionNode.id,
+            nome: supervisionNode.nome,
+            membros: [],
+          },
+        ];
       }
 
       // Discípulos atuais por supervisor (fonte de verdade)
-      const discipulosAtuais = await prisma.user.findMany({
-        where: {
-          supervisaoId: superVisionId,
-          discipuladorId: { in: supervisorIds },
-          // is_discipulado: true, // opcional
-        },
-        select: {
-          id: true,
-          first_name: true,
-          image_url: true,
-          discipuladorId: true,
-        },
-        orderBy: [{ first_name: "asc" }],
-      });
+      const discipulosAtuais = coverageSetorIds.length
+        ? await prisma.user.findMany({
+            where: {
+              supervisaoId: { in: coverageSetorIds },
+              discipuladorId: { in: supervisorIds },
+            },
+            select: {
+              id: true,
+              first_name: true,
+              image_url: true,
+              discipuladorId: true,
+            },
+            orderBy: [{ first_name: "asc" }],
+          })
+        : [];
 
       const pairs = discipulosAtuais
         .filter((d) => d.discipuladorId)
@@ -218,12 +277,12 @@ class RegisterDiscipuladoRepositorie {
         discipulosBySupervisor.set(supId, list);
       }
 
-      const membros = supervisao.membros.map((m) => ({
+      const membros = supervisors.map((m) => ({
         ...m,
         discipulos: discipulosBySupervisor.get(m.id) ?? [],
       }));
 
-      return [{ id: supervisao.id, nome: supervisao.nome, membros }];
+      return [{ id: supervisionNode.id, nome: supervisionNode.nome, membros }];
     } finally {
     }
   }
@@ -266,6 +325,7 @@ class RegisterDiscipuladoRepositorie {
     superVisionId: string;
     startDate: Date;
     endDate: Date;
+    coverageSetorIds?: string[];
   }) {
     const prisma = createPrismaInstance();
     const period: Period = {
@@ -274,33 +334,40 @@ class RegisterDiscipuladoRepositorie {
     };
 
     try {
-      // 1) Membros da supervisão com discipuladorId atual
-      const supervisaoArr = await prisma.supervisao.findMany({
-        where: { id: params.superVisionId },
-        select: {
-          membros: {
-            select: {
-              id: true,
-              first_name: true,
-              image_url: true,
-              discipuladorId: true, // <- fonte de verdade
-              celula: {
-                select: {
-                  id: true,
-                  nome: true,
-                  lider: { select: { first_name: true } },
-                },
-              },
-              supervisao_pertence: { select: { id: true, nome: true } },
-            },
-          },
-        },
+      const coverageSetorIds = this.resolveCoverageSetorIds({
+        explicitCoverageSetorIds: params.coverageSetorIds,
+        legacySuperVisionId: params.superVisionId,
       });
 
-      const supervisao = supervisaoArr[0];
-      if (!supervisao) return [];
+      if (!coverageSetorIds.length) {
+        return [{ membros: [] }];
+      }
 
-      const membros = supervisao.membros;
+      // 1) Membros no escopo de cobertura (setores)
+      const membros = await prisma.user.findMany({
+        where: {
+          supervisaoId: { in: coverageSetorIds },
+        },
+        select: {
+          id: true,
+          first_name: true,
+          image_url: true,
+          discipuladorId: true, // <- fonte de verdade
+          celula: {
+            select: {
+              id: true,
+              nome: true,
+              lider: { select: { first_name: true } },
+            },
+          },
+          supervisao_pertence: { select: { id: true, nome: true } },
+        },
+        orderBy: [{ first_name: "asc" }],
+      });
+
+      if (!membros.length) {
+        return [{ membros: [] }];
+      }
 
       // 2) Pega dados dos discipuladores atuais (nome/imagem) num batch
       const discipuladorIds = Array.from(

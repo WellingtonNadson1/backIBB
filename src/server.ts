@@ -35,6 +35,9 @@ import { liderMembrosRoutes } from "./Routers/liderMembrosRoutes";
 import { centralDashboardRoutes } from "./Routers/centralDashboardRoutes";
 import { cultoRoutes } from "./Routers/cultoRoutes";
 import rateLimit from "@fastify/rate-limit";
+import mobileAuthRoutes from "./Routers/MobileAuth";
+import { adminSupervisaoRoutes } from "./Routers/adminSupervisaoRoutes";
+import { adminCelulaRoutes } from "./Routers/adminCelulaRoutes";
 // import routerLicoesCelula from "./Routers/upLoads/LicoesCelula";
 
 declare module "fastify" {
@@ -98,6 +101,9 @@ app.addHook("onRequest", async (request, reply) => {
     "/refresh-token",
     "/request-reset-password",
     "/reset-password",
+    "/mobile/auth/login",
+    "/mobile/auth/refresh",
+    "/mobile/auth/logout",
   ]);
 
   if (publicRoutes.has(path)) return;
@@ -106,20 +112,33 @@ app.addHook("onRequest", async (request, reply) => {
   return requireAuth(request, reply);
 });
 
-app.addHook("onRequest", async (request, reply) => {
-  request.prisma = createPrismaInstance();
+const prisma = createPrismaInstance();
+
+app.addHook("onRequest", async (request) => {
+  request.prisma = prisma;
 });
 
+app.addHook("onClose", async () => {
+  await disconnectPrisma();
+});
+
+let shuttingDown = false;
+
 const shutdown = async (signal: string) => {
+  if (shuttingDown) return;
+  shuttingDown = true;
+
+  app.log.info({ signal }, "Encerrando servidor...");
+
   try {
-    app.log.info({ signal }, "Encerrando servidor...");
-    await app.close(); // para de aceitar novas requests
+    // Para de aceitar novas requests e espera as atuais
+    await app.close();
   } catch (err) {
     app.log.error(err, "Erro ao fechar Fastify");
   }
 
   try {
-    await disconnectPrisma(); // ✅ aqui sim é o lugar certo
+    await disconnectPrisma();
   } catch (err) {
     app.log.error(err, "Erro ao desconectar Prisma");
   } finally {
@@ -127,11 +146,12 @@ const shutdown = async (signal: string) => {
   }
 };
 
-process.on("SIGINT", () => shutdown("SIGINT"));
-process.on("SIGTERM", () => shutdown("SIGTERM"));
+process.once("SIGINT", () => shutdown("SIGINT"));
+process.once("SIGTERM", () => shutdown("SIGTERM"));
 
 const start = async () => {
   try {
+    await app.register(mobileAuthRoutes);
     await app.register(multer.contentParser);
     await app.register(supervisorDashboardRoutes);
     await app.register(centralDashboardRoutes);
@@ -153,6 +173,8 @@ const start = async () => {
     await app.register(routerEncontro);
     // await app.register(routerAccount);
     await app.register(routerSupervisao);
+    await app.register(adminSupervisaoRoutes);
+    await app.register(adminCelulaRoutes);
     await app.register(routerSituacaoNoReino);
     await app.register(routerCargoslideranca);
     await app.register(routerCelula);

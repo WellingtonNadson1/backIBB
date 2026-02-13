@@ -2,6 +2,12 @@ import { FastifyReply, FastifyRequest } from "fastify";
 import { Input, array, date, object, string } from "valibot";
 import { CultoIndividualRepositorie } from "../../Repositories/Culto";
 import dayjs from "dayjs";
+import {
+  resolveEffectiveCoverageNodeId,
+  resolveReportNodeId,
+  resolveSetorIdsForNode,
+} from "../../services/SupervisaoCoverageService";
+import { createPrismaInstance } from "../../services/prisma";
 
 const CultoIndividualDataSchema = object({
   data: object({
@@ -43,20 +49,49 @@ class CultoIndividualController {
     }>,
     reply: FastifyReply
   ) {
-    const { startDate, endDate, superVisionId } =
-      request.body as CultoIndividualForDate;
+    const payload = request.body as CultoIndividualForDate & {
+      nodeId?: string;
+      supervisionNodeId?: string;
+      supervisaoId?: string;
+    };
+    const requesterId = request.user?.id;
+    if (!requesterId) {
+      return reply.status(401).send({ error: "Não autorizado" });
+    }
+
+    const { startDate, endDate } = payload;
+    const requestedNodeId = resolveReportNodeId(payload);
+    const coverageNodeId = await resolveEffectiveCoverageNodeId(
+      {
+        requesterUserId: requesterId,
+        requestedNodeId,
+      },
+      createPrismaInstance(),
+    );
+
+    if (!coverageNodeId) {
+      return reply.status(403).send({
+        error: "Usuário sem supervisão vinculada para o escopo do relatório.",
+      });
+    }
+
+    const coverageSetorIds = await resolveSetorIdsForNode(
+      coverageNodeId,
+      createPrismaInstance(),
+    );
 
     console.log("Received request with parameters:", {
       startDate,
       endDate,
-      superVisionId,
+      coverageNodeId,
+      coverageSetorIdsCount: coverageSetorIds.length,
     });
 
     const cultosIndividuaisForDate =
       await CultoIndividualRepositorie.findAllIntervall(
         startDate,
         endDate,
-        superVisionId
+        coverageSetorIds
       );
     if (!cultosIndividuaisForDate) {
       return reply.code(500).send({ error: "Internal Server Error" });

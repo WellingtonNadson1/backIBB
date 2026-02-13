@@ -2,6 +2,11 @@ import dayjs from "dayjs";
 import { FastifyInstance, FastifyReply, FastifyRequest } from "fastify";
 import { CultoIndividualForDate } from "../../Controllers/Culto/CultoIndividual";
 import { createPrismaInstance } from "../../services/prisma";
+import {
+  resolveEffectiveCoverageNodeId,
+  resolveReportNodeId,
+  resolveSetorIdsForNode,
+} from "../../services/SupervisaoCoverageService";
 
 const routerRelatorioPresencaCelula = async (fastify: FastifyInstance) => {
   fastify.post(
@@ -9,20 +14,62 @@ const routerRelatorioPresencaCelula = async (fastify: FastifyInstance) => {
     async (request: FastifyRequest, reply: FastifyReply) => {
       try {
         const prisma = createPrismaInstance();
+        const requesterId = request.user?.id;
+        if (!requesterId) {
+          return reply.status(401).send({ error: "Não autorizado" });
+        }
 
-        const { startDate, endDate, superVisionId } =
-          request.body as CultoIndividualForDate;
+        const payload = request.body as CultoIndividualForDate & {
+          nodeId?: string;
+          supervisionNodeId?: string;
+          supervisaoId?: string;
+        };
+        const { startDate, endDate } = payload;
+        const requestedNodeId = resolveReportNodeId(payload);
+        const coverageNodeId = await resolveEffectiveCoverageNodeId(
+          {
+            requesterUserId: requesterId,
+            requestedNodeId,
+          },
+          prisma,
+        );
+
+        if (!coverageNodeId) {
+          return reply.status(403).send({
+            error:
+              "Usuário sem supervisão vinculada para o escopo do relatório.",
+          });
+        }
 
         const dataFim = dayjs(endDate).endOf("day").toISOString();
+        const coverageSetorIds = await resolveSetorIdsForNode(
+          coverageNodeId,
+          prisma,
+        );
 
-        const supervisionData = await prisma.supervisao.findUnique({
+        const supervisionNode = await prisma.supervisao.findUnique({
           where: {
-            id: superVisionId,
+            id: coverageNodeId,
           },
           select: {
+            id: true,
             nome: true,
+            tipo: true,
             supervisor: { select: { first_name: true, image_url: true } },
-            celulas: {
+          },
+        });
+
+        if (!supervisionNode) {
+          return reply.status(404).send({
+            error: "Nó de supervisão não encontrado para o relatório.",
+          });
+        }
+
+        const celulas = coverageSetorIds.length
+          ? await prisma.celula.findMany({
+              where: {
+                supervisaoId: { in: coverageSetorIds },
+              },
               select: {
                 id: true,
                 nome: true,
@@ -58,12 +105,22 @@ const routerRelatorioPresencaCelula = async (fastify: FastifyInstance) => {
                   },
                 },
               },
-            },
-          },
-        });
+            })
+          : [];
 
         reply.send({
-          supervisionData,
+          coverage: {
+            nodeId: supervisionNode.id,
+            tipo: supervisionNode.tipo,
+            setorIds: coverageSetorIds,
+          },
+          nodeType: supervisionNode.tipo,
+          supervisionData: {
+            nome: supervisionNode.nome,
+            tipo: supervisionNode.tipo,
+            supervisor: supervisionNode.supervisor,
+            celulas,
+          },
         });
       } catch (error) {
         console.error("Erro:", error);

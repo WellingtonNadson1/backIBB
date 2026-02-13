@@ -9,6 +9,7 @@ import {
 } from "date-fns";
 import { utcToZonedTime, zonedTimeToUtc } from "date-fns-tz";
 import { createPrismaInstance } from "../../services/prisma";
+import { resolveSetorIdsForSupervisor } from "../../services/SupervisaoCoverageService";
 
 // ================= Helpers (Timezone) =================
 const TZ = "America/Sao_Paulo";
@@ -48,6 +49,11 @@ export type ListParams = {
 type DetailParams = { supervisorId: string; celulaId: string };
 
 export class SupervisorDashboardRepository {
+  constructor(
+    private readonly db = prisma,
+    private readonly resolveSetorIds = resolveSetorIdsForSupervisor,
+  ) {}
+
   async getDashboardBySupervisor(supervisorId: string) {
     const { nowSP, inicioHojeUTC, fimHojeUTC, inicioMesUTC, fimMesUTC } =
       getSaoPauloRangeNow();
@@ -62,13 +68,22 @@ export class SupervisorDashboardRepository {
     const trintaDiasAtras = subDays(hoje, 30);
     const quatorzeDiasAtras = subDays(hoje, 14);
 
-    const supervisao = await prisma.supervisao.findFirst({
+    const supervisao = await this.db.supervisao.findFirst({
       where: { userId: supervisorId },
       select: {
         id: true,
         nome: true,
         cor: true,
-        celulas: {
+      },
+    });
+
+    if (!supervisao) return null;
+
+    const setorIds = await this.resolveSetorIds(supervisorId, this.db);
+
+    const celulas = setorIds.length
+      ? await this.db.celula.findMany({
+          where: { supervisaoId: { in: setorIds } },
           select: {
             id: true,
             nome: true,
@@ -83,7 +98,6 @@ export class SupervisorDashboardRepository {
             },
             membros: { select: { id: true } },
             reunioes_celula: {
-              // ✅ usa fimHoje (UTC) para comparar corretamente
               where: { data_reuniao: { lte: fimHoje } },
               orderBy: { data_reuniao: "desc" },
               take: 1,
@@ -96,21 +110,18 @@ export class SupervisorDashboardRepository {
               },
             },
           },
-        },
-      },
-    });
+        })
+      : [];
 
-    if (!supervisao) return null;
+    const totalCelulas = celulas.length;
 
-    const totalCelulas = supervisao.celulas.length;
-
-    const lideres = supervisao.celulas
+    const lideres = celulas
       .map((c) => c.lider?.id)
       .filter(Boolean) as string[];
     const totalLideres = new Set(lideres).size;
 
     // ================= Cultos de hoje (range UTC) =================
-    const cultosHoje = await prisma.cultoIndividual.findMany({
+    const cultosHoje = await this.db.cultoIndividual.findMany({
       where: { data_inicio_culto: { gte: inicioHoje, lte: fimHoje } },
       orderBy: { data_inicio_culto: "asc" },
       select: { id: true },
@@ -118,7 +129,7 @@ export class SupervisorDashboardRepository {
 
     const primeiroCultoHojeId = cultosHoje[0]?.id ?? null;
 
-    const membrosIds = supervisao.celulas.flatMap((c) =>
+    const membrosIds = celulas.flatMap((c) =>
       c.membros.map((m) => m.id),
     );
 
@@ -129,7 +140,7 @@ export class SupervisorDashboardRepository {
      */
     const presencasCultoHojeRegistradas =
       primeiroCultoHojeId && membrosIds.length
-        ? await prisma.presencaCulto.findMany({
+        ? await this.db.presencaCulto.findMany({
             where: {
               // se no seu schema for cultoIndividualId, mantenha.
               // se for via relação, troque por: presenca_culto: { is: { id: primeiroCultoHojeId } }
@@ -148,7 +159,7 @@ export class SupervisorDashboardRepository {
 
     // ================= Discipulados 30d =================
     const discipuladosRecentes = lideres.length
-      ? await prisma.discipulado.findMany({
+      ? await this.db.discipulado.findMany({
           where: {
             data_ocorreu: { gte: trintaDiasAtras },
             discipulador_id: { in: lideres },
@@ -178,14 +189,14 @@ export class SupervisorDashboardRepository {
     const inicioMes = inicioMesUTC;
     const fimMes = fimMesUTC;
 
-    const totalCultosMes = await prisma.cultoIndividual.count({
+    const totalCultosMes = await this.db.cultoIndividual.count({
       where: { data_inicio_culto: { gte: inicioMes, lte: fimMes } },
     });
 
     // frequência = status=true (aqui faz sentido)
     const presencasCultoMes =
       membrosIds.length && totalCultosMes > 0
-        ? await prisma.presencaCulto.findMany({
+        ? await this.db.presencaCulto.findMany({
             where: {
               status: true,
               userId: { in: membrosIds },
@@ -206,7 +217,7 @@ export class SupervisorDashboardRepository {
       );
     }
 
-    const celulasResumo = supervisao.celulas.map((c) => {
+    const celulasResumo = celulas.map((c) => {
       const membrosTotal = c.membros.length;
 
       const diaCelula = c.date_que_ocorre ? Number(c.date_que_ocorre) : null;
@@ -397,15 +408,9 @@ export class SupervisorDashboardRepository {
     const inicio = inicioMesUTC;
     const fim = fimMesUTC;
 
-    const supervisao = await prisma.supervisao.findFirst({
+    const supervisao = await this.db.supervisao.findFirst({
       where: { userId: supervisorId },
-      select: {
-        id: true,
-        nome: true,
-        celulas: {
-          select: { id: true, nome: true, membros: { select: { id: true } } },
-        },
-      },
+      select: { id: true, nome: true },
     });
 
     const mesRef = `${nowSP.getFullYear()}-${String(
@@ -416,18 +421,27 @@ export class SupervisorDashboardRepository {
       return { mesRef, supervisao: null, totalCultosMes: 0, celulas: [] };
     }
 
-    const totalCultosMes = await prisma.cultoIndividual.count({
+    const setorIds = await this.resolveSetorIds(supervisorId, this.db);
+
+    const celulasCobertas = setorIds.length
+      ? await this.db.celula.findMany({
+          where: { supervisaoId: { in: setorIds } },
+          select: { id: true, nome: true, membros: { select: { id: true } } },
+        })
+      : [];
+
+    const totalCultosMes = await this.db.cultoIndividual.count({
       where: {
         data_inicio_culto: { gte: inicio, lte: fim },
       },
     });
 
-    const membrosIds = supervisao.celulas.flatMap((c) =>
+    const membrosIds = celulasCobertas.flatMap((c) =>
       c.membros.map((m) => m.id),
     );
 
     const presencasMes = membrosIds.length
-      ? await prisma.presencaCulto.findMany({
+      ? await this.db.presencaCulto.findMany({
           where: {
             status: true,
             userId: { in: membrosIds },
@@ -445,7 +459,7 @@ export class SupervisorDashboardRepository {
       countPorMembro.set(p.userId, (countPorMembro.get(p.userId) ?? 0) + 1);
     }
 
-    const celulas = supervisao.celulas.map((c) => {
+    const celulas = celulasCobertas.map((c) => {
       const membros = c.membros;
       if (!membros.length || totalCultosMes === 0) {
         return {
@@ -482,13 +496,33 @@ export class SupervisorDashboardRepository {
   async listCelulasBySupervisor(params: ListParams) {
     const { supervisorId, status, q, order = "criticidade" } = params;
 
-    const supervisao = await prisma.supervisao.findFirst({
+    const supervisao = await this.db.supervisao.findFirst({
       where: { userId: supervisorId },
       select: {
         id: true,
         nome: true,
         cor: true,
-        celulas: {
+      },
+    });
+
+    if (!supervisao) {
+      return {
+        supervisao: null,
+        cards: {
+          totalCelulas: 0,
+          celulasCriticas: 0,
+          semReuniao7d: 0,
+          pendenciasHoje: 0,
+        },
+        celulas: [],
+      };
+    }
+
+    const setorIds = await this.resolveSetorIds(supervisorId, this.db);
+
+    const celulas = setorIds.length
+      ? await this.db.celula.findMany({
+          where: { supervisaoId: { in: setorIds } },
           select: {
             id: true,
             nome: true,
@@ -508,27 +542,13 @@ export class SupervisorDashboardRepository {
               select: { data_reuniao: true },
             },
           },
-        },
-      },
-    });
-
-    if (!supervisao) {
-      return {
-        supervisao: null,
-        cards: {
-          totalCelulas: 0,
-          celulasCriticas: 0,
-          semReuniao7d: 0,
-          pendenciasHoje: 0,
-        },
-        celulas: [],
-      };
-    }
+        })
+      : [];
 
     const { nowSP } = getSaoPauloRangeNow();
     const hoje = nowSP;
 
-    const celulasDTO = supervisao.celulas.map((c) => {
+    const celulasDTO = celulas.map((c) => {
       const ultima = c.reunioes_celula[0]?.data_reuniao ?? null;
       const diasSemReuniao = ultima ? differenceInDays(hoje, ultima) : 999;
 
@@ -584,7 +604,7 @@ export class SupervisorDashboardRepository {
       return b.diasSemReuniao - a.diasSemReuniao;
     });
 
-    const totalCelulas = supervisao.celulas.length;
+    const totalCelulas = celulas.length;
     const celulasCriticas = celulasDTO.filter(
       (c) => c.status === "CRITICA",
     ).length;
@@ -608,11 +628,14 @@ export class SupervisorDashboardRepository {
   async getCelulaDetailBySupervisor(params: DetailParams) {
     const { supervisorId, celulaId } = params;
 
-    const supervisao = await prisma.supervisao.findFirst({
-      where: { userId: supervisorId, celulas: { some: { id: celulaId } } },
+    const supervisao = await this.db.supervisao.findFirst({
+      where: { userId: supervisorId },
       select: { id: true, nome: true, cor: true },
     });
     if (!supervisao) return null;
+
+    const setorIds = await this.resolveSetorIds(supervisorId, this.db);
+    if (!setorIds.length) return null;
 
     const { nowSP, inicioHojeUTC, fimHojeUTC, inicioMesUTC, fimMesUTC } =
       getSaoPauloRangeNow();
@@ -626,8 +649,8 @@ export class SupervisorDashboardRepository {
     const inicioMes = inicioMesUTC;
     const fimMes = fimMesUTC;
 
-    const celula = await prisma.celula.findUnique({
-      where: { id: celulaId },
+    const celula = await this.db.celula.findFirst({
+      where: { id: celulaId, supervisaoId: { in: setorIds } },
       select: {
         id: true,
         nome: true,
@@ -667,12 +690,12 @@ export class SupervisorDashboardRepository {
       ? differenceInDays(hoje, ultimaReuniao)
       : 999;
 
-    const reuniaoHoje = await prisma.reuniaoCelula.findFirst({
+    const reuniaoHoje = await this.db.reuniaoCelula.findFirst({
       where: { celulaId, data_reuniao: { gte: inicioHoje, lte: fimHoje } },
       select: { id: true },
     });
 
-    const cultosHoje = await prisma.cultoIndividual.findMany({
+    const cultosHoje = await this.db.cultoIndividual.findMany({
       where: { data_inicio_culto: { gte: inicioHoje, lte: fimHoje } },
       orderBy: { data_inicio_culto: "asc" },
       select: { id: true },
@@ -683,7 +706,7 @@ export class SupervisorDashboardRepository {
     // ✅ pendência = falta registro (true/false), não falta status=true
     let precisaCultoHoje = false;
     if (primeiroCultoHojeId && membrosTotal > 0) {
-      const presencasCultoHoje = await prisma.presencaCulto.findMany({
+      const presencasCultoHoje = await this.db.presencaCulto.findMany({
         where: {
           cultoIndividualId: primeiroCultoHojeId,
           userId: { in: celula.membros.map((m) => m.id) },
@@ -700,7 +723,7 @@ export class SupervisorDashboardRepository {
 
     const liderId = celula.lider?.id ?? null;
     const discipuladosRecentes = liderId
-      ? await prisma.discipulado.findMany({
+      ? await this.db.discipulado.findMany({
           where: {
             discipulador_id: liderId,
             data_ocorreu: { gte: trintaDiasAtras },
@@ -720,7 +743,7 @@ export class SupervisorDashboardRepository {
       ? Math.round((semDiscipulado / membrosTotal) * 100)
       : 0;
 
-    const totalCultosMes = await prisma.cultoIndividual.count({
+    const totalCultosMes = await this.db.cultoIndividual.count({
       where: { data_inicio_culto: { gte: inicioMes, lte: fimMes } },
     });
 
@@ -733,7 +756,7 @@ export class SupervisorDashboardRepository {
     }> = [];
 
     if (totalCultosMes > 0 && membrosTotal > 0) {
-      const presencasMes = await prisma.presencaCulto.findMany({
+      const presencasMes = await this.db.presencaCulto.findMany({
         where: {
           status: true,
           userId: { in: celula.membros.map((m) => m.id) },

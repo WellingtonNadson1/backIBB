@@ -27,7 +27,7 @@ function getPathname(url: string) {
 
 export async function requireAuth(
   request: FastifyRequest,
-  reply: FastifyReply
+  reply: FastifyReply,
 ) {
   // ✅ libera preflight
   if (request.method === "OPTIONS") return;
@@ -46,6 +46,9 @@ export async function requireAuth(
     "/password/recorver",
     "/password/reset",
     "/users",
+    "/mobile/auth/login",
+    "/mobile/auth/refresh",
+    "/mobile/auth/logout",
   ]);
 
   if (publicRoutes.has(pathname)) return;

@@ -521,13 +521,14 @@ export class LiderDashboardRepository {
       const membrosDTO = membros.map((m) => {
         const presentesMes = m.presencas_cultos.length;
         const nome = `${m.first_name} ${m.last_name ?? ""}`.trim();
+        const image = m.image_url || null;
 
         const percentual =
           totalCultosMes > 0
             ? Math.round((presentesMes / totalCultosMes) * 100)
             : 0;
 
-        return { id: m.id, nome, presentesMes, percentual };
+        return { id: m.id, nome, presentesMes, percentual, image };
       });
 
       return {

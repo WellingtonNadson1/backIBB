@@ -301,10 +301,30 @@ class CultoIndividualRepositorie {
   async findAllIntervall(
     startDate: Date,
     endDate: Date,
-    superVisionId: string,
+    supervisionScopeIds: string[],
   ) {
     const dataFim = dayjs(endDate).endOf("day").toISOString();
     const prisma = createPrismaInstance();
+    const coverageIds = Array.from(
+      new Set(
+        (supervisionScopeIds ?? [])
+          .filter((id): id is string => typeof id === "string")
+          .map((id) => id.trim())
+          .filter((id) => id.length > 0),
+      ),
+    );
+
+    if (!coverageIds.length) {
+      return {
+        cultoQuarta: 0,
+        cultoPrimicia: 0,
+        cultoDomingoSacrificio: 0,
+        cultoSabado: 0,
+        cultoDomingoManha: 0,
+        cultoDomingoTarde: 0,
+        totalCultosPeriodo: 0,
+      };
+    }
 
     try {
       const result = await prisma?.cultoIndividual.findMany({
@@ -316,9 +336,7 @@ class CultoIndividualRepositorie {
           presencas_culto: {
             some: {
               membro: {
-                supervisao_pertence: {
-                  id: { equals: superVisionId },
-                },
+                supervisaoId: { in: coverageIds },
               },
             },
           },
@@ -332,9 +350,7 @@ class CultoIndividualRepositorie {
           presencas_culto: {
             where: {
               membro: {
-                supervisao_pertence: {
-                  id: { equals: superVisionId },
-                },
+                supervisaoId: { in: coverageIds },
               },
             },
             select: {

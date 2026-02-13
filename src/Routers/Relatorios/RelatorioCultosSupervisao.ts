@@ -3,6 +3,11 @@ import { createPrismaInstance } from "../../services/prisma";
 import dayjs from "dayjs";
 import { CultoIndividualForDate } from "../../Controllers/Culto/CultoIndividual";
 import { CultoIndividualRepositorie } from "../../Repositories/Culto";
+import {
+  resolveEffectiveCoverageNodeId,
+  resolveReportNodeId,
+  resolveSetorIdsForNode,
+} from "../../services/SupervisaoCoverageService";
 
 const routerRelatorioPresencaCulto = async (fastify: FastifyInstance) => {
   fastify.post(
@@ -10,9 +15,37 @@ const routerRelatorioPresencaCulto = async (fastify: FastifyInstance) => {
     async (request: FastifyRequest, reply: FastifyReply) => {
       try {
         const prisma = createPrismaInstance();
+        const requesterId = request.user?.id;
+        if (!requesterId) {
+          return reply.status(401).send({ error: "Não autorizado" });
+        }
 
-        const { startDate, endDate, superVisionId } =
-          request.body as CultoIndividualForDate;
+        const payload = request.body as CultoIndividualForDate & {
+          nodeId?: string;
+          supervisionNodeId?: string;
+          supervisaoId?: string;
+        };
+        const { startDate, endDate } = payload;
+        const requestedNodeId = resolveReportNodeId(payload);
+        const coverageNodeId = await resolveEffectiveCoverageNodeId(
+          {
+            requesterUserId: requesterId,
+            requestedNodeId,
+          },
+          prisma,
+        );
+
+        if (!coverageNodeId) {
+          return reply.status(403).send({
+            error:
+              "Usuário sem supervisão vinculada para o escopo do relatório.",
+          });
+        }
+
+        const coverageSetorIds = await resolveSetorIdsForNode(
+          coverageNodeId,
+          prisma,
+        );
 
         const dataInicio = dayjs(startDate).toISOString();
         const dataFim = dayjs(endDate).endOf("day").toISOString();
@@ -20,7 +53,7 @@ const routerRelatorioPresencaCulto = async (fastify: FastifyInstance) => {
         // Consulta para buscar membros da supervisão que compareceram aos cultos no intervalo de tempo
         const membrosCompareceramCultos = await prisma?.user.findMany({
           where: {
-            supervisaoId: superVisionId,
+            supervisaoId: { in: coverageSetorIds },
           },
           // Use a opção 'select' para selecionar apenas os campos desejados
           select: {
@@ -74,7 +107,7 @@ const routerRelatorioPresencaCulto = async (fastify: FastifyInstance) => {
           await CultoIndividualRepositorie.findAllIntervall(
             startDate,
             endDate,
-            superVisionId,
+            coverageSetorIds,
           );
 
         const totalCultosPeriodo = cultosIndividuaisForDate.totalCultosPeriodo;

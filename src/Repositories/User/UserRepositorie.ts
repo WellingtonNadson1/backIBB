@@ -1,4 +1,4 @@
-import { Prisma } from "@prisma/client";
+import { Prisma, SupervisaoTipo } from "@prisma/client";
 import { UserData, UserDataUpdate } from "../../Controllers/User/schema";
 import { createPrismaInstance } from "../../services/prisma";
 
@@ -37,6 +37,71 @@ type UpdateUserInput = Prisma.UserUpdateInput & {
 };
 
 class UserRepositorie {
+  private sanitizeIds(ids: unknown[] | undefined): string[] {
+    if (!ids) return [];
+
+    return Array.from(
+      new Set(
+        ids
+          .filter((id): id is string => typeof id === "string")
+          .map((id) => id.trim())
+          .filter((id) => id.length > 0),
+      ),
+    );
+  }
+
+  private sanitizeNodeId(value: unknown): string | null {
+    if (typeof value !== "string") return null;
+    const trimmed = value.trim();
+    return trimmed.length > 0 ? trimmed : null;
+  }
+
+  private resolveCoverageNodeIdFromPayload(payload: {
+    nodeId?: unknown;
+    supervisionNodeId?: unknown;
+    supervisaoId?: unknown;
+    superVisionId?: unknown;
+    dicipuladosupervisaoId?: unknown;
+  }): string | null {
+    const candidates = [
+      this.sanitizeNodeId(payload.nodeId),
+      this.sanitizeNodeId(payload.supervisionNodeId),
+      this.sanitizeNodeId(payload.supervisaoId),
+      this.sanitizeNodeId(payload.superVisionId),
+      this.sanitizeNodeId(payload.dicipuladosupervisaoId),
+    ];
+
+    return candidates.find(Boolean) ?? null;
+  }
+
+  private async resolveCoverageSetorIds(
+    prisma: ReturnType<typeof createPrismaInstance>,
+    coverageNodeId: string,
+  ): Promise<string[]> {
+    const node = await prisma.supervisao.findUnique({
+      where: { id: coverageNodeId },
+      select: { id: true, tipo: true },
+    });
+
+    if (!node) {
+      return [];
+    }
+
+    if (node.tipo === SupervisaoTipo.SETOR) {
+      return [node.id];
+    }
+
+    const descendants = await prisma.supervisaoClosure.findMany({
+      where: {
+        ancestorId: node.id,
+        descendant: { tipo: SupervisaoTipo.SETOR },
+      },
+      select: { descendantId: true },
+    });
+
+    return this.sanitizeIds(descendants.map((row) => row.descendantId));
+  }
+
   async getCombinedData() {
     const prisma = createPrismaInstance();
 
@@ -330,21 +395,30 @@ class UserRepositorie {
     return result;
   }
 
-  async findAllDiscipulosSupervisor({
-    dicipuladosupervisaoId,
-    supervisorId,
-  }: {
-    dicipuladosupervisaoId: string;
+  async findAllDiscipulosSupervisor(payload: {
+    dicipuladosupervisaoId?: string;
     supervisorId: string;
+    nodeId?: string;
+    supervisionNodeId?: string;
+    supervisaoId?: string;
+    superVisionId?: string;
   }) {
     const prisma = createPrismaInstance();
     if (!prisma) throw new Error("Prisma instance is null");
-    if (!supervisorId) throw new Error("Supervisor ID is not defined");
+    if (!payload.supervisorId) throw new Error("Supervisor ID is not defined");
+
+    const coverageNodeId = this.resolveCoverageNodeIdFromPayload(payload);
+    if (!coverageNodeId) throw new Error("Coverage node ID is not defined");
+
+    const coverageSetorIds = await this.resolveCoverageSetorIds(
+      prisma,
+      coverageNodeId,
+    );
 
     try {
       const [supervisor, discipulos] = await prisma.$transaction([
         prisma.user.findUnique({
-          where: { id: supervisorId },
+          where: { id: payload.supervisorId },
           select: {
             id: true,
             first_name: true,
@@ -359,8 +433,8 @@ class UserRepositorie {
 
         prisma.user.findMany({
           where: {
-            supervisaoId: dicipuladosupervisaoId, // mantém no “distrito/supervisão”
-            discipuladorId: supervisorId, // ✅ pega SOMENTE os atuais
+            supervisaoId: { in: coverageSetorIds }, // cobertura de SETOR do nó selecionado
+            discipuladorId: payload.supervisorId, // ✅ pega SOMENTE os atuais
           },
           select: {
             id: true,
@@ -382,36 +456,69 @@ class UserRepositorie {
       ]);
 
       if (!supervisor) {
-        throw new Error(`Supervisor ${supervisorId} não encontrado`);
+        throw new Error(`Supervisor ${payload.supervisorId} não encontrado`);
       }
 
       return {
         supervisor,
         discipulos,
         total: discipulos.length,
+        coverage: {
+          nodeId: coverageNodeId,
+          setorIds: coverageSetorIds,
+          totalSetores: coverageSetorIds.length,
+        },
       };
     } finally {
     }
   }
 
-  async findAllDiscipulosSupervisores({
-    dicipuladosupervisaoId,
-    cargoLiderancaSupervisores,
-  }: {
-    dicipuladosupervisaoId: string;
+  async findAllDiscipulosSupervisores(payload: {
+    dicipuladosupervisaoId?: string;
+    nodeId?: string;
+    supervisionNodeId?: string;
+    supervisaoId?: string;
+    superVisionId?: string;
     cargoLiderancaSupervisores: { id: string; nome: string }[];
   }) {
     const prisma = createPrismaInstance();
     if (!prisma) throw new Error("Prisma instance is null");
 
+    const coverageNodeId = this.resolveCoverageNodeIdFromPayload(payload);
+    if (!coverageNodeId) throw new Error("Coverage node ID is not defined");
+
+    const coverageSetorIds = await this.resolveCoverageSetorIds(
+      prisma,
+      coverageNodeId,
+    );
+
+    const coverageNode = await prisma.supervisao.findUnique({
+      where: { id: coverageNodeId },
+      select: {
+        id: true,
+        nome: true,
+        tipo: true,
+        cor: true,
+        supervisor: {
+          select: {
+            id: true,
+            first_name: true,
+            image_url: true,
+          },
+        },
+      },
+    });
+
     try {
+      const cargoFilters = payload.cargoLiderancaSupervisores.map((cargo) => ({
+        cargo_de_lideranca: { nome: { contains: cargo.nome } },
+      }));
+
       // 1) Busca supervisores (pessoas que são supervisores dentro da supervisão)
       const supervisores = await prisma.user.findMany({
         where: {
-          supervisaoId: dicipuladosupervisaoId,
-          OR: cargoLiderancaSupervisores.map((cargo) => ({
-            cargo_de_lideranca: { nome: { contains: cargo.nome } },
-          })),
+          supervisaoId: { in: coverageSetorIds },
+          ...(cargoFilters.length > 0 ? { OR: cargoFilters } : {}),
         },
         select: {
           id: true,
@@ -448,19 +555,18 @@ class UserRepositorie {
       });
 
       const supervisorIds = supervisores.map((s) => s.id);
-      if (supervisorIds.length === 0) {
-        return [];
-      }
 
       // 2) Conta discípulos ATUAIS por supervisor (discipuladorId)
-      const counts = await prisma.user.groupBy({
-        by: ["discipuladorId"],
-        where: {
-          supervisaoId: dicipuladosupervisaoId,
-          discipuladorId: { in: supervisorIds },
-        },
-        _count: { _all: true },
-      });
+      const counts = supervisorIds.length
+        ? await prisma.user.groupBy({
+            by: ["discipuladorId"],
+            where: {
+              supervisaoId: { in: coverageSetorIds },
+              discipuladorId: { in: supervisorIds },
+            },
+            _count: { _all: true },
+          })
+        : [];
 
       const countMap = new Map<string, number>();
       for (const row of counts) {
@@ -470,21 +576,23 @@ class UserRepositorie {
 
       // 3) (Opcional) trazer uma amostra dos discípulos atuais para cada supervisor (ex: 3)
       // Se não precisar, pode remover esse bloco inteiro.
-      const amostraDiscipulos = await prisma.user.findMany({
-        where: {
-          supervisaoId: dicipuladosupervisaoId,
-          discipuladorId: { in: supervisorIds },
-        },
-        select: {
-          id: true,
-          first_name: true,
-          last_name: true,
-          image_url: true,
-          discipuladorId: true,
-          cargo_de_lideranca: { select: { id: true, nome: true } },
-        },
-        orderBy: [{ first_name: "asc" }],
-      });
+      const amostraDiscipulos = supervisorIds.length
+        ? await prisma.user.findMany({
+            where: {
+              supervisaoId: { in: coverageSetorIds },
+              discipuladorId: { in: supervisorIds },
+            },
+            select: {
+              id: true,
+              first_name: true,
+              last_name: true,
+              image_url: true,
+              discipuladorId: true,
+              cargo_de_lideranca: { select: { id: true, nome: true } },
+            },
+            orderBy: [{ first_name: "asc" }],
+          })
+        : [];
 
       const amostraMap = new Map<string, any[]>();
       for (const d of amostraDiscipulos) {
@@ -497,12 +605,52 @@ class UserRepositorie {
         }
       }
 
-      // 4) Retorno final com contagem correta
-      return supervisores.map((s) => ({
+      const supervisorsWithMetrics = supervisores.map((s) => ({
         ...s,
         discipulosAtuaisCount: countMap.get(s.id) ?? 0,
         discipulosAtuaisPreview: amostraMap.get(s.id) ?? [],
       }));
+
+      const celulas = coverageSetorIds.length
+        ? await prisma.celula.findMany({
+            where: {
+              supervisaoId: { in: coverageSetorIds },
+            },
+            select: {
+              id: true,
+              nome: true,
+              supervisaoId: true,
+              lider: {
+                select: {
+                  id: true,
+                  first_name: true,
+                  image_url: true,
+                },
+              },
+            },
+            orderBy: [{ nome: "asc" }],
+          })
+        : [];
+
+      // 4) Retorno final com contagem correta e cobertura
+      return {
+        node: coverageNode
+          ? {
+              id: coverageNode.id,
+              nome: coverageNode.nome,
+              tipo: coverageNode.tipo,
+              cor: coverageNode.cor,
+              supervisor: coverageNode.supervisor,
+            }
+          : null,
+        coverage: {
+          nodeId: coverageNodeId,
+          setorIds: coverageSetorIds,
+          totalSetores: coverageSetorIds.length,
+        },
+        supervisores: supervisorsWithMetrics,
+        celulas,
+      };
     } finally {
     }
   }

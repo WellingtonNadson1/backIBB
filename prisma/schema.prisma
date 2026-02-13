@@ -262,12 +262,36 @@ model Supervisao {
   date_update       DateTime         @updatedAt
   nivelSupervisaoId String?
   userId            String?
+  tipo              SupervisaoTipo   @default(SUPERVISAO_TOPO)
+  parentId          String?
   celulas           Celula[]
   nivelSupervisao   NivelSupervisao? @relation(fields: [nivelSupervisaoId], references: [id])
   supervisor        User?            @relation("Supervisor", fields: [userId], references: [id])
   membros           User[]
+  parent            Supervisao?      @relation("SupervisaoHierarchy", fields: [parentId], references: [id])
+  children          Supervisao[]     @relation("SupervisaoHierarchy")
+  ancestorLinks     SupervisaoClosure[] @relation("SupervisaoClosureAncestor")
+  descendantLinks   SupervisaoClosure[] @relation("SupervisaoClosureDescendant")
+
+  @@index([parentId])
+  @@index([tipo])
+  @@index([userId])
 
   @@map("supervisao")
+}
+
+model SupervisaoClosure {
+  ancestorId   String
+  descendantId String
+  depth        Int
+  ancestor     Supervisao @relation("SupervisaoClosureAncestor", fields: [ancestorId], references: [id], onDelete: Cascade)
+  descendant   Supervisao @relation("SupervisaoClosureDescendant", fields: [descendantId], references: [id], onDelete: Cascade)
+
+  @@id([ancestorId, descendantId])
+  @@index([descendantId])
+  @@index([ancestorId, depth])
+  @@index([descendantId, depth])
+  @@map("supervisao_closure")
 }
 
 model Dizimo {
@@ -424,6 +448,8 @@ model User {
   user_roles               user_roles[]
   encontros                Encontros[]             @relation("EncontrosToUser")
   escolas                  Escola[]                @relation("EscolaToUser")
+  refreshTokenMobiles      RefreshTokenMobile[]    @relation("MobileRefreshTokens")
+  pushTokens               PushToken[]             @relation("PushTokens")
 
   @@map("user")
 }
@@ -435,6 +461,73 @@ model user_roles {
   user    User    @relation(fields: [user_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
 
   @@id([user_id, role_id])
+}
+
+model RefreshTokenMobile {
+  id           String    @id @default(uuid())
+  userId       String
+  deviceId     String
+  tokenHash    String
+  expiresAt    DateTime
+  revoked      Boolean   @default(false)
+  revokedAt    DateTime?
+  replacedById String?
+
+  createdAt DateTime @default(now())
+
+  user User @relation("MobileRefreshTokens", fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, deviceId])
+  @@index([userId])
+  @@index([deviceId])
+  @@map("refresh_token_mobile")
+}
+
+model PushToken {
+  id            String @id @default(uuid())
+  userId        String
+  deviceId      String
+  expoPushToken String
+
+  platform    PushPlatform
+  environment PushEnvironment @default(PROD)
+
+  enabled    Boolean  @default(true)
+  lastSeenAt DateTime @default(now())
+
+  appVersion String?
+  osVersion  String?
+  locale     String?
+  timezone   String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user User @relation("PushTokens", fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, deviceId])
+  @@index([expoPushToken])
+  @@index([deviceId])
+  @@index([userId, enabled])
+  @@index([lastSeenAt])
+  @@map("push_token")
+}
+
+enum PushPlatform {
+  ios
+  android
+}
+
+enum PushEnvironment {
+  DEV
+  PROD
+}
+
+enum SupervisaoTipo {
+  SUPERVISAO_TOPO
+  DISTRITO
+  AREA
+  SETOR
 }
 
 enum EventoContribuicao {

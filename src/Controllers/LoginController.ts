@@ -1,4 +1,4 @@
-import bcrypt from "bcrypt";
+import bcrypt from "bcryptjs";
 import { FastifyReply, FastifyRequest } from "fastify";
 import { loginSchema } from "../schemas/login.schema";
 import UserRepositorie from "../Repositories/User/UserRepositorie";
@@ -60,7 +60,7 @@ class LoginController {
     const generateRefreshToken = new GenerateRfreshToken();
     const refreshToken = await generateRefreshToken.execute(
       user.id,
-      request.prisma
+      request.prisma,
     );
 
     const { password: _pw, ...newUser } = user as any;

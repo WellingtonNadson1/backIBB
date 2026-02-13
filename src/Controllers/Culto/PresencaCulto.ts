@@ -4,6 +4,12 @@ import { Input, array, boolean, object, string } from "valibot";
 import { PresencaCultoRepositorie } from "../../Repositories/Culto";
 import { PresencaCultoSpeedSchema } from "./schemas";
 import z from "zod";
+import {
+  resolveEffectiveCoverageNodeId,
+  resolveReportNodeId,
+  resolveSetorIdsForNode,
+} from "../../services/SupervisaoCoverageService";
+import { createPrismaInstance } from "../../services/prisma";
 
 interface PresencaCultoByUserParams {
   culto: string;
@@ -101,15 +107,43 @@ class PresencaCultoController {
 
   // Relatorio de presenca nos cultos
   async supervisores(request: FastifyRequest, reply: FastifyReply) {
-    const { startDate, endDate, superVisionId, cargoLideranca } =
-      request.body as CultoIndividual;
+    const payload = request.body as CultoIndividual & {
+      nodeId?: string;
+      supervisionNodeId?: string;
+      supervisaoId?: string;
+    };
+    const requesterId = request.user?.id;
+    if (!requesterId) {
+      return reply.status(401).send({ error: "Não autorizado" });
+    }
+
+    const { startDate, endDate, cargoLideranca } = payload;
+    const requestedNodeId = resolveReportNodeId(payload);
+    const coverageNodeId = await resolveEffectiveCoverageNodeId(
+      {
+        requesterUserId: requesterId,
+        requestedNodeId,
+      },
+      createPrismaInstance(),
+    );
+
+    if (!coverageNodeId) {
+      return reply.status(403).send({
+        error: "Usuário sem supervisão vinculada para o escopo do relatório.",
+      });
+    }
+
+    const coverageSetorIds = await resolveSetorIdsForNode(
+      coverageNodeId,
+      createPrismaInstance(),
+    );
 
     const resultRelatorioCultos =
       await PresencaCultoRepositorie.cultosRelatoriosSupervisor(
         startDate,
         endDate,
-        superVisionId,
-        cargoLideranca,
+        coverageSetorIds,
+        cargoLideranca ?? [],
       );
 
     if (!resultRelatorioCultos) {
