@@ -483,7 +483,7 @@ class CelulaRepositorie {
       },
     });
 
-    console.log(result?.membros[0].presencas_cultos);
+    console.log(result?.membros?.[0]?.presencas_cultos);
     return result;
   }
 

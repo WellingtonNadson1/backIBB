@@ -52,7 +52,7 @@
   "scripts": {
     "postinstall": "prisma generate",
     "test": "jest",
-    "start:dev": "tsx watch --no-cache src/server.ts",
+    "dev": "tsx watch --no-cache src/server.ts",
     "build": "prisma generate && next build",
     "start": "next start"
   },
