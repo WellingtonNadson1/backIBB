@@ -190,6 +190,19 @@ export async function resolveSetorIdsForNode(
   return resolveSetorIdsFromNode(node.id, node.tipo, prismaClient);
 }
 
+export async function resolveSupervisaoScopeIdsForNode(
+  nodeId: string,
+  prismaClient: PrismaCoverageClient = createPrismaInstance(),
+): Promise<string[]> {
+  const cleanNodeId = sanitizeNodeId(nodeId);
+  if (!cleanNodeId) {
+    return [];
+  }
+
+  const coverageSetorIds = await resolveSetorIdsForNode(cleanNodeId, prismaClient);
+  return Array.from(new Set([cleanNodeId, ...coverageSetorIds]));
+}
+
 export async function resolveSetorIdsForSupervisor(
   supervisorUserId: string,
   prismaClient: PrismaCoverageClient = createPrismaInstance(),

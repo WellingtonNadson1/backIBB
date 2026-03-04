@@ -5,7 +5,7 @@ import dayjs from "dayjs";
 import {
   resolveEffectiveCoverageNodeId,
   resolveReportNodeId,
-  resolveSetorIdsForNode,
+  resolveSupervisaoScopeIdsForNode,
 } from "../../services/SupervisaoCoverageService";
 import { createPrismaInstance } from "../../services/prisma";
 
@@ -75,7 +75,7 @@ class CultoIndividualController {
       });
     }
 
-    const coverageSetorIds = await resolveSetorIdsForNode(
+    const coverageSupervisaoIds = await resolveSupervisaoScopeIdsForNode(
       coverageNodeId,
       createPrismaInstance(),
     );
@@ -84,14 +84,14 @@ class CultoIndividualController {
       startDate,
       endDate,
       coverageNodeId,
-      coverageSetorIdsCount: coverageSetorIds.length,
+      coverageSupervisaoIdsCount: coverageSupervisaoIds.length,
     });
 
     const cultosIndividuaisForDate =
       await CultoIndividualRepositorie.findAllIntervall(
         startDate,
         endDate,
-        coverageSetorIds
+        coverageSupervisaoIds
       );
     if (!cultosIndividuaisForDate) {
       return reply.code(500).send({ error: "Internal Server Error" });

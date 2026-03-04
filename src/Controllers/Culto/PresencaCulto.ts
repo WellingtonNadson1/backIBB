@@ -7,7 +7,7 @@ import z from "zod";
 import {
   resolveEffectiveCoverageNodeId,
   resolveReportNodeId,
-  resolveSetorIdsForNode,
+  resolveSupervisaoScopeIdsForNode,
 } from "../../services/SupervisaoCoverageService";
 import { createPrismaInstance } from "../../services/prisma";
 
@@ -133,7 +133,7 @@ class PresencaCultoController {
       });
     }
 
-    const coverageSetorIds = await resolveSetorIdsForNode(
+    const coverageSupervisaoIds = await resolveSupervisaoScopeIdsForNode(
       coverageNodeId,
       createPrismaInstance(),
     );
@@ -142,7 +142,7 @@ class PresencaCultoController {
       await PresencaCultoRepositorie.cultosRelatoriosSupervisor(
         startDate,
         endDate,
-        coverageSetorIds,
+        coverageSupervisaoIds,
         cargoLideranca ?? [],
       );
 

@@ -3,9 +3,8 @@ import { FastifyReply, FastifyRequest } from "fastify";
 import UserRepositorie from "../../Repositories/User/UserRepositorie";
 import {
   TStatusUpdate,
-  UserData,
   UserDataSchema,
-  UserDataUpdate,
+  UserDataUpdateSchema,
 } from "./schema";
 import { z } from "zod";
 
@@ -17,6 +16,11 @@ const formatDateToISO8601 = (dateString: string) => {
   const dateObj = new Date(dateString);
   return dateObj.toISOString();
 };
+
+const isUserPayloadValidationError = (error: unknown): error is Error =>
+  error instanceof Error &&
+  (error.message === "Ao menos 1 papel de usuário deve ser informado" ||
+    error.message.startsWith("IDs de papéis não encontrados:"));
 
 class UserController {
   // Combine requests
@@ -124,6 +128,17 @@ class UserController {
     }
   }
 
+  async roles(_request: FastifyRequest, reply: FastifyReply) {
+    try {
+      const roles = await UserRepositorie.findAllRoles();
+      return reply.code(200).send(roles);
+    } catch (error) {
+      return reply
+        .code(500)
+        .send({ error: "Failed to fetch user roles catalog." });
+    }
+  }
+
   // Show a user by ID in a cell
   async showcell(
     request: FastifyRequest<{ Params: UserParams }>,
@@ -205,6 +220,9 @@ class UserController {
       if (error instanceof z.ZodError) {
         return reply.code(400).send({ errors: error.errors });
       }
+      if (isUserPayloadValidationError(error)) {
+        return reply.code(400).send({ error: error.message });
+      }
       return reply.code(500).send({ error: "Failed to create user." });
     }
   }
@@ -216,7 +234,7 @@ class UserController {
   ) {
     try {
       const id = request.params.id;
-      const userDataForm = request.body as UserDataUpdate;
+      const userDataForm = UserDataUpdateSchema.parse(request.body);
 
       // Extrair apenas os IDs de escolas e encontros
       const escolasIds = userDataForm.escolas?.map((escola) => escola);
@@ -245,6 +263,12 @@ class UserController {
       return reply.code(202).send(user);
     } catch (error) {
       console.error(error);
+      if (error instanceof z.ZodError) {
+        return reply.code(400).send({ errors: error.errors });
+      }
+      if (isUserPayloadValidationError(error)) {
+        return reply.code(400).send({ error: error.message });
+      }
       return reply.code(500).send({ error: "Failed to update user." });
     }
   }

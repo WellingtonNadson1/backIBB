@@ -27,10 +27,11 @@ export const UserDataSchema = z
     cargo_de_lideranca: z
       .string()
       .uuid({ message: "Cargo de Liderança é obrigatório" }),
+    user_role_ids: z.array(z.string().uuid()).min(1).optional(),
     supervisao_pertence: z
       .string()
       .uuid({ message: "Supervisão é obrigatória" }),
-    celula: z.string().uuid().optional(),
+    celula: z.string().uuid().nullable().optional(),
     estado_civil: z.enum(
       ["solteiro", "casado", "divorciado", "uniao_estavel", "viuvo"],
       { required_error: "Estado Civil é obrigatório" }
@@ -110,10 +111,11 @@ export const UserDataUpdateSchema = z
     cargo_de_lideranca: z
       .string()
       .uuid({ message: "Cargo de Liderança é obrigatório" }),
+    user_role_ids: z.array(z.string().uuid()).min(1).optional(),
     supervisao_pertence: z
       .string()
       .uuid({ message: "Supervisão é obrigatória" }),
-    celula: z.string().uuid().optional(),
+    celula: z.string().uuid().nullable().optional(),
     estado_civil: z.enum(
       ["solteiro", "casado", "divorciado", "uniao_estavel", "viuvo"],
       { required_error: "Estado Civil é obrigatório" }

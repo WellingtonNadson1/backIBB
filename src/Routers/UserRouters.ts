@@ -6,6 +6,7 @@ const routerUser = async (fastify: FastifyInstance) => {
   fastify.get("/users/all", UserController.combinationRequests);
   fastify.get("/users/allmembers", UserController.getAllMembers);
   fastify.get("/users", UserController.index);
+  fastify.get("/users/roles", UserController.roles);
   fastify.get("/users/simple", UserController.simple);
   fastify.get("/users/alldiscipulados", UserController.indexDiscipulados);
   // USERS para o campo de seleção de discipuladores diponíveis para update de discipulador

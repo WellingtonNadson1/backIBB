@@ -2,39 +2,10 @@ import { Prisma, SupervisaoTipo } from "@prisma/client";
 import { UserData, UserDataUpdate } from "../../Controllers/User/schema";
 import { createPrismaInstance } from "../../services/prisma";
 
-type UpdateUserInput = Prisma.UserUpdateInput & {
-  connect?: {
-    user?: {
-      id: string;
-    };
-    user_discipulos?: {
-      connect: {
-        usuario_id: string;
-        discipulador_id: string;
-      };
-    };
-    discipulador?: {
-      connect: {
-        usuario_id: string;
-        discipulador_id: string;
-      };
-    };
-  };
-  supervisao_pertence?: { connect: { id: string } };
-  role?: string;
-  celula?: { connect: { id: string } };
-  celula_lidera?: { connect: { id: string } }[];
-  escola_lidera?: { connect: { id: string } }[];
-  supervisoes_lidera?: { connect: { id: string } }[];
-  presencas_aulas_escolas?: { connect: { id: string } }[];
-  presencas_reuniao_celula?: { connect: { id: string } }[];
-  presencas_cultos?: { connect: { id: string } }[];
-  escolas?: { connect: { id: string } }[];
-  encontros?: { connect: { id: string } }[];
-  situacao_no_reino?: { connect: { id: string } };
-  cargo_de_lideranca?: { connect: { id: string } };
-  TurmaEscola?: { connect: { id: string } };
-};
+type UserRoleSyncPrismaClient = Pick<
+  Prisma.TransactionClient,
+  "rolenew" | "user_roles"
+>;
 
 class UserRepositorie {
   private sanitizeIds(ids: unknown[] | undefined): string[] {
@@ -74,6 +45,73 @@ class UserRepositorie {
     return candidates.find(Boolean) ?? null;
   }
 
+  private async syncUserRoleIds(
+    userId: string,
+    requestedRoleIds: string[],
+    prismaClient: UserRoleSyncPrismaClient,
+  ) {
+    const desiredRoleIds = this.sanitizeIds(requestedRoleIds);
+
+    if (desiredRoleIds.length === 0) {
+      throw new Error("Ao menos 1 papel de usuário deve ser informado");
+    }
+
+    const catalogRoles = await prismaClient.rolenew.findMany({
+      where: {
+        id: {
+          in: desiredRoleIds,
+        },
+      },
+      select: {
+        id: true,
+      },
+    });
+
+    const catalogRoleIdSet = new Set(catalogRoles.map((role) => role.id));
+    const missingRoleIds = desiredRoleIds.filter(
+      (roleId) => !catalogRoleIdSet.has(roleId),
+    );
+
+    if (missingRoleIds.length > 0) {
+      throw new Error(`IDs de papéis não encontrados: ${missingRoleIds.join(", ")}`);
+    }
+
+    const existingRoles = await prismaClient.user_roles.findMany({
+      where: { user_id: userId },
+      select: { role_id: true },
+    });
+
+    const existingRoleIdSet = new Set(existingRoles.map((role) => role.role_id));
+    const desiredRoleIdSet = new Set(desiredRoleIds);
+
+    const roleIdsToDelete = existingRoles
+      .map((role) => role.role_id)
+      .filter((roleId) => !desiredRoleIdSet.has(roleId));
+
+    if (roleIdsToDelete.length > 0) {
+      await prismaClient.user_roles.deleteMany({
+        where: {
+          user_id: userId,
+          role_id: { in: roleIdsToDelete },
+        },
+      });
+    }
+
+    const roleIdsToCreate = desiredRoleIds.filter(
+      (roleId) => !existingRoleIdSet.has(roleId),
+    );
+
+    if (roleIdsToCreate.length > 0) {
+      await prismaClient.user_roles.createMany({
+        data: roleIdsToCreate.map((roleId) => ({
+          user_id: userId,
+          role_id: roleId,
+        })),
+        skipDuplicates: true,
+      });
+    }
+  }
+
   private async resolveCoverageSetorIds(
     prisma: ReturnType<typeof createPrismaInstance>,
     coverageNodeId: string,
@@ -100,6 +138,13 @@ class UserRepositorie {
     });
 
     return this.sanitizeIds(descendants.map((row) => row.descendantId));
+  }
+
+  private resolveCoverageUserSupervisaoIds(
+    coverageNodeId: string,
+    coverageSetorIds: string[],
+  ) {
+    return this.sanitizeIds([coverageNodeId, ...coverageSetorIds]);
   }
 
   async getCombinedData() {
@@ -323,6 +368,26 @@ class UserRepositorie {
     };
   }
 
+  async findAllRoles() {
+    const prisma = createPrismaInstance();
+    if (!prisma) throw new Error("Prisma instance is null");
+
+    const roles = await prisma.rolenew.findMany({
+      select: {
+        id: true,
+        name: true,
+      },
+      orderBy: {
+        name: "asc",
+      },
+    });
+
+    return roles.map((role) => ({
+      id: role.id,
+      name: role.name ?? "",
+    }));
+  }
+
   async findAllCell() {
     const prisma = createPrismaInstance();
 
@@ -414,6 +479,10 @@ class UserRepositorie {
       prisma,
       coverageNodeId,
     );
+    const coverageUserSupervisaoIds = this.resolveCoverageUserSupervisaoIds(
+      coverageNodeId,
+      coverageSetorIds,
+    );
 
     try {
       const [supervisor, discipulos] = await prisma.$transaction([
@@ -427,13 +496,15 @@ class UserRepositorie {
             role: true,
             supervisao_pertence: { select: { id: true, nome: true } },
             cargo_de_lideranca: { select: { id: true, nome: true } },
-            user_roles: { select: { rolenew: { select: { name: true } } } },
+            user_roles: {
+              select: { rolenew: { select: { id: true, name: true } } },
+            },
           },
         }),
 
         prisma.user.findMany({
           where: {
-            supervisaoId: { in: coverageSetorIds }, // cobertura de SETOR do nó selecionado
+            supervisaoId: { in: coverageUserSupervisaoIds },
             discipuladorId: payload.supervisorId, // ✅ pega SOMENTE os atuais
           },
           select: {
@@ -447,7 +518,9 @@ class UserRepositorie {
             celula: { select: { id: true, nome: true } },
             cargo_de_lideranca: { select: { id: true, nome: true } },
             situacao_no_reino: { select: { id: true, nome: true } },
-            user_roles: { select: { rolenew: { select: { name: true } } } },
+            user_roles: {
+              select: { rolenew: { select: { id: true, name: true } } },
+            },
             // ✅ se você quiser contar/mostrar discipulado recente, faça em outro endpoint
             // porque aqui seu "discipulos" é histórico e pode confundir.
           },
@@ -491,6 +564,10 @@ class UserRepositorie {
       prisma,
       coverageNodeId,
     );
+    const coverageUserSupervisaoIds = this.resolveCoverageUserSupervisaoIds(
+      coverageNodeId,
+      coverageSetorIds,
+    );
 
     const coverageNode = await prisma.supervisao.findUnique({
       where: { id: coverageNodeId },
@@ -517,7 +594,7 @@ class UserRepositorie {
       // 1) Busca supervisores (pessoas que são supervisores dentro da supervisão)
       const supervisores = await prisma.user.findMany({
         where: {
-          supervisaoId: { in: coverageSetorIds },
+          supervisaoId: { in: coverageUserSupervisaoIds },
           ...(cargoFilters.length > 0 ? { OR: cargoFilters } : {}),
         },
         select: {
@@ -540,7 +617,9 @@ class UserRepositorie {
             },
           },
 
-          user_roles: { select: { rolenew: { select: { name: true } } } },
+          user_roles: {
+            select: { rolenew: { select: { id: true, name: true } } },
+          },
 
           supervisao_pertence: { select: { id: true, nome: true } },
           celula: { select: { id: true, nome: true } },
@@ -561,7 +640,7 @@ class UserRepositorie {
         ? await prisma.user.groupBy({
             by: ["discipuladorId"],
             where: {
-              supervisaoId: { in: coverageSetorIds },
+              supervisaoId: { in: coverageUserSupervisaoIds },
               discipuladorId: { in: supervisorIds },
             },
             _count: { _all: true },
@@ -579,7 +658,7 @@ class UserRepositorie {
       const amostraDiscipulos = supervisorIds.length
         ? await prisma.user.findMany({
             where: {
-              supervisaoId: { in: coverageSetorIds },
+              supervisaoId: { in: coverageUserSupervisaoIds },
               discipuladorId: { in: supervisorIds },
             },
             select: {
@@ -673,7 +752,9 @@ class UserRepositorie {
             user_discipulos: { select: { id: true, first_name: true } },
           },
         },
-        user_roles: { select: { rolenew: { select: { name: true } } } },
+        user_roles: {
+          select: { rolenew: { select: { id: true, name: true } } },
+        },
         image_url: true,
         email: false,
         first_name: true,
@@ -747,7 +828,9 @@ class UserRepositorie {
     const result = await prisma?.user.findMany({
       select: {
         id: true,
-        user_roles: { select: { rolenew: { select: { name: true } } } },
+        user_roles: {
+          select: { rolenew: { select: { id: true, name: true } } },
+        },
         image_url: true,
         first_name: true,
         last_name: true,
@@ -803,7 +886,9 @@ class UserRepositorie {
             },
           },
         },
-        user_roles: { select: { rolenew: { select: { name: true } } } },
+        user_roles: {
+          select: { rolenew: { select: { id: true, name: true } } },
+        },
         image_url: true,
         email: true,
         first_name: true,
@@ -1027,7 +1112,9 @@ class UserRepositorie {
             },
           },
         },
-        user_roles: { select: { rolenew: { select: { name: true } } } },
+        user_roles: {
+          select: { rolenew: { select: { id: true, name: true } } },
+        },
         image_url: true,
         email: true,
         first_name: true,
@@ -1084,6 +1171,7 @@ class UserRepositorie {
       celula,
       situacao_no_reino,
       cargo_de_lideranca,
+      user_role_ids,
       date_nascimento,
       date_batizado,
       date_casamento,
@@ -1101,63 +1189,84 @@ class UserRepositorie {
       ...userData
     } = userDataForm;
 
-    const user = await prisma.user.create({
-      data: {
-        ...userData,
-        password,
-        date_nascimento,
-        date_batizado,
-        date_casamento,
-        date_decisao,
-        supervisao_pertence: { connect: { id: supervisao_pertence } },
-        celula: celula ? { connect: { id: celula } } : undefined,
-        situacao_no_reino: { connect: { id: situacao_no_reino } },
-        cargo_de_lideranca: { connect: { id: cargo_de_lideranca } },
-        ...(discipuladorId && { user: { connect: { id: discipuladorId } } }),
-        TurmaEscola: TurmaEscola ? { connect: { id: TurmaEscola } } : undefined,
-        escolas: escolas?.length
-          ? { connect: escolas.map((escola) => ({ id: escola.id })) }
-          : undefined,
-        encontros: encontros?.length
-          ? { connect: encontros.map((encontro) => ({ id: encontro.id })) }
-          : undefined,
-        celula_lidera: celula_lidera?.length
-          ? {
-              connect: celula_lidera.map((celulaLideraId) => ({
-                id: celulaLideraId,
-              })),
-            }
-          : undefined,
-        escola_lidera: escola_lidera?.length
-          ? {
-              connect: escola_lidera.map((escolaLideraId) => ({
-                id: escolaLideraId,
-              })),
-            }
-          : undefined,
-        supervisoes_lidera: supervisoes_lidera?.length
-          ? {
-              connect: supervisoes_lidera.map((supervisoesLideraId) => ({
-                id: supervisoesLideraId,
-              })),
-            }
-          : undefined,
-        presencas_aulas_escolas: presencas_aulas_escolas?.length
-          ? { connect: presencas_aulas_escolas.map((id) => ({ id })) }
-          : undefined,
-        presencas_cultos: presencas_cultos?.length
-          ? { connect: presencas_cultos.map((id) => ({ id })) }
-          : undefined,
-        presencas_reuniao_celula: presencas_reuniao_celula?.length
-          ? { connect: presencas_reuniao_celula.map((id) => ({ id })) }
-          : undefined,
-      },
-    });
+    const user = await prisma.$transaction(async (tx) => {
+      const createdUser = await tx.user.create({
+        data: {
+          ...userData,
+          password,
+          date_nascimento,
+          date_batizado,
+          date_casamento,
+          date_decisao,
+          supervisao_pertence: { connect: { id: supervisao_pertence } },
+          celula: celula ? { connect: { id: celula } } : undefined,
+          situacao_no_reino: { connect: { id: situacao_no_reino } },
+          cargo_de_lideranca: { connect: { id: cargo_de_lideranca } },
+          ...(discipuladorId && { user: { connect: { id: discipuladorId } } }),
+          TurmaEscola: TurmaEscola
+            ? { connect: { id: TurmaEscola } }
+            : undefined,
+          escolas: escolas?.length
+            ? { connect: escolas.map((escola) => ({ id: escola.id })) }
+            : undefined,
+          encontros: encontros?.length
+            ? { connect: encontros.map((encontro) => ({ id: encontro.id })) }
+            : undefined,
+          celula_lidera: celula_lidera?.length
+            ? {
+                connect: celula_lidera.map((celulaLideraId) => ({
+                  id: celulaLideraId,
+                })),
+              }
+            : undefined,
+          escola_lidera: escola_lidera?.length
+            ? {
+                connect: escola_lidera.map((escolaLideraId) => ({
+                  id: escolaLideraId,
+                })),
+              }
+            : undefined,
+          supervisoes_lidera: supervisoes_lidera?.length
+            ? {
+                connect: supervisoes_lidera.map((supervisoesLideraId) => ({
+                  id: supervisoesLideraId,
+                })),
+              }
+            : undefined,
+          presencas_aulas_escolas: presencas_aulas_escolas?.length
+            ? { connect: presencas_aulas_escolas.map((id) => ({ id })) }
+            : undefined,
+          presencas_cultos: presencas_cultos?.length
+            ? { connect: presencas_cultos.map((id) => ({ id })) }
+            : undefined,
+          presencas_reuniao_celula: presencas_reuniao_celula?.length
+            ? { connect: presencas_reuniao_celula.map((id) => ({ id })) }
+            : undefined,
+        },
+      });
 
-    // ✅ cria relação pivô (sem “update” de PK)
-    if (user.discipuladorId) {
-      await this.ensureDiscipuladorRelation(user.id, user.discipuladorId);
-    }
+      if (createdUser.discipuladorId) {
+        await tx.discipulador_usuario.upsert({
+          where: {
+            usuario_id_discipulador_id: {
+              usuario_id: createdUser.id,
+              discipulador_id: createdUser.discipuladorId,
+            },
+          },
+          update: {},
+          create: {
+            usuario_id: createdUser.id,
+            discipulador_id: createdUser.discipuladorId,
+          },
+        });
+      }
+
+      if (user_role_ids !== undefined) {
+        await this.syncUserRoleIds(createdUser.id, user_role_ids, tx);
+      }
+
+      return createdUser;
+    });
 
     return user;
   }
@@ -1186,6 +1295,7 @@ class UserRepositorie {
         date_batizado,
         date_casamento,
         cargo_de_lideranca,
+        user_role_ids,
         discipuladorId,
         ...userData
       } = userDataForm;
@@ -1338,9 +1448,17 @@ class UserRepositorie {
         };
       }
 
-      const result = await prisma.user.update({
-        where: { id },
-        data: updateUserInput,
+      const result = await prisma.$transaction(async (tx) => {
+        const updatedUser = await tx.user.update({
+          where: { id },
+          data: updateUserInput,
+        });
+
+        if (user_role_ids !== undefined) {
+          await this.syncUserRoleIds(id, user_role_ids, tx);
+        }
+
+        return updatedUser;
       });
 
       return result;

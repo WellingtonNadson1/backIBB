@@ -6,7 +6,7 @@ import { CultoIndividualRepositorie } from "../../Repositories/Culto";
 import {
   resolveEffectiveCoverageNodeId,
   resolveReportNodeId,
-  resolveSetorIdsForNode,
+  resolveSupervisaoScopeIdsForNode,
 } from "../../services/SupervisaoCoverageService";
 
 const routerRelatorioPresencaCulto = async (fastify: FastifyInstance) => {
@@ -42,7 +42,7 @@ const routerRelatorioPresencaCulto = async (fastify: FastifyInstance) => {
           });
         }
 
-        const coverageSetorIds = await resolveSetorIdsForNode(
+        const coverageSupervisaoIds = await resolveSupervisaoScopeIdsForNode(
           coverageNodeId,
           prisma,
         );
@@ -53,7 +53,7 @@ const routerRelatorioPresencaCulto = async (fastify: FastifyInstance) => {
         // Consulta para buscar membros da supervisão que compareceram aos cultos no intervalo de tempo
         const membrosCompareceramCultos = await prisma?.user.findMany({
           where: {
-            supervisaoId: { in: coverageSetorIds },
+            supervisaoId: { in: coverageSupervisaoIds },
           },
           // Use a opção 'select' para selecionar apenas os campos desejados
           select: {
@@ -107,7 +107,7 @@ const routerRelatorioPresencaCulto = async (fastify: FastifyInstance) => {
           await CultoIndividualRepositorie.findAllIntervall(
             startDate,
             endDate,
-            coverageSetorIds,
+            coverageSupervisaoIds,
           );
 
         const totalCultosPeriodo = cultosIndividuaisForDate.totalCultosPeriodo;
