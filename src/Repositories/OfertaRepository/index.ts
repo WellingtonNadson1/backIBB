@@ -11,6 +11,7 @@ type OfertaWithUserAndCelula = Prisma.OfertaGetPayload<{
         id: true;
         first_name: true;
         last_name: true;
+        image_url: true;
         email: true;
         supervisao_pertence: { select: { nome: true } };
         celula: { select: { nome: true } };
@@ -61,6 +62,7 @@ export class OfertaRepository {
             id: true,
             first_name: true,
             last_name: true,
+            image_url: true,
             email: true,
             supervisao_pertence: { select: { nome: true } },
             celula: { select: { nome: true } },
