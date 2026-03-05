@@ -11,6 +11,7 @@ type DizimoWithUser = Prisma.DizimoGetPayload<{
         id: true;
         first_name: true;
         last_name: true;
+        image_url: true;
         email: true;
         supervisao_pertence: { select: { nome: true } };
         celula: { select: { nome: true } };
@@ -60,6 +61,7 @@ export class DizimoRepository {
               id: true,
               first_name: true,
               last_name: true,
+              image_url: true,
               email: true,
               supervisao_pertence: { select: { nome: true } },
               celula: { select: { nome: true } },
