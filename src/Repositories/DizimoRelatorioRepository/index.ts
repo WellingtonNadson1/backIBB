@@ -11,6 +11,7 @@ import { resolveSupervisaoScopeIdsForNode } from "../../services/SupervisaoCover
 type LiderPorSupervisaoDTO = {
   supervisaoId: string;
   supervisaoNome: string;
+  supervisaoCor: string;
   lideres: MembroCelulaRelatorioDTO[]; // reutiliza seu DTO
   totalGeral: number;
   totalRegistros: number;
@@ -25,6 +26,7 @@ type RelatorioFuncaoDetalhadoDTO = {
 type MembroCelulaRelatorioDTO = {
   membroId: string;
   membroNome: string;
+  membroImagem: string | null;
   cargoNome: string | null;
   user_roles?: { rolenew: { name: string | null } }[];
   totalLancamentos: number;
@@ -36,6 +38,7 @@ type MembroCelulaRelatorioDTO = {
 type RelatorioCelulaDetalhadoDTO = {
   supervisaoId: string;
   supervisaoNome: string;
+  supervisaoCor: string;
   celulaId: string;
   celulaNome: string;
   membros: MembroCelulaRelatorioDTO[];
@@ -127,7 +130,10 @@ function createContributionSelect(
 }
 
 function extractContributions(
-  record: { Dizimo?: RelatorioContribuicao[]; Oferta?: RelatorioContribuicao[] },
+  record: {
+    Dizimo?: RelatorioContribuicao[];
+    Oferta?: RelatorioContribuicao[];
+  },
   tipoFinanceiro: TipoFinanceiro,
 ): RelatorioContribuicao[] {
   return tipoFinanceiro === "OFERTA"
@@ -181,8 +187,9 @@ export class DizimoRelatorioRepository {
         id: true,
         first_name: true,
         last_name: true,
+        image_url: true,
         cargo_de_lideranca: { select: { nome: true } },
-        supervisao_pertence: { select: { id: true, nome: true } },
+        supervisao_pertence: { select: { id: true, nome: true, cor: true } },
         user_roles: { select: { rolenew: { select: { name: true } } } },
         ...createContributionSelect(tipoFinanceiro, inicio, fim),
       },
@@ -201,11 +208,13 @@ export class DizimoRelatorioRepository {
     for (const u of users) {
       const supervisaoNome = u.supervisao_pertence?.nome ?? "SEM_SUPERVISÃO";
       const supervisaoKey = u.supervisao_pertence?.id ?? "SEM_SUPERVISAO";
+      const supervisaoCor = u.supervisao_pertence?.cor ?? "";
 
       if (!map.has(supervisaoKey)) {
         map.set(supervisaoKey, {
           supervisaoId: supervisaoKey,
           supervisaoNome,
+          supervisaoCor,
           lideres: [],
           totalGeral: 0,
           totalRegistros: 0,
@@ -235,6 +244,7 @@ export class DizimoRelatorioRepository {
       const dto: MembroCelulaRelatorioDTO = {
         membroId: u.id,
         membroNome,
+        membroImagem: u.image_url,
         cargoNome: u.cargo_de_lideranca?.nome ?? null,
         user_roles: u.user_roles,
         totalLancamentos,
@@ -320,6 +330,7 @@ export class DizimoRelatorioRepository {
             id: true,
             first_name: true,
             last_name: true,
+            image_url: true,
             cargo_de_lideranca: {
               select: { nome: true },
             },
@@ -343,6 +354,7 @@ export class DizimoRelatorioRepository {
         .map((membro) => {
           const nome = `${membro.first_name} ${membro.last_name ?? ""}`.trim();
           const cargoNome = membro.cargo_de_lideranca?.nome ?? null;
+          const membroImagem = membro.image_url;
 
           const contribs = extractContributions(membro as any, tipoFinanceiro);
 
@@ -359,7 +371,10 @@ export class DizimoRelatorioRepository {
               tipoFinanceiro,
               contribution,
             );
-            if (dataContribuicao && (!ultimaData || dataContribuicao > ultimaData)) {
+            if (
+              dataContribuicao &&
+              (!ultimaData || dataContribuicao > ultimaData)
+            ) {
               ultimaData = dataContribuicao;
             }
           }
@@ -372,6 +387,7 @@ export class DizimoRelatorioRepository {
           return {
             membroId: membro.id,
             membroNome: nome,
+            membroImagem,
             cargoNome,
             totalLancamentos,
             totalValor,
@@ -419,6 +435,7 @@ export class DizimoRelatorioRepository {
           select: {
             id: true,
             nome: true,
+            cor: true,
           },
         },
         membros: {
@@ -426,6 +443,7 @@ export class DizimoRelatorioRepository {
             id: true,
             first_name: true,
             last_name: true,
+            image_url: true,
             cargo_de_lideranca: {
               select: { nome: true },
             },
@@ -440,6 +458,7 @@ export class DizimoRelatorioRepository {
       return {
         supervisaoId: "",
         supervisaoNome: "",
+        supervisaoCor: "",
         celulaId,
         celulaNome: "",
         membros: [],
@@ -476,7 +495,10 @@ export class DizimoRelatorioRepository {
             tipoFinanceiro,
             contribution,
           );
-          if (dataContribuicao && (!ultimaData || dataContribuicao > ultimaData)) {
+          if (
+            dataContribuicao &&
+            (!ultimaData || dataContribuicao > ultimaData)
+          ) {
             ultimaData = dataContribuicao;
           }
         }
@@ -489,6 +511,7 @@ export class DizimoRelatorioRepository {
         return {
           membroId: membro.id,
           membroNome: nome,
+          membroImagem: membro.image_url,
           cargoNome,
           totalLancamentos,
           totalValor,
@@ -500,6 +523,7 @@ export class DizimoRelatorioRepository {
     return {
       supervisaoId: celula.supervisao.id,
       supervisaoNome: celula.supervisao.nome,
+      supervisaoCor: celula.supervisao.cor,
       celulaId: celula.id,
       celulaNome: celula.nome,
       membros,
