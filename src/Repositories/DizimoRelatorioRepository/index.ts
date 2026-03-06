@@ -27,6 +27,7 @@ type MembroCelulaRelatorioDTO = {
   membroId: string;
   membroNome: string;
   membroImagem: string | null;
+  tipoRegistro: TipoFinanceiro;
   cargoNome: string | null;
   user_roles?: { rolenew: { name: string | null } }[];
   totalLancamentos: number;
@@ -55,6 +56,7 @@ type CelulaRelatorioDTO = {
 type RelatorioSupervisaoDetalhadoDTO = {
   supervisaoId: string;
   supervisaoNome: string;
+  supervisaoCor: string;
   celulas: CelulaRelatorioDTO[];
   totalGeral: number; // soma de todos os dízimos do período
   totalRegistros: number; // quantidade de lançamentos de dízimo
@@ -64,6 +66,7 @@ type DizimoReportItem = {
   id: string;
   data: string; // ISO string
   valor: number;
+  tipoRegistro: TipoFinanceiro;
   evento: EventoContribuicao;
   tipoPagamento: TipoPagamento;
 
@@ -72,6 +75,7 @@ type DizimoReportItem = {
 
   supervisaoId: string | null;
   supervisaoNome: string | null;
+  supervisaoCor: string | null;
 
   celulaId: string | null;
   celulaNome: string | null;
@@ -245,6 +249,7 @@ export class DizimoRelatorioRepository {
         membroId: u.id,
         membroNome,
         membroImagem: u.image_url,
+        tipoRegistro: tipoFinanceiro,
         cargoNome: u.cargo_de_lideranca?.nome ?? null,
         user_roles: u.user_roles,
         totalLancamentos,
@@ -300,6 +305,7 @@ export class DizimoRelatorioRepository {
         select: {
           id: true,
           nome: true,
+          cor: true,
         },
       }),
       resolveCoverageIds(supervisaoId),
@@ -309,6 +315,7 @@ export class DizimoRelatorioRepository {
       return {
         supervisaoId,
         supervisaoNome: "",
+        supervisaoCor: "",
         celulas: [],
         totalGeral: 0,
         totalRegistros: 0,
@@ -388,6 +395,7 @@ export class DizimoRelatorioRepository {
             membroId: membro.id,
             membroNome: nome,
             membroImagem,
+            tipoRegistro: tipoFinanceiro,
             cargoNome,
             totalLancamentos,
             totalValor,
@@ -406,6 +414,7 @@ export class DizimoRelatorioRepository {
     return {
       supervisaoId: supervisao.id,
       supervisaoNome: supervisao.nome,
+      supervisaoCor: supervisao.cor,
       celulas,
       totalGeral,
       totalRegistros,
@@ -512,6 +521,7 @@ export class DizimoRelatorioRepository {
           membroId: membro.id,
           membroNome: nome,
           membroImagem: membro.image_url,
+          tipoRegistro: tipoFinanceiro,
           cargoNome,
           totalLancamentos,
           totalValor,
@@ -610,7 +620,7 @@ export class DizimoRelatorioRepository {
             id: true,
             first_name: true,
             last_name: true,
-            supervisao_pertence: { select: { id: true, nome: true } },
+            supervisao_pertence: { select: { id: true, nome: true, cor: true } },
             celula: { select: { id: true, nome: true } },
           },
         },
@@ -624,6 +634,7 @@ export class DizimoRelatorioRepository {
       id: r.id,
       data: r.data_dizimou.toISOString(),
       valor: Number(r.valor ?? 0),
+      tipoRegistro: tipoFinanceiro,
 
       evento: r.evento,
       tipoPagamento: r.tipoPagamento,
@@ -635,6 +646,7 @@ export class DizimoRelatorioRepository {
 
       supervisaoId: r.user?.supervisao_pertence?.id ?? null,
       supervisaoNome: r.user?.supervisao_pertence?.nome ?? null,
+      supervisaoCor: r.user?.supervisao_pertence?.cor ?? null,
 
       celulaId: r.user?.celula?.id ?? null,
       celulaNome: r.user?.celula?.nome ?? null,

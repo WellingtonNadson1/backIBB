@@ -13,7 +13,7 @@ type OfertaWithUserAndCelula = Prisma.OfertaGetPayload<{
         last_name: true;
         image_url: true;
         email: true;
-        supervisao_pertence: { select: { nome: true } };
+        supervisao_pertence: { select: { nome: true; cor: true } };
         celula: { select: { nome: true } };
         cargo_de_lideranca: { select: { nome: true } };
         situacao_no_reino: { select: { nome: true } };
@@ -27,6 +27,7 @@ type OfertaWithUserAndCelula = Prisma.OfertaGetPayload<{
           select: {
             id: true;
             nome: true;
+            cor: true;
           };
         };
       };
@@ -64,7 +65,7 @@ export class OfertaRepository {
             last_name: true,
             image_url: true,
             email: true,
-            supervisao_pertence: { select: { nome: true } },
+            supervisao_pertence: { select: { nome: true, cor: true } },
             celula: { select: { nome: true } },
             cargo_de_lideranca: { select: { nome: true } },
             situacao_no_reino: { select: { nome: true } },
@@ -78,6 +79,7 @@ export class OfertaRepository {
               select: {
                 id: true,
                 nome: true,
+                cor: true,
               },
             },
           },
