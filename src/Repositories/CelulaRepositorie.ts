@@ -1,6 +1,7 @@
 import { Prisma } from "@prisma/client";
 import { CelulaData, CelulaDataForm } from "../Controllers/CelulaController";
 import { createPrismaInstance } from "../services/prisma";
+import { resolveSupervisaoScopeIdsForNode } from "../services/SupervisaoCoverageService";
 import { CultoIndividualRepositorie } from "./Culto";
 
 function getStartOfDay(date: Date): Date {
@@ -36,11 +37,24 @@ class CelulaRepositorie {
     if (!prisma) {
       throw new Error("Prisma instance is null");
     }
+    const coverageIds = await resolveSupervisaoScopeIdsForNode(
+      supervisaoId,
+      prisma,
+    );
+    const targetIds = coverageIds.length > 0 ? coverageIds : [supervisaoId];
+
     const celulas = await prisma.celula.findMany({
-      where: { supervisaoId },
+      where: {
+        supervisaoId: {
+          in: targetIds,
+        },
+      },
       select: {
         id: true,
         nome: true,
+      },
+      orderBy: {
+        nome: "asc",
       },
     });
 

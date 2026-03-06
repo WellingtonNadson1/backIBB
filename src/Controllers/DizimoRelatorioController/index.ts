@@ -88,6 +88,7 @@ export class DizimoRelatorioController {
             supervisaoId,
             dataInicio,
             dataFim,
+            tipoFinanceiro: tf,
           });
 
         return reply.send(relatorioSupervisao);
