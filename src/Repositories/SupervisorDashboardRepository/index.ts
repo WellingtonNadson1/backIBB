@@ -520,6 +520,13 @@ export class SupervisorDashboardRepository {
 
     const setorIds = await this.resolveSetorIds(supervisorId, this.db);
 
+    const { nowSP, inicioHojeUTC, fimHojeUTC } = getSaoPauloRangeNow();
+    const hoje = nowSP;
+    const inicioHoje = inicioHojeUTC;
+    const fimHoje = fimHojeUTC;
+    const trintaDiasAtras = subDays(hoje, 30);
+    const hojeWeekday = hoje.getDay();
+
     const celulas = setorIds.length
       ? await this.db.celula.findMany({
           where: { supervisaoId: { in: setorIds } },
@@ -537,6 +544,7 @@ export class SupervisorDashboardRepository {
             },
             membros: { select: { id: true } },
             reunioes_celula: {
+              where: { data_reuniao: { lte: fimHoje } },
               orderBy: { data_reuniao: "desc" },
               take: 1,
               select: { data_reuniao: true },
@@ -545,16 +553,91 @@ export class SupervisorDashboardRepository {
         })
       : [];
 
-    const { nowSP } = getSaoPauloRangeNow();
-    const hoje = nowSP;
+    // ===== Cultos hoje =====
+    const cultosHoje = await this.db.cultoIndividual.findMany({
+      where: { data_inicio_culto: { gte: inicioHoje, lte: fimHoje } },
+      select: { id: true },
+    });
+    const primeiroCultoHojeId = cultosHoje[0]?.id ?? null;
+
+    // ===== Presenças culto hoje =====
+    const membrosIds = celulas.flatMap((c) => c.membros.map((m) => m.id));
+    const presencasCultoHoje =
+      primeiroCultoHojeId && membrosIds.length
+        ? await this.db.presencaCulto.findMany({
+            where: {
+              cultoIndividualId: primeiroCultoHojeId,
+              userId: { in: membrosIds },
+            },
+            select: { userId: true },
+          })
+        : [];
+    const registradosCultoSet = new Set(
+      presencasCultoHoje.map((p) => p.userId).filter(Boolean) as string[],
+    );
+
+    // ===== Discipulados 30d =====
+    const lideres = celulas
+      .map((c) => c.lider?.id)
+      .filter(Boolean) as string[];
+    const discipuladosRecentes = lideres.length
+      ? await this.db.discipulado.findMany({
+          where: {
+            data_ocorreu: { gte: trintaDiasAtras },
+            discipulador_id: { in: lideres },
+          },
+          select: { usuario_id: true, discipulador_id: true },
+        })
+      : [];
+    const discipuladosPorLider = new Map<string, Set<string>>();
+    for (const d of discipuladosRecentes) {
+      if (!discipuladosPorLider.has(d.discipulador_id)) {
+        discipuladosPorLider.set(d.discipulador_id, new Set());
+      }
+      discipuladosPorLider.get(d.discipulador_id)!.add(d.usuario_id);
+    }
 
     const celulasDTO = celulas.map((c) => {
       const ultima = c.reunioes_celula[0]?.data_reuniao ?? null;
       const diasSemReuniao = ultima ? differenceInDays(hoje, ultima) : 999;
 
+      const diaCelula = c.date_que_ocorre ? Number(c.date_que_ocorre) : null;
+      const ehDiaDeCelula = diaCelula === hojeWeekday;
+
+      const precisaRegistrarReuniaoHoje =
+        ehDiaDeCelula &&
+        (!ultima || ultima < inicioHoje || ultima > fimHoje);
+
+      let precisaCultoHoje = false;
+      if (primeiroCultoHojeId && c.membros.length > 0) {
+        const registrados = c.membros.filter((m) =>
+          registradosCultoSet.has(m.id),
+        ).length;
+        precisaCultoHoje = registrados !== c.membros.length;
+      }
+
+      const pendenciasHoje =
+        Number(precisaRegistrarReuniaoHoje) +
+        Number(cultosHoje.length > 0 && precisaCultoHoje);
+
+      const liderId = c.lider?.id ?? null;
+      const discipuladosSet = liderId
+        ? (discipuladosPorLider.get(liderId) ?? new Set())
+        : new Set<string>();
+      const membrosSemDiscipulado30d = c.membros.filter(
+        (m) => !discipuladosSet.has(m.id),
+      ).length;
+
+      // mesmo algoritmo do dashboard
       let st: CelulaStatus = "OK";
-      if (diasSemReuniao >= 14) st = "CRITICA";
-      else if (diasSemReuniao >= 7) st = "ATENCAO";
+      if (
+        pendenciasHoje >= 1 ||
+        diasSemReuniao >= 14 ||
+        membrosSemDiscipulado30d >= 5
+      )
+        st = "CRITICA";
+      else if (diasSemReuniao >= 7 || membrosSemDiscipulado30d >= 1)
+        st = "ATENCAO";
 
       return {
         id: c.id,
@@ -570,7 +653,7 @@ export class SupervisorDashboardRepository {
         ultimaReuniaoIso: ultima ? ultima.toISOString() : null,
         diasSemReuniao,
         status: st,
-        pendenciasHoje: 0,
+        pendenciasHoje,
         freqCultoMesPct: null as number | null,
       };
     });

@@ -15,6 +15,7 @@ describe("SupervisorDashboardRepository coverage", () => {
         }),
       },
       celula: { findMany: jest.fn().mockResolvedValue([]) },
+      cultoIndividual: { findMany: jest.fn().mockResolvedValue([]) },
     } as any;
 
     const resolveSetorIds = jest
