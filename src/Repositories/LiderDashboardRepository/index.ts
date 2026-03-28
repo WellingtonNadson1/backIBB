@@ -313,11 +313,10 @@ export class LiderDashboardRepository {
       },
     });
 
-    // 5) Agenda do mês
+    // 5) Agenda: mês atual e meses futuros (eventos que ainda não encerraram)
     const agendaHoje = await prisma.agenda.findMany({
       where: {
-        data_inicio: { lte: fimMes },
-        data_termino: { gte: inicioMes },
+        data_termino: { gte: inicioHoje },
         status: true,
       },
       orderBy: { data_inicio: "asc" },
