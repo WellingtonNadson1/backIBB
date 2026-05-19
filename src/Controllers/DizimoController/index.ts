@@ -1,4 +1,4 @@
-import { Prisma } from "@prisma/client";
+import { EventoContribuicao, Prisma, TipoPagamento } from "@prisma/client";
 import { FastifyReply, FastifyRequest } from "fastify";
 import { DizimoRepository } from "../../Repositories/DizimoRepository";
 
@@ -9,8 +9,12 @@ export class DizimoController {
     try {
       const registros = request.body as Array<{
         userId: string;
-        valor: number;
+        valor: number | string;
         data_dizimou: string;
+        evento?: EventoContribuicao;
+        tipoPagamento?: TipoPagamento;
+        cultoIndividualId?: string | null;
+        descricao?: string | null;
       }>;
 
       if (!Array.isArray(registros) || registros.length === 0) {
@@ -19,11 +23,14 @@ export class DizimoController {
           .send({ error: "Nenhum registro foi enviado." });
       }
 
-      // Convertendo os valores para os tipos corretos
-      const dadosFormatados = registros.map((registro) => ({
+      const dadosFormatados: Prisma.DizimoCreateManyInput[] = registros.map((registro) => ({
         userId: registro.userId,
-        valor: new Prisma.Decimal(registro.valor), // ✅ Convertendo para Decimal
-        data_dizimou: new Date(registro.data_dizimou), // ✅ Convertendo para Date
+        valor: new Prisma.Decimal(registro.valor),
+        data_dizimou: new Date(registro.data_dizimou),
+        evento: registro.evento ?? EventoContribuicao.CULTO,
+        tipoPagamento: registro.tipoPagamento ?? TipoPagamento.PIX,
+        cultoIndividualId: registro.cultoIndividualId ?? null,
+        descricao: registro.descricao ?? null,
       }));
 
       const newDizimos = await dizimoRepository.createMany(dadosFormatados);
