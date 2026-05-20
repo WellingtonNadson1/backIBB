@@ -53,8 +53,8 @@
     "postinstall": "prisma generate",
     "test": "jest",
     "dev": "tsx watch --no-cache src/server.ts",
-    "build": "prisma generate && next build",
-    "start": "next start"
+    "build": "prisma generate && tsup src/server.ts --format cjs --out-dir dist",
+    "start": "node dist/server.js"
   },
   "keywords": [],
   "author": "Wellington Nadson",
