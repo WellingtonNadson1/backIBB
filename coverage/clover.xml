@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<coverage generated="1773109907350" clover="3.2.0">
-  <project timestamp="1773109907350" name="All files">
+<coverage generated="1779388855039" clover="3.2.0">
+  <project timestamp="1779388855039" name="All files">
     <metrics statements="4954" coveredstatements="1693" conditionals="143" coveredconditionals="70" methods="116" coveredmethods="27" elements="5213" coveredelements="1790" complexity="0" loc="4954" ncloc="4954" packages="6" files="17" classes="17"/>
     <package name="Controllers.AdminCelulaController">
       <metrics statements="263" coveredstatements="168" conditionals="33" coveredconditionals="15" methods="9" coveredmethods="8"/>

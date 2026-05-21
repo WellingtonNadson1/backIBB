@@ -1,5 +1,5 @@
-const UUID_A = "11111111-1111-1111-1111-111111111111";
-const UUID_B = "22222222-2222-2222-2222-222222222222";
+const UUID_A = "11111111-1111-4111-a111-111111111111";
+const UUID_B = "22222222-2222-4222-b222-222222222222";
 
 type MockReply = {
   status: jest.Mock;
@@ -216,7 +216,7 @@ describe("AdminCelulaController authorization", () => {
         user: { id: UUID_A },
         body: {
           setorId: UUID_B,
-          celulaIds: [UUID_A, "33333333-3333-3333-3333-333333333333"],
+          celulaIds: [UUID_A, "33333333-3333-4333-8333-333333333333"],
         },
       },
       reply,

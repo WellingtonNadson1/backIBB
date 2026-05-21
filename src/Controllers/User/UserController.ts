@@ -218,7 +218,7 @@ class UserController {
     } catch (error) {
       console.log("error ao criar user:", error);
       if (error instanceof z.ZodError) {
-        return reply.code(400).send({ errors: error.errors });
+        return reply.code(400).send({ errors: error.issues });
       }
       if (isUserPayloadValidationError(error)) {
         return reply.code(400).send({ error: error.message });
@@ -264,7 +264,7 @@ class UserController {
     } catch (error) {
       console.error(error);
       if (error instanceof z.ZodError) {
-        return reply.code(400).send({ errors: error.errors });
+        return reply.code(400).send({ errors: error.issues });
       }
       if (isUserPayloadValidationError(error)) {
         return reply.code(400).send({ error: error.message });

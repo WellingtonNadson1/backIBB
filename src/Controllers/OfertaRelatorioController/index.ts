@@ -1,17 +1,24 @@
-import { Prisma } from "@prisma/client";
+import { EventoContribuicao, Prisma, TipoPagamento } from "@prisma/client";
 import { FastifyReply, FastifyRequest } from "fastify";
 import { OfertaRelatorioRepository } from "../../Repositories/OfertaRelatorioRepository";
 
 const ofertaRepository = new OfertaRelatorioRepository();
 
+type CreateOfertaRelatorioDTO = {
+  userId?: string | null;
+  valor: string | number;
+  data_ofertou: string;
+  evento?: EventoContribuicao;
+  tipoPagamento?: TipoPagamento;
+  cultoIndividualId?: string | null;
+  celulaId?: string | null;
+  descricao?: string | null;
+};
+
 export class OfertaRelatorioController {
   async createMany(request: FastifyRequest, reply: FastifyReply) {
     try {
-      const registros = request.body as Array<{
-        userId: string;
-        valor: number;
-        data_ofertou: string;
-      }>;
+      const registros = request.body as CreateOfertaRelatorioDTO[];
 
       if (!Array.isArray(registros) || registros.length === 0) {
         return reply
@@ -20,11 +27,18 @@ export class OfertaRelatorioController {
       }
 
       // Convertendo os valores para os tipos corretos
-      const dadosFormatados = registros.map((registro) => ({
-        userId: registro.userId,
-        valor: new Prisma.Decimal(registro.valor), // ✅ Convertendo para Decimal
-        data_ofertou: new Date(registro.data_ofertou), // ✅ Convertendo para Date
-      }));
+      const dadosFormatados: Prisma.OfertaCreateManyInput[] = registros.map(
+        (registro) => ({
+          userId: registro.userId ?? null,
+          valor: new Prisma.Decimal(registro.valor), // ✅ Convertendo para Decimal
+          data_ofertou: new Date(registro.data_ofertou), // ✅ Convertendo para Date
+          evento: registro.evento ?? EventoContribuicao.CELULA,
+          tipoPagamento: registro.tipoPagamento ?? TipoPagamento.PIX,
+          cultoIndividualId: registro.cultoIndividualId ?? null,
+          celulaId: registro.celulaId ?? null,
+          descricao: registro.descricao ?? null,
+        }),
+      );
 
       const newOfertas = await ofertaRepository.createMany(dadosFormatados);
 
@@ -40,15 +54,19 @@ export class OfertaRelatorioController {
 
   async create(request: FastifyRequest, reply: FastifyReply) {
     try {
-      const { userId, valor, data_ofertou } = request.body as {
-        userId: string;
-        valor: number;
-        data_ofertou: string;
+      const body = request.body as CreateOfertaRelatorioDTO;
+      const data: Prisma.OfertaUncheckedCreateInput = {
+        userId: body.userId ?? null,
+        valor: new Prisma.Decimal(body.valor),
+        data_ofertou: new Date(body.data_ofertou),
+        evento: body.evento ?? EventoContribuicao.CELULA,
+        tipoPagamento: body.tipoPagamento ?? TipoPagamento.PIX,
+        cultoIndividualId: body.cultoIndividualId ?? null,
+        celulaId: body.celulaId ?? null,
+        descricao: body.descricao ?? null,
       };
       const newOferta = await ofertaRepository.create({
-        userId,
-        valor: new Prisma.Decimal(valor),
-        data_ofertou: new Date(data_ofertou),
+        ...data,
       });
       return reply.status(201).send(newOferta);
     } catch (error) {

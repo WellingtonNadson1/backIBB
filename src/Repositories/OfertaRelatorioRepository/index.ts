@@ -6,7 +6,7 @@ const prisma = createPrismaInstance();
 
 export class OfertaRelatorioRepository {
   async createMany(
-    data: Omit<Oferta, "id" | "date_create" | "date_update">[],
+    data: Prisma.OfertaCreateManyInput[],
   ): Promise<Prisma.BatchPayload> {
     return await prisma.oferta.createMany({
       data,
@@ -15,7 +15,7 @@ export class OfertaRelatorioRepository {
   }
 
   async create(
-    data: Omit<Oferta, "id" | "date_create" | "date_update">,
+    data: Prisma.OfertaUncheckedCreateInput,
   ): Promise<Oferta> {
     return await prisma.oferta.create({ data });
   }

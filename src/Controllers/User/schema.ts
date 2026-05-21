@@ -20,7 +20,7 @@ export const UserDataSchema = z
     first_name: z.string().min(1, "Nome é obrigatório"),
     last_name: z.string().min(1, "Sobrenome é obrigatório"),
     telefone: z.string().min(10, "Telefone inválido"),
-    sexo: z.enum(["M", "F"], { required_error: "Sexo é obrigatório" }),
+    sexo: z.enum(["M", "F"], { error: "Sexo é obrigatório" }),
     situacao_no_reino: z
       .string()
       .uuid({ message: "Situação no Reino é obrigatória" }),
@@ -34,14 +34,14 @@ export const UserDataSchema = z
     celula: z.string().uuid().nullable().optional(),
     estado_civil: z.enum(
       ["solteiro", "casado", "divorciado", "uniao_estavel", "viuvo"],
-      { required_error: "Estado Civil é obrigatório" }
+      { error: "Estado Civil é obrigatório" }
     ),
     // Campos opcionais
     role: z
       .string()
       .refine(roleEnumValidator, { message: "Valor de role inválido" })
       .optional()
-      .default("MEMBER"), // Valor padrão alinhado com Prisma
+      .default(Role.MEMBER), // Valor padrão alinhado com Prisma
     userIdRefresh: z.string().optional(),
     image_url: z.string().optional(),
     cpf: z.string().optional(),
@@ -104,7 +104,7 @@ export const UserDataUpdateSchema = z
     first_name: z.string().min(1, "Nome é obrigatório"),
     last_name: z.string().min(1, "Sobrenome é obrigatório"),
     telefone: z.string().min(10, "Telefone inválido"),
-    sexo: z.enum(["M", "F"], { required_error: "Sexo é obrigatório" }),
+    sexo: z.enum(["M", "F"], { error: "Sexo é obrigatório" }),
     situacao_no_reino: z
       .string()
       .uuid({ message: "Situação no Reino é obrigatória" }),
@@ -118,14 +118,14 @@ export const UserDataUpdateSchema = z
     celula: z.string().uuid().nullable().optional(),
     estado_civil: z.enum(
       ["solteiro", "casado", "divorciado", "uniao_estavel", "viuvo"],
-      { required_error: "Estado Civil é obrigatório" }
+      { error: "Estado Civil é obrigatório" }
     ),
     // Campos opcionais
     role: z
       .string()
       .refine(roleEnumValidator, { message: "Valor de role inválido" })
       .optional()
-      .default("MEMBER"),
+      .default(Role.MEMBER),
     userIdRefresh: z.string().optional(),
     image_url: z.string().optional(),
     cpf: z.string().optional(),

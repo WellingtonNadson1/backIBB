@@ -55,6 +55,21 @@ const ALLOWED_ORIGINS = (process.env.CORS_ORIGINS ?? "")
   .map((s) => s.trim())
   .filter(Boolean);
 
+function isLocalBrowserOrigin(origin: string) {
+  try {
+    const { hostname, protocol } = new URL(origin);
+    const isHttp = protocol === "http:";
+    const isLoopback =
+      hostname === "localhost" ||
+      hostname === "127.0.0.1" ||
+      hostname === "::1";
+
+    return isHttp && isLoopback;
+  } catch {
+    return false;
+  }
+}
+
 // Opcional: liberar previews da Vercel por sufixo
 const ALLOW_VERCEL_PREVIEWS = process.env.ALLOW_VERCEL_PREVIEWS === "true";
 
@@ -72,7 +87,10 @@ app.register(cors, {
     // 1) lista fixa
     if (ALLOWED_ORIGINS.includes(origin)) return cb(null, true);
 
-    // 2) previews (se quiser)
+    // 2) browsers locais em desenvolvimento podem usar portas variadas.
+    if (isLocalBrowserOrigin(origin)) return cb(null, true);
+
+    // 3) previews (se quiser)
     if (ALLOW_VERCEL_PREVIEWS) {
       try {
         const { hostname, protocol } = new URL(origin);
